@@ -1,0 +1,43 @@
+@import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Inter:wght@300;400;500;600&family=Montserrat:wght@400;500;600;700&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --color-cream: #d8c7b4;
+  --color-terracotta: #c48a6a;
+  --color-offwhite: #f7f3ef;
+  --color-redbrown: #8a3c2a;
+  --color-dustypink: #b07a7a;
+  --color-teal: #0f3f3e;
+  --color-lightbrown: #b97a5b;
+
+  --font-title: "DM Serif Display", serif;
+  --font-subtitle: "Montserrat", sans-serif;
+  --font-body: "Inter", sans-serif;
+  
+  --font-sans: var(--font-body), ui-sans-serif, system-ui, sans-serif;
+
+  --animate-bounce-slow: bounce-slow 3s infinite;
+
+  @keyframes bounce-slow {
+    0%, 100% {
+      transform: translateY(-5%);
+      animation-timing-function: cubic-bezier(0.8, 0, 1, 1);
+    }
+    50% {
+      transform: translateY(0);
+      animation-timing-function: cubic-bezier(0, 0, 0.2, 1);
+    }
+  }
+}
+
+body {
+  @apply font-body text-teal bg-offwhite antialiased;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  @apply font-title;
+}
+
+.subtitle-text {
+  @apply font-subtitle;
+}

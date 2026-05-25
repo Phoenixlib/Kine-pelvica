@@ -1,0 +1,56 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+    provider = "prisma-client-js"
+    output   = "../generated/prisma"
+}
+
+datasource db {
+    provider = "sqlite"
+    url      = "file:./dev.db"
+}
+
+// Administradores del sistema (solo Camila en la práctica)
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String    @unique
+  password      String    // bcrypt hash
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+// Pacientes / Clientes
+model Patient {
+  id           String        @id @default(cuid())
+  name         String
+  email        String?       @unique
+  phone        String?
+  rut          String?       @unique // RUT chileno
+  birthDate    DateTime?
+  notes        String?       // Notas clínicas privadas (SQLite standard text)
+  status       String        @default("Active") // "Active" | "Inactive"
+  lastVisit    DateTime?
+  appointments Appointment[]
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+}
+
+// Citas / Atenciones
+model Appointment {
+  id              String    @id @default(cuid())
+  patientId       String
+  patient         Patient   @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  title           String    // Ej: "Evaluación Pélvica"
+  serviceCategory String?   // Categoría del servicio
+  date            DateTime
+  durationMinutes Int       @default(60)
+  status          String    @default("Confirmed") // "Confirmed" | "Pending" | "Cancelled"
+  paymentStatus   String    @default("Unpaid")    // "Paid" | "Unpaid" | "Partial"
+  amountPaid      Float?
+  calComEventId   String?   @unique // ID de sincronización con Cal.com
+  notes           String?   // SQLite standard text
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+}

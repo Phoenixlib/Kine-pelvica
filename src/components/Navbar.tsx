@@ -1,0 +1,96 @@
+"use client";
+
+import { useState, useEffect } from "react";
+import { cn } from "../utils";
+import { Menu, X } from "lucide-react";
+
+export function Navbar() {
+  const [isScrolled, setIsScrolled] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 10);
+    };
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  const navLinks = [
+    { name: "Inicio", href: "/#inicio" },
+    { name: "Quién Soy", href: "/#quien-soy" },
+    { name: "Servicios", href: "/#servicios" },
+    { name: "Antes y Después", href: "/#galeria" },
+    { name: "Blog", href: "/#blog" },
+    { name: "Contáctanos", href: "/#contacto" },
+    { name: "Opciones Heros", href: "/heros" },
+  ];
+
+  return (
+    <header
+      className={cn(
+        "fixed top-0 inset-x-0 z-50 transition-all duration-300",
+        isScrolled
+          ? "bg-teal/95 backdrop-blur-md shadow-md py-4 border-b border-teal"
+          : "bg-transparent py-6"
+      )}
+    >
+      <div className="container mx-auto px-4 md:px-8 flex justify-between items-center">
+        {/* Logo Image for Navbar */}
+        <a href="/" className="flex items-center space-x-3 group">
+          <img
+            src="/logo-editado.png"
+            alt="Estudio Pélvico"
+            className="h-10 md:h-12 w-auto object-contain transition-transform group-hover:scale-105"
+          />
+        </a>
+
+        {/* Desktop Nav */}
+        <nav className="hidden lg:flex items-center space-x-8">
+          {navLinks.map((link) => (
+            <a
+              key={link.name}
+              href={link.href}
+              className="font-subtitle text-[11px] uppercase tracking-widest font-bold text-offwhite/90 hover:text-terracotta transition-colors relative group"
+            >
+              {link.name}
+              <span className="absolute -bottom-2 left-0 w-0 h-[2px] bg-terracotta transition-all group-hover:w-full"></span>
+            </a>
+          ))}
+          <a
+            href="#contacto"
+            className="px-6 py-2.5 bg-cream text-teal text-[10px] uppercase tracking-widest font-bold rounded-full hover:bg-white transition-all shadow-sm"
+          >
+            Agendar Hora
+          </a>
+        </nav>
+
+        {/* Mobile menu button */}
+        <button
+          className="lg:hidden text-offwhite"
+          onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+        >
+          {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+        </button>
+      </div>
+
+      {/* Mobile Nav */}
+      {isMobileMenuOpen && (
+        <div className="lg:hidden absolute top-full left-0 w-full bg-teal shadow-lg border-t border-white/10">
+          <nav className="flex flex-col py-4 px-4 space-y-4">
+            {navLinks.map((link) => (
+              <a
+                key={link.name}
+                href={link.href}
+                className="font-subtitle text-xs uppercase tracking-widest font-bold text-offwhite/80 pb-3 border-b border-white/10"
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                {link.name}
+              </a>
+            ))}
+          </nav>
+        </div>
+      )}
+    </header>
+  );
+}

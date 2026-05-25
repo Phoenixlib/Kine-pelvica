@@ -1,0 +1,8 @@
+{
+  "name": "Estudio Pélvico Camila Ortiz",
+  "description": "Kinesióloga de piso pélvico en Iquique, especialista en uroginecología, embarazo, postparto, sexualidad terapéutica y tratamiento integral de cicatrices en adultos, niños y embarazadas.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
