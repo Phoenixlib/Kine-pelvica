@@ -32,20 +32,26 @@ export async function POST(req: Request) {
         return new Response("Missing attendee", { status: 400 });
       }
 
+      // Split Cal.com full name into firstName and lastName
+      const fullName = attendee.name || "";
+      const nameParts = fullName.trim().split(/\s+/);
+      const firstName = nameParts[0] || "Paciente";
+      const lastName = nameParts.slice(1).join(" ") || "Sin Apellido";
+
       // Find or create patient by email (upsert)
       const patient = await db.patient.upsert({
         where: { email: attendee.email },
         update: { 
-          name: attendee.name,
+          firstName,
+          lastName,
           phone: attendee.phone || null,
-          lastVisit: new Date(booking.startTime)
         },
         create: {
-          name: attendee.name,
+          firstName,
+          lastName,
           email: attendee.email,
           phone: attendee.phone || null,
-          lastVisit: new Date(booking.startTime),
-          status: "Active",
+          status: "ACTIVE",
         },
       });
 
@@ -53,7 +59,7 @@ export async function POST(req: Request) {
       await db.appointment.upsert({
         where: { calComEventId: String(booking.uid) },
         update: { 
-          status: "Confirmed",
+          status: "BOOKED",
           date: new Date(booking.startTime),
           durationMinutes: booking.eventDuration || 60,
           title: booking.title || "Cita de Kinesiología",
@@ -61,12 +67,11 @@ export async function POST(req: Request) {
         create: {
           patientId: patient.id,
           calComEventId: String(booking.uid),
+          calComBookingId: String(booking.id || ""),
           title: booking.title || "Cita de Kinesiología",
           date: new Date(booking.startTime),
           durationMinutes: booking.eventDuration || 60,
-          status: "Confirmed",
-          paymentStatus: "Unpaid",
-          amountPaid: 30000, // default evaluation rate
+          status: "BOOKED",
         },
       });
     } else if (payload.triggerEvent === "BOOKING_CANCELLED") {
@@ -76,7 +81,8 @@ export async function POST(req: Request) {
       await db.appointment.update({
         where: { calComEventId: String(booking.uid) },
         data: {
-          status: "Cancelled",
+          status: "CANCELLED",
+          cancelReason: "Cancelada desde Cal.com",
         },
       });
     }

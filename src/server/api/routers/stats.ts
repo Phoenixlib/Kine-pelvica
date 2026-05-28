@@ -16,10 +16,19 @@ export const statsRouter = createTRPCRouter({
           lte: todayEnd,
         },
       },
+      include: {
+        service: true,
+      },
     });
 
     const revenueToday = appointmentsToday.reduce(
-      (sum, appt) => sum + (appt.amountPaid ?? 0),
+      (sum, appt) => {
+        // Sum price if attended, transferred or pending cash payment (which means it's booked for today)
+        if (appt.status === "ATTENDED" || appt.status === "TRANSFERRED" || appt.status === "CASH_PENDING") {
+          return sum + (appt.service?.price ?? 0);
+        }
+        return sum;
+      },
       0
     );
 
@@ -45,7 +54,6 @@ export const statsRouter = createTRPCRouter({
       },
     });
 
-    // Just a realistic calculation or fallback if no patients
     const retentionRate = totalPatients > 0 
       ? Math.round((repeatingPatients / totalPatients) * 100) 
       : 85;
@@ -75,9 +83,18 @@ export const statsRouter = createTRPCRouter({
             lte: dayEnd,
           },
         },
+        include: {
+          service: true,
+        },
       });
 
-      const revenue = dayAppts.reduce((sum, appt) => sum + (appt.amountPaid ?? 0), 0);
+      const revenue = dayAppts.reduce((sum, appt) => {
+        if (appt.status === "ATTENDED" || appt.status === "TRANSFERRED" || appt.status === "CASH_PENDING") {
+          return sum + (appt.service?.price ?? 0);
+        }
+        return sum;
+      }, 0);
+      
       const appointments = dayAppts.length;
 
       chartData.push({

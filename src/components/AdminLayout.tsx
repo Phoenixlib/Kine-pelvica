@@ -15,7 +15,10 @@ import {
   X, 
   Bell, 
   User as UserIcon, 
-  Home 
+  Home,
+  Settings,
+  Camera,
+  MessageSquare
 } from "lucide-react";
 
 interface AdminLayoutProps {
@@ -35,6 +38,10 @@ export function AdminLayout({ children, user }: AdminLayoutProps) {
     { href: "/admin/agenda", label: "Agenda", icon: Calendar },
     { href: "/admin/citas", label: "Citas / Reservas", icon: FileText },
     { href: "/admin/pacientes", label: "Fichas Clínicas", icon: Users },
+    { href: "/admin/servicios", label: "Servicios / Terapias", icon: Settings },
+    { href: "/admin/contenido", label: "Contenido Sitio", icon: Home },
+    { href: "/admin/galeria", label: "Galería de Fotos", icon: Camera },
+    { href: "/admin/testimonios", label: "Testimonios", icon: MessageSquare },
   ];
 
   const handleSignOut = () => {

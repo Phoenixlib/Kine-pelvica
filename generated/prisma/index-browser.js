@@ -115,6 +115,9 @@ Prisma.NullTypes = {
  */
 
 exports.Prisma.TransactionIsolationLevel = makeStrictEnum({
+  ReadUncommitted: 'ReadUncommitted',
+  ReadCommitted: 'ReadCommitted',
+  RepeatableRead: 'RepeatableRead',
   Serializable: 'Serializable'
 });
 
@@ -129,14 +132,14 @@ exports.Prisma.UserScalarFieldEnum = {
 
 exports.Prisma.PatientScalarFieldEnum = {
   id: 'id',
-  name: 'name',
+  firstName: 'firstName',
+  lastName: 'lastName',
   email: 'email',
   phone: 'phone',
   rut: 'rut',
   birthDate: 'birthDate',
   notes: 'notes',
   status: 'status',
-  lastVisit: 'lastVisit',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 };
@@ -145,15 +148,63 @@ exports.Prisma.AppointmentScalarFieldEnum = {
   id: 'id',
   patientId: 'patientId',
   title: 'title',
-  serviceCategory: 'serviceCategory',
+  serviceId: 'serviceId',
   date: 'date',
   durationMinutes: 'durationMinutes',
   status: 'status',
-  paymentStatus: 'paymentStatus',
-  amountPaid: 'amountPaid',
+  paymentMethod: 'paymentMethod',
+  cancelReason: 'cancelReason',
   calComEventId: 'calComEventId',
+  calComBookingId: 'calComBookingId',
   notes: 'notes',
   createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.ServiceCategoryScalarFieldEnum = {
+  id: 'id',
+  name: 'name',
+  order: 'order',
+  isActive: 'isActive',
+  createdAt: 'createdAt'
+};
+
+exports.Prisma.ServiceScalarFieldEnum = {
+  id: 'id',
+  name: 'name',
+  price: 'price',
+  duration: 'duration',
+  description: 'description',
+  isActive: 'isActive',
+  order: 'order',
+  categoryId: 'categoryId',
+  calComEventTypeId: 'calComEventTypeId',
+  calComBookingUrl: 'calComBookingUrl',
+  calComSlug: 'calComSlug'
+};
+
+exports.Prisma.GalleryPhotoScalarFieldEnum = {
+  id: 'id',
+  beforeUrl: 'beforeUrl',
+  afterUrl: 'afterUrl',
+  caption: 'caption',
+  order: 'order',
+  isVisible: 'isVisible',
+  createdAt: 'createdAt'
+};
+
+exports.Prisma.TestimonialScalarFieldEnum = {
+  id: 'id',
+  name: 'name',
+  email: 'email',
+  message: 'message',
+  status: 'status',
+  createdAt: 'createdAt'
+};
+
+exports.Prisma.SiteConfigScalarFieldEnum = {
+  key: 'key',
+  value: 'value',
   updatedAt: 'updatedAt'
 };
 
@@ -162,16 +213,49 @@ exports.Prisma.SortOrder = {
   desc: 'desc'
 };
 
+exports.Prisma.QueryMode = {
+  default: 'default',
+  insensitive: 'insensitive'
+};
+
 exports.Prisma.NullsOrder = {
   first: 'first',
   last: 'last'
 };
+exports.PatientStatus = exports.$Enums.PatientStatus = {
+  ACTIVE: 'ACTIVE',
+  INACTIVE: 'INACTIVE'
+};
 
+exports.AppointmentStatus = exports.$Enums.AppointmentStatus = {
+  BOOKED: 'BOOKED',
+  CASH_PENDING: 'CASH_PENDING',
+  TRANSFERRED: 'TRANSFERRED',
+  CANCELLED: 'CANCELLED',
+  ATTENDED: 'ATTENDED',
+  NO_SHOW: 'NO_SHOW'
+};
+
+exports.PaymentMethod = exports.$Enums.PaymentMethod = {
+  CASH: 'CASH',
+  TRANSFER: 'TRANSFER'
+};
+
+exports.TestimonialStatus = exports.$Enums.TestimonialStatus = {
+  PENDING: 'PENDING',
+  READ: 'READ',
+  ARCHIVED: 'ARCHIVED'
+};
 
 exports.Prisma.ModelName = {
   User: 'User',
   Patient: 'Patient',
-  Appointment: 'Appointment'
+  Appointment: 'Appointment',
+  ServiceCategory: 'ServiceCategory',
+  Service: 'Service',
+  GalleryPhoto: 'GalleryPhoto',
+  Testimonial: 'Testimonial',
+  SiteConfig: 'SiteConfig'
 };
 
 /**

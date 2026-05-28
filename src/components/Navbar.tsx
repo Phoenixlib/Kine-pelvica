@@ -41,7 +41,7 @@ export function Navbar() {
           <img
             src="/logo-editado.png"
             alt="Estudio Pélvico"
-            className="h-10 md:h-12 w-auto object-contain transition-transform group-hover:scale-105"
+            className="h-[60px] md:h-[72px] w-auto object-contain transition-transform group-hover:scale-105"
           />
         </a>
 

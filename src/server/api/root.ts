@@ -1,6 +1,10 @@
 import { statsRouter } from "~/server/api/routers/stats";
 import { patientRouter } from "~/server/api/routers/patient";
 import { appointmentRouter } from "~/server/api/routers/appointment";
+import { serviceRouter } from "~/server/api/routers/service";
+import { siteConfigRouter } from "~/server/api/routers/siteConfig";
+import { galleryRouter } from "~/server/api/routers/gallery";
+import { testimonialRouter } from "~/server/api/routers/testimonial";
 import { createCallerFactory, createTRPCRouter } from "~/server/api/trpc";
 
 /**
@@ -12,6 +16,10 @@ export const appRouter = createTRPCRouter({
   stats: statsRouter,
   patient: patientRouter,
   appointment: appointmentRouter,
+  service: serviceRouter,
+  siteConfig: siteConfigRouter,
+  gallery: galleryRouter,
+  testimonial: testimonialRouter,
 });
 
 // export type definition of API

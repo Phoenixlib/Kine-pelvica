@@ -1,6 +1,36 @@
-import { ChevronRight } from "lucide-react";
+interface GalleryPhoto {
+  id: string;
+  beforeUrl: string;
+  afterUrl: string;
+  caption: string | null;
+}
 
-export function Gallery() {
+interface GalleryProps {
+  photos?: GalleryPhoto[] | null;
+}
+
+export function Gallery({ photos }: GalleryProps) {
+  const fallbackPhotos: GalleryPhoto[] = [
+    {
+      id: "1",
+      beforeUrl: "https://images.unsplash.com/photo-1544365558-35aa4afcf11f?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
+      afterUrl: "https://images.unsplash.com/photo-1544365558-35aa4afcf11f?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
+      caption: "Tratamiento y rehabilitación funcional de cicatrices."
+    },
+    {
+      id: "2",
+      beforeUrl: "https://images.unsplash.com/photo-1506126613408-eca07ce68773?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
+      afterUrl: "https://images.unsplash.com/photo-1506126613408-eca07ce68773?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
+      caption: "Evolución clínica piso pélvico."
+    }
+  ];
+
+  const displayPhotos = photos || fallbackPhotos;
+
+  if (!displayPhotos || displayPhotos.length === 0) {
+    return null;
+  }
+
   return (
     <section id="galeria" className="py-24 bg-teal">
       <div className="container mx-auto px-4 lg:px-8 max-w-5xl">
@@ -13,40 +43,34 @@ export function Gallery() {
         </div>
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
-          <div className="relative group cursor-pointer overflow-hidden rounded-3xl shadow-lg border-[6px] border-white max-w-md mx-auto w-full">
-            <div className="aspect-[4/3] bg-teal/5 flex items-center justify-center relative">
-               <img 
-                  src="https://images.unsplash.com/photo-1544365558-35aa4afcf11f?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" 
-                  alt="Evolución de tratamiento"
-                  className="w-full h-full object-cover mix-blend-multiply opacity-90"
-                />
-                {/* Fake slider line */}
+          {displayPhotos.map((photo) => (
+            <div key={photo.id} className="relative group overflow-hidden rounded-3xl shadow-lg border-[6px] border-white max-w-md mx-auto w-full bg-white">
+              
+              {/* Image side-by-side view */}
+              <div className="grid grid-cols-2 gap-px bg-cream/20 relative aspect-[4/3] w-full">
+                <div className="relative h-full overflow-hidden">
+                  <img src={photo.beforeUrl} alt="Antes" className="w-full h-full object-cover" />
+                  <span className="absolute bottom-2 left-2 bg-[#0f3f3e]/85 text-white text-[9px] font-subtitle uppercase tracking-widest font-bold px-2.5 py-1 rounded-md">Antes</span>
+                </div>
+                <div className="relative h-full overflow-hidden">
+                  <img src={photo.afterUrl} alt="Después" className="w-full h-full object-cover" />
+                  <span className="absolute bottom-2 right-2 bg-terracotta/90 text-white text-[9px] font-subtitle uppercase tracking-widest font-bold px-2.5 py-1 rounded-md">Después</span>
+                </div>
+                
+                {/* Visual Separator Line */}
                 <div className="absolute inset-y-0 left-1/2 w-[2px] bg-white pointer-events-none opacity-80 shadow-[0_0_10px_rgba(0,0,0,0.3)]"></div>
                 <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-white flex items-center justify-center shadow-lg pointer-events-none">
-                   <div className="w-1 h-3 border-l border-r border-teal/40"></div>
+                  <div className="w-1 h-3 border-l border-r border-teal/40"></div>
                 </div>
-            </div>
-            <div className="absolute inset-0 bg-teal/50 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
-               <span className="text-white font-subtitle font-medium text-sm tracking-widest uppercase border border-white px-6 py-3 rounded-full backdrop-blur-sm">Ver Caso Completo</span>
-            </div>
-          </div>
-          
-          <div className="relative group cursor-pointer overflow-hidden rounded-3xl shadow-lg border-[6px] border-white max-w-md mx-auto w-full">
-            <div className="aspect-[4/3] bg-teal/5 flex items-center justify-center relative">
-               <img 
-                  src="https://images.unsplash.com/photo-1506126613408-eca07ce68773?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" 
-                  alt="Evolución de tratamiento"
-                  className="w-full h-full object-cover opacity-90"
-                />
-                <div className="absolute inset-y-0 left-1/2 w-[2px] bg-white pointer-events-none opacity-80 shadow-[0_0_10px_rgba(0,0,0,0.3)]"></div>
-                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-white flex items-center justify-center shadow-lg pointer-events-none">
-                   <div className="w-1 h-3 border-l border-r border-teal/40"></div>
+              </div>
+
+              {photo.caption && (
+                <div className="p-4 bg-white text-center border-t border-cream/10">
+                  <p className="text-xs font-body text-teal/70 italic">"{photo.caption}"</p>
                 </div>
+              )}
             </div>
-            <div className="absolute inset-0 bg-teal/50 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
-               <span className="text-white font-subtitle font-medium text-sm tracking-widest uppercase border border-white px-6 py-3 rounded-full backdrop-blur-sm">Ver Caso Completo</span>
-            </div>
-          </div>
+          ))}
         </div>
 
         <div className="mt-12 text-center">

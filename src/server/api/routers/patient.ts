@@ -2,14 +2,74 @@ import { z } from "zod";
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
 
 export const patientRouter = createTRPCRouter({
-  getAll: protectedProcedure.query(async ({ ctx }) => {
+  getAll: protectedProcedure
+    .input(
+      z.object({
+        page: z.number().int().min(1).optional().default(1),
+        limit: z.number().int().min(1).optional().default(20),
+        searchQuery: z.string().optional(),
+      }).optional()
+    )
+    .query(async ({ ctx, input }) => {
+      const page = input?.page ?? 1;
+      const limit = input?.limit ?? 20;
+      const skip = (page - 1) * limit;
+
+      const whereClause: any = {};
+
+      if (input?.searchQuery) {
+        whereClause.OR = [
+          { firstName: { contains: input.searchQuery, mode: "insensitive" } },
+          { lastName: { contains: input.searchQuery, mode: "insensitive" } },
+          { email: { contains: input.searchQuery, mode: "insensitive" } },
+          { phone: { contains: input.searchQuery, mode: "insensitive" } },
+          { rut: { contains: input.searchQuery, mode: "insensitive" } },
+        ];
+      }
+
+      const [patients, total] = await Promise.all([
+        ctx.db.patient.findMany({
+          where: whereClause,
+          orderBy: [
+            { firstName: "asc" },
+            { lastName: "asc" }
+          ],
+          include: {
+            _count: {
+              select: { appointments: true },
+            },
+            appointments: {
+              orderBy: { date: "desc" },
+              take: 1,
+            },
+          },
+          skip,
+          take: limit,
+        }),
+        ctx.db.patient.count({ where: whereClause }),
+      ]);
+
+      return {
+        patients,
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
+      };
+    }),
+
+  getLookupList: protectedProcedure.query(async ({ ctx }) => {
     return ctx.db.patient.findMany({
-      orderBy: { name: "asc" },
-      include: {
-        _count: {
-          select: { appointments: true },
-        },
+      where: { status: "ACTIVE" },
+      select: {
+        id: true,
+        firstName: true,
+        lastName: true,
       },
+      orderBy: [
+        { firstName: "asc" },
+        { lastName: "asc" }
+      ],
     });
   }),
 
@@ -29,19 +89,21 @@ export const patientRouter = createTRPCRouter({
   create: protectedProcedure
     .input(
       z.object({
-        name: z.string().min(1),
+        firstName: z.string().min(1),
+        lastName: z.string().min(1),
         email: z.string().email().optional().or(z.literal("")),
         phone: z.string().optional(),
         rut: z.string().optional(),
         birthDate: z.date().optional(),
         notes: z.string().optional(),
-        status: z.enum(["Active", "Inactive"]).default("Active"),
+        status: z.enum(["ACTIVE", "INACTIVE"]).default("ACTIVE"),
       })
     )
     .mutation(async ({ ctx, input }) => {
       return ctx.db.patient.create({
         data: {
-          name: input.name,
+          firstName: input.firstName,
+          lastName: input.lastName,
           email: input.email || null,
           phone: input.phone || null,
           rut: input.rut || null,
@@ -56,20 +118,22 @@ export const patientRouter = createTRPCRouter({
     .input(
       z.object({
         id: z.string(),
-        name: z.string().min(1),
+        firstName: z.string().min(1),
+        lastName: z.string().min(1),
         email: z.string().email().optional().or(z.literal("")),
         phone: z.string().optional(),
         rut: z.string().optional(),
         birthDate: z.date().optional(),
         notes: z.string().optional(),
-        status: z.enum(["Active", "Inactive"]),
+        status: z.enum(["ACTIVE", "INACTIVE"]),
       })
     )
     .mutation(async ({ ctx, input }) => {
       return ctx.db.patient.update({
         where: { id: input.id },
         data: {
-          name: input.name,
+          firstName: input.firstName,
+          lastName: input.lastName,
           email: input.email || null,
           phone: input.phone || null,
           rut: input.rut || null,

@@ -7,8 +7,6 @@ import {
   startOfWeek, 
   addDays, 
   isSameDay, 
-  startOfDay, 
-  endOfDay 
 } from "date-fns";
 import { 
   ChevronLeft, 
@@ -16,12 +14,38 @@ import {
   Plus, 
   Download, 
   Clock, 
-  User as UserIcon, 
   X, 
   Calendar as CalendarIcon,
-  CheckCircle,
-  AlertCircle
+  CheckCircle
 } from "lucide-react";
+
+interface Patient {
+  id: string;
+  firstName: string;
+  lastName: string;
+  email: string | null;
+  phone: string | null;
+  rut: string | null;
+}
+
+interface Service {
+  id: string;
+  name: string;
+  price: number;
+  duration: number;
+}
+
+interface Appointment {
+  id: string;
+  patientId: string;
+  title: string;
+  serviceId: string | null;
+  date: Date | string;
+  durationMinutes: number;
+  status: "BOOKED" | "CASH_PENDING" | "TRANSFERRED" | "CANCELLED" | "ATTENDED" | "NO_SHOW";
+  paymentMethod: "CASH" | "TRANSFER" | null;
+  notes: string | null;
+}
 
 export default function AgendaPage() {
   const [currentDate, setCurrentDate] = useState(new Date());
@@ -29,19 +53,30 @@ export default function AgendaPage() {
   
   // Form fields
   const [patientId, setPatientId] = useState("");
-  const [title, setTitle] = useState("Evaluación Pélvica");
-  const [serviceCategory, setServiceCategory] = useState("ATENCIONES PÉLVICAS");
+  const [title, setTitle] = useState("Cita de Kinesiología");
+  const [serviceId, setServiceId] = useState("");
   const [apptDate, setApptDate] = useState("");
   const [apptTime, setApptTime] = useState("09:00");
   const [durationMinutes, setDurationMinutes] = useState(60);
-  const [paymentStatus, setPaymentStatus] = useState("Unpaid");
-  const [amountPaid, setAmountPaid] = useState(30000);
+  const [apptStatus, setApptStatus] = useState<Appointment["status"]>("BOOKED");
+  const [paymentMethod, setPaymentMethod] = useState<"CASH" | "TRANSFER" | "PENDING">("PENDING");
   const [notes, setNotes] = useState("");
   const [isSuccessMessageOpen, setIsSuccessMessageOpen] = useState(false);
 
   const utils = api.useUtils();
-  const { data: appointments, isLoading: apptsLoading } = api.appointment.getAll.useQuery();
-  const { data: patients, isLoading: patientsLoading } = api.patient.getAll.useQuery();
+  const weekStart = startOfWeek(currentDate, { weekStartsOn: 1 });
+  const weekDays = Array.from({ length: 7 }).map((_, i) => addDays(weekStart, i));
+  const weekEnd = addDays(weekStart, 7);
+  const hours = Array.from({ length: 11 }).map((_, i) => i + 8); // 8 AM to 6 PM
+
+  const { data: apptData, isLoading: apptsLoading } = api.appointment.getAll.useQuery({
+    startDate: weekStart,
+    endDate: weekEnd,
+    limit: 200,
+  });
+  const appointments = apptData?.appointments;
+  const { data: patients, isLoading: patientsLoading } = api.patient.getLookupList.useQuery();
+  const { data: services } = api.service.getAll.useQuery();
 
   const createAppointment = api.appointment.create.useMutation({
     onSuccess: async () => {
@@ -53,24 +88,24 @@ export default function AgendaPage() {
       
       // Reset form
       setPatientId("");
+      setServiceId("");
+      setTitle("Cita de Kinesiología");
       setNotes("");
     }
   });
-
-  const weekStart = startOfWeek(currentDate, { weekStartsOn: 1 });
-  const weekDays = Array.from({ length: 7 }).map((_, i) => addDays(weekStart, i));
-  const hours = Array.from({ length: 11 }).map((_, i) => i + 8); // 8 AM to 6 PM
 
   const prevWeek = () => setCurrentDate(addDays(currentDate, -7));
   const nextWeek = () => setCurrentDate(addDays(currentDate, 7));
   const setToday = () => setCurrentDate(new Date());
 
-  const getPatientName = (id: string) => patients?.find(p => p.id === id)?.name || 'Paciente Desconocido';
+  const getPatientName = (id: string) => {
+    const p = patients?.find(pat => pat.id === id);
+    return p ? `${p.firstName} ${p.lastName}` : 'Paciente Desconocido';
+  };
 
   const handleExport = () => {
-    // Generate and download a simple calendar print/csv simulation
-    const headers = ["Fecha", "Hora", "Paciente", "Servicio", "Duracion", "Estado"];
-    const rows = (appointments || []).map(appt => {
+    const headers = ["Fecha", "Hora", "Paciente", "Servicio", "Duracion", "Estado", "Medio Pago"];
+    const rows = ((appointments as unknown as Appointment[]) || []).map(appt => {
       const d = new Date(appt.date);
       return [
         d.toLocaleDateString("es-CL"),
@@ -78,7 +113,8 @@ export default function AgendaPage() {
         getPatientName(appt.patientId),
         appt.title,
         `${appt.durationMinutes} min`,
-        appt.status
+        appt.status,
+        appt.paymentMethod || "Pendiente"
       ];
     });
 
@@ -106,14 +142,53 @@ export default function AgendaPage() {
     createAppointment.mutate({
       patientId,
       title,
-      serviceCategory,
+      serviceId: serviceId || null,
       date: fullDate,
       durationMinutes: Number(durationMinutes),
-      status: "Confirmed",
-      paymentStatus: paymentStatus as any,
-      amountPaid: Number(amountPaid),
+      status: apptStatus,
+      paymentMethod: paymentMethod === "PENDING" ? null : paymentMethod,
       notes,
     });
+  };
+
+  const handleServiceChange = (id: string) => {
+    setServiceId(id);
+    const selectedService = services?.find(s => s.id === id);
+    if (selectedService) {
+      setTitle(selectedService.name);
+      setDurationMinutes(selectedService.duration || 60);
+    }
+  };
+
+  const getStatusColor = (status: Appointment["status"]) => {
+    switch (status) {
+      case "ATTENDED":
+      case "TRANSFERRED":
+        return {
+          bg: "#ecfdf5",
+          border: "#a7f3d0",
+          text: "#064e3b"
+        };
+      case "CASH_PENDING":
+      case "BOOKED":
+        return {
+          bg: "#fffbeb",
+          border: "#fde68a",
+          text: "#78350f"
+        };
+      case "CANCELLED":
+        return {
+          bg: "#fef2f2",
+          border: "#fecaca",
+          text: "#7f1d1d"
+        };
+      default:
+        return {
+          bg: "#f3f4f6",
+          border: "#e5e7eb",
+          text: "#1f2937"
+        };
+    }
   };
 
   const loading = apptsLoading || patientsLoading;
@@ -223,15 +298,16 @@ export default function AgendaPage() {
                     ))}
 
                     {/* Render Appointments */}
-                    {appointments
+                    {(appointments as unknown as Appointment[])
                       ?.filter(a => isSameDay(new Date(a.date), day))
                       .map(appt => {
                         const d = new Date(appt.date);
                         const startHour = d.getHours() + d.getMinutes() / 60;
                         if (startHour < 8 || startHour > 18) return null;
                         
-                        const top = (startHour - 8) * 80; // 80px per hour
+                        const top = (startHour - 8) * 80;
                         const height = (appt.durationMinutes / 60) * 80;
+                        const colors = getStatusColor(appt.status);
 
                         return (
                           <div 
@@ -240,9 +316,9 @@ export default function AgendaPage() {
                             style={{
                               top: `${top}px`,
                               height: `${height}px`,
-                              backgroundColor: appt.status === 'Confirmed' ? '#ecfdf5' : '#fffbeb',
-                              borderColor: appt.status === 'Confirmed' ? '#a7f3d0' : '#fde68a',
-                              color: appt.status === 'Confirmed' ? '#064e3b' : '#78350f'
+                              backgroundColor: colors.bg,
+                              borderColor: colors.border,
+                              color: colors.text
                             }}
                           >
                             <div>
@@ -293,11 +369,30 @@ export default function AgendaPage() {
                   required
                   value={patientId}
                   onChange={(e) => setPatientId(e.target.value)}
-                  className="w-full px-4 py-3 bg-white border border-cream rounded-xl font-body text-sm text-teal focus:outline-none focus:border-terracotta focus:ring-1 focus:ring-terracotta transition-colors"
+                  className="w-full px-4 py-3 bg-white border border-cream rounded-xl font-body text-sm text-teal focus:outline-none"
                 >
                   <option value="">Selecciona un paciente...</option>
                   {patients?.map(p => (
-                    <option key={p.id} value={p.id}>{p.name}</option>
+                    <option key={p.id} value={p.id}>{p.firstName} {p.lastName}</option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Select Service */}
+              <div className="space-y-1.5">
+                <label className="font-subtitle text-[10px] tracking-wider uppercase font-bold text-teal block">
+                  Asociar Terapia / Servicio
+                </label>
+                <select
+                  value={serviceId}
+                  onChange={(e) => handleServiceChange(e.target.value)}
+                  className="w-full px-4 py-3 bg-white border border-cream rounded-xl font-body text-sm text-teal focus:outline-none"
+                >
+                  <option value="">Ninguno (Servicio Libre)</option>
+                  {services?.map((service) => (
+                    <option key={service.id} value={service.id}>
+                      {service.name} (${service.price.toLocaleString("es-CL")})
+                    </option>
                   ))}
                 </select>
               </div>
@@ -305,7 +400,7 @@ export default function AgendaPage() {
               {/* Title / Service */}
               <div className="space-y-1.5">
                 <label className="font-subtitle text-[10px] tracking-wider uppercase font-bold text-teal block">
-                  Servicio / Terapia *
+                  Título de la Cita / Comentario *
                 </label>
                 <input
                   type="text"
@@ -313,26 +408,8 @@ export default function AgendaPage() {
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
                   placeholder="Ej: Evaluación de Suelo Pélvico"
-                  className="w-full px-4 py-3 bg-white border border-cream rounded-xl font-body text-sm text-teal focus:outline-none focus:border-terracotta focus:ring-1 focus:ring-terracotta transition-colors"
+                  className="w-full px-4 py-3 bg-white border border-cream rounded-xl font-body text-sm text-teal focus:outline-none"
                 />
-              </div>
-
-              {/* Category */}
-              <div className="space-y-1.5">
-                <label className="font-subtitle text-[10px] tracking-wider uppercase font-bold text-teal block">
-                  Categoría del Servicio
-                </label>
-                <select
-                  value={serviceCategory}
-                  onChange={(e) => setServiceCategory(e.target.value)}
-                  className="w-full px-4 py-3 bg-white border border-cream rounded-xl font-body text-sm text-teal focus:outline-none focus:border-terracotta focus:ring-1 focus:ring-terracotta transition-colors"
-                >
-                  <option value="ATENCIONES PÉLVICAS">ATENCIONES PÉLVICAS</option>
-                  <option value="PREPARACIÓN DURANTE EL EMBARAZO">PREPARACIÓN DURANTE EL EMBARAZO</option>
-                  <option value="DRENAJE-CICATRICES-MASAJES">DRENAJE-CICATRICES-MASAJES</option>
-                  <option value="RESPIRATORIO">RESPIRATORIO</option>
-                  <option value="Servicios empresas">Servicios empresas</option>
-                </select>
               </div>
 
               {/* Date and Time */}
@@ -346,7 +423,7 @@ export default function AgendaPage() {
                     required
                     value={apptDate}
                     onChange={(e) => setApptDate(e.target.value)}
-                    className="w-full px-4 py-3 bg-white border border-cream rounded-xl font-body text-sm text-teal focus:outline-none focus:border-terracotta focus:ring-1 focus:ring-terracotta transition-colors"
+                    className="w-full px-4 py-3 bg-white border border-cream rounded-xl font-body text-sm text-teal focus:outline-none"
                   />
                 </div>
                 
@@ -359,53 +436,57 @@ export default function AgendaPage() {
                     required
                     value={apptTime}
                     onChange={(e) => setApptTime(e.target.value)}
-                    className="w-full px-4 py-3 bg-white border border-cream rounded-xl font-body text-sm text-teal focus:outline-none focus:border-terracotta focus:ring-1 focus:ring-terracotta transition-colors"
+                    className="w-full px-4 py-3 bg-white border border-cream rounded-xl font-body text-sm text-teal focus:outline-none"
                   />
                 </div>
               </div>
 
-              {/* Duration and Amount */}
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-1.5">
-                  <label className="font-subtitle text-[10px] tracking-wider uppercase font-bold text-teal block">
-                    Duración (minutos)
-                  </label>
-                  <input
-                    type="number"
-                    required
-                    value={durationMinutes}
-                    onChange={(e) => setDurationMinutes(Number(e.target.value))}
-                    className="w-full px-4 py-3 bg-white border border-cream rounded-xl font-body text-sm text-teal focus:outline-none focus:border-terracotta focus:ring-1 focus:ring-terracotta transition-colors"
-                  />
-                </div>
-                
-                <div className="space-y-1.5">
-                  <label className="font-subtitle text-[10px] tracking-wider uppercase font-bold text-teal block">
-                    Monto Cobrado ($)
-                  </label>
-                  <input
-                    type="number"
-                    required
-                    value={amountPaid}
-                    onChange={(e) => setAmountPaid(Number(e.target.value))}
-                    className="w-full px-4 py-3 bg-white border border-cream rounded-xl font-body text-sm text-teal focus:outline-none focus:border-terracotta focus:ring-1 focus:ring-terracotta transition-colors"
-                  />
-                </div>
-              </div>
-
-              {/* Payment Status */}
+              {/* Duration */}
               <div className="space-y-1.5">
                 <label className="font-subtitle text-[10px] tracking-wider uppercase font-bold text-teal block">
-                  Estado de Pago
+                  Duración (minutos)
+                </label>
+                <input
+                  type="number"
+                  required
+                  value={durationMinutes}
+                  onChange={(e) => setDurationMinutes(Number(e.target.value))}
+                  className="w-full px-4 py-3 bg-white border border-cream rounded-xl font-body text-sm text-teal focus:outline-none"
+                />
+              </div>
+
+              {/* Status */}
+              <div className="space-y-1.5">
+                <label className="font-subtitle text-[10px] tracking-wider uppercase font-bold text-teal block">
+                  Estado Inicial de la Cita
                 </label>
                 <select
-                  value={paymentStatus}
-                  onChange={(e) => setPaymentStatus(e.target.value)}
-                  className="w-full px-4 py-3 bg-white border border-cream rounded-xl font-body text-sm text-teal focus:outline-none focus:border-terracotta focus:ring-1 focus:ring-terracotta transition-colors"
+                  value={apptStatus}
+                  onChange={(e) => setApptStatus(e.target.value as any)}
+                  className="w-full px-4 py-3 bg-white border border-cream rounded-xl font-body text-sm text-teal focus:outline-none"
                 >
-                  <option value="Paid">Pagado</option>
-                  <option value="Unpaid">Impago</option>
-                  <option value="Partial">Pago Parcial</option>
+                  <option value="BOOKED">Reservada</option>
+                  <option value="CASH_PENDING">Pago Efectivo Pendiente</option>
+                  <option value="TRANSFERRED">Transferido (Pagado)</option>
+                  <option value="ATTENDED">Asistió y Pagado</option>
+                  <option value="NO_SHOW">No Asistió</option>
+                  <option value="CANCELLED">Cancelada</option>
+                </select>
+              </div>
+
+              {/* Payment Method */}
+              <div className="space-y-1.5">
+                <label className="font-subtitle text-[10px] tracking-wider uppercase font-bold text-teal block">
+                  Medio de Pago
+                </label>
+                <select
+                  value={paymentMethod}
+                  onChange={(e) => setPaymentMethod(e.target.value as any)}
+                  className="w-full px-4 py-3 bg-white border border-cream rounded-xl font-body text-sm text-teal focus:outline-none"
+                >
+                  <option value="PENDING">Pendiente / Sin Registrar</option>
+                  <option value="CASH">Efectivo</option>
+                  <option value="TRANSFER">Transferencia</option>
                 </select>
               </div>
 
@@ -419,7 +500,7 @@ export default function AgendaPage() {
                   onChange={(e) => setNotes(e.target.value)}
                   placeholder="Comentarios adicionales sobre el agendamiento..."
                   rows={3}
-                  className="w-full px-4 py-3 bg-white border border-cream rounded-xl font-body text-sm text-teal focus:outline-none focus:border-terracotta focus:ring-1 focus:ring-terracotta transition-colors resize-none"
+                  className="w-full px-4 py-3 bg-white border border-cream rounded-xl font-body text-sm text-teal focus:outline-none resize-none"
                 />
               </div>
 

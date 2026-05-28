@@ -1,0 +1,107 @@
+import { z } from "zod";
+import { createTRPCRouter, protectedProcedure, publicProcedure } from "~/server/api/trpc";
+import { destroyByUrls } from "~/lib/cloudinary";
+
+export const galleryRouter = createTRPCRouter({
+  getAll: publicProcedure.query(async ({ ctx }) => {
+    return ctx.db.galleryPhoto.findMany({
+      where: { isVisible: true },
+      orderBy: { order: "asc" },
+    });
+  }),
+
+  getAllAdmin: protectedProcedure.query(async ({ ctx }) => {
+    return ctx.db.galleryPhoto.findMany({
+      orderBy: { order: "asc" },
+    });
+  }),
+
+  create: protectedProcedure
+    .input(
+      z.object({
+        beforeUrl: z.string().url(),
+        afterUrl: z.string().url(),
+        caption: z.string().optional().nullable(),
+        order: z.number().int().default(0),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      return ctx.db.galleryPhoto.create({
+        data: {
+          beforeUrl: input.beforeUrl,
+          afterUrl: input.afterUrl,
+          caption: input.caption || null,
+          order: input.order,
+          isVisible: true,
+        },
+      });
+    }),
+
+  update: protectedProcedure
+    .input(
+      z.object({
+        id: z.string(),
+        beforeUrl: z.string().url(),
+        afterUrl: z.string().url(),
+        caption: z.string().optional().nullable(),
+        order: z.number().int(),
+        isVisible: z.boolean(),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      const existing = await ctx.db.galleryPhoto.findUnique({
+        where: { id: input.id },
+      });
+
+      if (!existing) {
+        throw new Error("Gallery photo not found");
+      }
+
+      // Cleanup old Cloudinary assets if urls changed
+      try {
+        const toDelete: string[] = [];
+        if (existing.beforeUrl !== input.beforeUrl) {
+          toDelete.push(existing.beforeUrl);
+        }
+        if (existing.afterUrl !== input.afterUrl) {
+          toDelete.push(existing.afterUrl);
+        }
+        if (toDelete.length > 0) {
+          await destroyByUrls(toDelete);
+        }
+      } catch (err) {
+        console.error("Failed to delete old gallery photos from Cloudinary:", err);
+      }
+
+      return ctx.db.galleryPhoto.update({
+        where: { id: input.id },
+        data: {
+          beforeUrl: input.beforeUrl,
+          afterUrl: input.afterUrl,
+          caption: input.caption || null,
+          order: input.order,
+          isVisible: input.isVisible,
+        },
+      });
+    }),
+
+  delete: protectedProcedure
+    .input(z.object({ id: z.string() }))
+    .mutation(async ({ ctx, input }) => {
+      const existing = await ctx.db.galleryPhoto.findUnique({
+        where: { id: input.id },
+      });
+
+      if (existing) {
+        try {
+          await destroyByUrls([existing.beforeUrl, existing.afterUrl]);
+        } catch (err) {
+          console.error("Failed to delete gallery photos from Cloudinary on delete:", err);
+        }
+      }
+
+      return ctx.db.galleryPhoto.delete({
+        where: { id: input.id },
+      });
+    }),
+});

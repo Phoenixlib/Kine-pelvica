@@ -7,11 +7,12 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
-  url      = "file:./dev.db"
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
-// Administradores del sistema (solo Camila en la práctica)
+// --- Autenticación ---
 model User {
   id        String   @id @default(cuid())
   name      String?
@@ -21,36 +22,117 @@ model User {
   updatedAt DateTime @updatedAt
 }
 
-// Pacientes / Clientes
+// --- Pacientes ---
 model Patient {
   id           String        @id @default(cuid())
-  name         String
+  firstName    String
+  lastName     String
   email        String?       @unique
   phone        String?
-  rut          String?       @unique // RUT chileno
+  rut          String?       @unique
   birthDate    DateTime?
-  notes        String? // Notas clínicas privadas (SQLite standard text)
-  status       String        @default("Active") // "Active" | "Inactive"
-  lastVisit    DateTime?
-  appointments Appointment[]
+  notes        String?
+  status       PatientStatus @default(ACTIVE)
   createdAt    DateTime      @default(now())
   updatedAt    DateTime      @updatedAt
+  appointments Appointment[]
 }
 
-// Citas / Atenciones
+enum PatientStatus {
+  ACTIVE
+  INACTIVE
+}
+
+// --- Citas ---
 model Appointment {
-  id              String   @id @default(cuid())
+  id              String            @id @default(cuid())
   patientId       String
-  patient         Patient  @relation(fields: [patientId], references: [id], onDelete: Cascade)
-  title           String // Ej: "Evaluación Pélvica"
-  serviceCategory String? // Categoría del servicio
+  patient         Patient           @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  title           String
+  serviceId       String?
+  service         Service?          @relation(fields: [serviceId], references: [id])
   date            DateTime
-  durationMinutes Int      @default(60)
-  status          String   @default("Confirmed") // "Confirmed" | "Pending" | "Cancelled"
-  paymentStatus   String   @default("Unpaid") // "Paid" | "Unpaid" | "Partial"
-  amountPaid      Float?
-  calComEventId   String?  @unique // ID de sincronización con Cal.com
-  notes           String? // SQLite standard text
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  durationMinutes Int               @default(60)
+  status          AppointmentStatus @default(BOOKED)
+  paymentMethod   PaymentMethod? // null hasta que informen
+  cancelReason    String? // obligatorio si status=CANCELLED
+  calComEventId   String?           @unique
+  calComBookingId String?           @unique
+  notes           String?
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+}
+
+enum AppointmentStatus {
+  BOOKED // Reservado (hora pedida)
+  CASH_PENDING // Pago en efectivo (informó que pagará el día)
+  TRANSFERRED // Transferido (pagó por transferencia)
+  CANCELLED // Cancelado desde el admin (requiere cancelReason)
+  ATTENDED // Asistió y todo pagado
+  NO_SHOW // No asistió
+}
+
+enum PaymentMethod {
+  CASH
+  TRANSFER
+}
+
+// --- Servicios ---
+model ServiceCategory {
+  id        String    @id @default(cuid())
+  name      String
+  order     Int       @default(0)
+  isActive  Boolean   @default(true)
+  createdAt DateTime  @default(now())
+  services  Service[]
+}
+
+model Service {
+  id                String           @id @default(cuid())
+  name              String
+  price             Int // CLP, sin decimales
+  duration          Int // minutos
+  description       String?
+  isActive          Boolean          @default(true)
+  order             Int              @default(0)
+  categoryId        String?
+  category          ServiceCategory? @relation(fields: [categoryId], references: [id])
+  calComEventTypeId Int? // ID numérico del event type en Cal.com
+  calComBookingUrl  String? // URL pública de reserva: cal.com/camila-ortiz/evaluacion
+  calComSlug        String? // slug del evento para construir URLs
+  appointments      Appointment[]
+}
+
+// --- Galería Antes/Después ---
+model GalleryPhoto {
+  id        String   @id @default(cuid())
+  beforeUrl String // Cloudinary URL "Antes"
+  afterUrl  String // Cloudinary URL "Después"
+  caption   String?
+  order     Int      @default(0)
+  isVisible Boolean  @default(true)
+  createdAt DateTime @default(now())
+}
+
+// --- Testimonios (del formulario del landing) ---
+model Testimonial {
+  id        String            @id @default(cuid())
+  name      String
+  email     String?
+  message   String
+  status    TestimonialStatus @default(PENDING)
+  createdAt DateTime          @default(now())
+}
+
+enum TestimonialStatus {
+  PENDING // Sin leer
+  READ // Leído
+  ARCHIVED // Archivado
+}
+
+// --- Config general del sitio (Quién Soy, etc.) ---
+model SiteConfig {
+  key       String   @id // "about_title", "about_description"
+  value     String
+  updatedAt DateTime @updatedAt
 }

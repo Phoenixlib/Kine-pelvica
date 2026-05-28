@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
+import { cancelCalComBooking, rescheduleCalComBooking } from "~/lib/calcom";
 
 export const appointmentRouter = createTRPCRouter({
   getAll: protectedProcedure
@@ -7,9 +8,17 @@ export const appointmentRouter = createTRPCRouter({
       z.object({
         startDate: z.date().optional(),
         endDate: z.date().optional(),
+        page: z.number().int().min(1).optional().default(1),
+        limit: z.number().int().min(1).optional().default(20),
+        status: z.enum(["BOOKED", "CASH_PENDING", "TRANSFERRED", "CANCELLED", "ATTENDED", "NO_SHOW"]).optional(),
+        searchQuery: z.string().optional(),
       }).optional()
     )
     .query(async ({ ctx, input }) => {
+      const page = input?.page ?? 1;
+      const limit = input?.limit ?? 20;
+      const skip = (page - 1) * limit;
+
       const whereClause: any = {};
       
       if (input?.startDate || input?.endDate) {
@@ -22,13 +31,47 @@ export const appointmentRouter = createTRPCRouter({
         }
       }
 
-      return ctx.db.appointment.findMany({
-        where: whereClause,
-        include: {
-          patient: true,
-        },
-        orderBy: { date: "asc" },
-      });
+      if (input?.status) {
+        whereClause.status = input.status;
+      }
+
+      if (input?.searchQuery) {
+        whereClause.OR = [
+          { title: { contains: input.searchQuery, mode: "insensitive" } },
+          {
+            patient: {
+              OR: [
+                { firstName: { contains: input.searchQuery, mode: "insensitive" } },
+                { lastName: { contains: input.searchQuery, mode: "insensitive" } },
+                { email: { contains: input.searchQuery, mode: "insensitive" } },
+                { rut: { contains: input.searchQuery, mode: "insensitive" } },
+              ],
+            },
+          },
+        ];
+      }
+
+      const [appointments, total] = await Promise.all([
+        ctx.db.appointment.findMany({
+          where: whereClause,
+          include: {
+            patient: true,
+            service: true,
+          },
+          orderBy: { date: "desc" },
+          skip,
+          take: limit,
+        }),
+        ctx.db.appointment.count({ where: whereClause }),
+      ]);
+
+      return {
+        appointments,
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
+      };
     }),
 
   create: protectedProcedure
@@ -36,32 +79,26 @@ export const appointmentRouter = createTRPCRouter({
       z.object({
         patientId: z.string(),
         title: z.string().min(1),
-        serviceCategory: z.string().optional(),
+        serviceId: z.string().optional().nullable(),
         date: z.date(),
         durationMinutes: z.number().int().default(60),
-        status: z.enum(["Confirmed", "Pending", "Cancelled"]).default("Confirmed"),
-        paymentStatus: z.enum(["Paid", "Unpaid", "Partial"]).default("Unpaid"),
-        amountPaid: z.number().optional(),
-        notes: z.string().optional(),
+        status: z.enum(["BOOKED", "CASH_PENDING", "TRANSFERRED", "CANCELLED", "ATTENDED", "NO_SHOW"]).default("BOOKED"),
+        paymentMethod: z.enum(["CASH", "TRANSFER"]).optional().nullable(),
+        cancelReason: z.string().optional().nullable(),
+        notes: z.string().optional().nullable(),
       })
     )
     .mutation(async ({ ctx, input }) => {
-      // Update patient lastVisit
-      await ctx.db.patient.update({
-        where: { id: input.patientId },
-        data: { lastVisit: input.date },
-      });
-
       return ctx.db.appointment.create({
         data: {
           patientId: input.patientId,
           title: input.title,
-          serviceCategory: input.serviceCategory || null,
+          serviceId: input.serviceId || null,
           date: input.date,
           durationMinutes: input.durationMinutes,
           status: input.status,
-          paymentStatus: input.paymentStatus,
-          amountPaid: input.amountPaid || 0,
+          paymentMethod: input.paymentMethod || null,
+          cancelReason: input.cancelReason || null,
           notes: input.notes || null,
         },
       });
@@ -72,26 +109,47 @@ export const appointmentRouter = createTRPCRouter({
       z.object({
         id: z.string(),
         title: z.string().min(1),
-        serviceCategory: z.string().optional(),
+        serviceId: z.string().optional().nullable(),
         date: z.date(),
         durationMinutes: z.number().int(),
-        status: z.enum(["Confirmed", "Pending", "Cancelled"]),
-        paymentStatus: z.enum(["Paid", "Unpaid", "Partial"]),
-        amountPaid: z.number().optional(),
-        notes: z.string().optional(),
+        status: z.enum(["BOOKED", "CASH_PENDING", "TRANSFERRED", "CANCELLED", "ATTENDED", "NO_SHOW"]),
+        paymentMethod: z.enum(["CASH", "TRANSFER"]).optional().nullable(),
+        cancelReason: z.string().optional().nullable(),
+        notes: z.string().optional().nullable(),
       })
     )
     .mutation(async ({ ctx, input }) => {
+      const existing = await ctx.db.appointment.findUnique({
+        where: { id: input.id },
+      });
+
+      if (!existing) {
+        throw new Error("Appointment not found");
+      }
+
+      // Synchronize cancellation or reschedule back to Cal.com if linked
+      if (existing.calComEventId) {
+        try {
+          if (input.status === "CANCELLED" && existing.status !== "CANCELLED") {
+            await cancelCalComBooking(existing.calComEventId, input.cancelReason || undefined);
+          } else if (input.date.getTime() !== existing.date.getTime()) {
+            await rescheduleCalComBooking(existing.calComEventId, input.date);
+          }
+        } catch (calError) {
+          console.error("Cal.com sync error (proceeding with local DB update):", calError);
+        }
+      }
+
       return ctx.db.appointment.update({
         where: { id: input.id },
         data: {
           title: input.title,
-          serviceCategory: input.serviceCategory || null,
+          serviceId: input.serviceId || null,
           date: input.date,
           durationMinutes: input.durationMinutes,
           status: input.status,
-          paymentStatus: input.paymentStatus,
-          amountPaid: input.amountPaid || 0,
+          paymentMethod: input.paymentMethod || null,
+          cancelReason: input.cancelReason || null,
           notes: input.notes || null,
         },
       });
@@ -100,6 +158,18 @@ export const appointmentRouter = createTRPCRouter({
   delete: protectedProcedure
     .input(z.object({ id: z.string() }))
     .mutation(async ({ ctx, input }) => {
+      const existing = await ctx.db.appointment.findUnique({
+        where: { id: input.id },
+      });
+
+      if (existing?.calComEventId) {
+        try {
+          await cancelCalComBooking(existing.calComEventId, "Cita eliminada desde el panel de administración");
+        } catch (calError) {
+          console.error("Cal.com deletion sync error:", calError);
+        }
+      }
+
       return ctx.db.appointment.delete({
         where: { id: input.id },
       });

@@ -2,32 +2,88 @@ import { Navbar } from "~/components/Navbar";
 import { Hero } from "~/components/Hero";
 import { About } from "~/components/About";
 import { Services } from "~/components/Services";
+import { Testimonials } from "~/components/Testimonials";
+import { Reviews } from "~/components/Reviews";
 import { Gallery } from "~/components/Gallery";
 import { Blog } from "~/components/Blog";
-import { Reviews } from "~/components/Reviews";
-import { TestimonialForm } from "~/components/TestimonialForm";
 import { Footer } from "~/components/Footer";
 import { sanityClient } from "~/lib/sanity";
+import { db } from "~/server/db";
 
-async function getServices() {
+// Dynamic cache revalidation interval (10 minutes)
+export const revalidate = 600;
+
+async function getServicesFromDb() {
   try {
-    if (!process.env.NEXT_PUBLIC_SANITY_PROJECT_ID || process.env.NEXT_PUBLIC_SANITY_PROJECT_ID === "placeholder") {
-      return null;
-    }
-    const data = await sanityClient.fetch(`
-      *[_type == "serviceCategory"] | order(order asc) {
-        name,
-        "services": *[_type == "service" && category._ref == ^._id] | order(order asc) {
-          name,
-          price,
-          duration,
-          details
-        }
-      }
-    `);
-    return data && data.length > 0 ? data : null;
+    const categories = await db.serviceCategory.findMany({
+      where: { isActive: true },
+      include: {
+        services: {
+          where: { isActive: true },
+          orderBy: { order: "asc" },
+        },
+      },
+      orderBy: { order: "asc" },
+    });
+
+    if (categories.length === 0) return null;
+
+    return categories.map((cat) => ({
+      name: cat.name,
+      services: cat.services.map((srv) => ({
+        name: srv.name,
+        price: srv.price,
+        duration: srv.duration,
+        details: srv.description,
+        bookingUrl: srv.calComBookingUrl,
+      })),
+    }));
   } catch (error) {
-    console.error("Error fetching services from Sanity, using fallback:", error);
+    console.error("Error fetching services from Prisma:", error);
+    return null;
+  }
+}
+
+async function getAboutConfig() {
+  try {
+    const configs = await db.siteConfig.findMany({
+      where: {
+        key: { in: ["about_title", "about_description", "about_image"] },
+      },
+    });
+
+    return {
+      title: configs.find((c) => c.key === "about_title")?.value,
+      description: configs.find((c) => c.key === "about_description")?.value,
+      imageUrl: configs.find((c) => c.key === "about_image")?.value,
+    };
+  } catch (error) {
+    console.error("Error fetching about configurations from Prisma:", error);
+    return {};
+  }
+}
+
+async function getTestimonialsFromDb() {
+  try {
+    return await db.testimonial.findMany({
+      where: { status: "READ" },
+      orderBy: { createdAt: "desc" },
+      take: 6,
+    });
+  } catch (error) {
+    console.error("Error fetching testimonials from Prisma:", error);
+    return null;
+  }
+}
+
+async function getGalleryFromDb() {
+  try {
+    return await db.galleryPhoto.findMany({
+      where: { isVisible: true },
+      orderBy: { order: "asc" },
+    });
+  } catch (error) {
+    console.error("Error fetching gallery from Prisma:", error);
     return null;
   }
 }
@@ -56,21 +112,44 @@ async function getBlogPosts() {
 }
 
 export default async function Home() {
-  const servicesData = await getServices();
-  const postsData = await getBlogPosts();
+  // Fetch everything in parallel to optimize Server Component performance
+  const [servicesData, aboutData, testimonialsData, galleryData, postsData] = await Promise.all([
+    getServicesFromDb(),
+    getAboutConfig(),
+    getTestimonialsFromDb(),
+    getGalleryFromDb(),
+    getBlogPosts(),
+  ]);
 
   return (
     <>
       <Navbar />
       
       <main className="min-h-screen font-body text-teal bg-offwhite selection:bg-terracotta selection:text-white scroll-smooth relative">
+        {/* Section 1: Hero (bg-teal / Verde) */}
         <Hero />
-        <About />
+        
+        {/* Section 2: About (bg-cream / Café Claro) */}
+        <About 
+          title={aboutData.title}
+          description={aboutData.description}
+          imageUrl={aboutData.imageUrl}
+        />
+        
+        {/* Section 3: Services (bg-offwhite / Crema) */}
         <Services initialCategories={servicesData} />
-        <Gallery />
-        <Blog initialPosts={postsData} />
+
+        {/* Section 4: Testimonials Carousel + Submit Form (bg-teal / Verde) */}
+        <Testimonials initialTestimonials={testimonialsData} />
+        
+        {/* Section 5: Reviews / Reseñas (bg-cream / Café Claro) */}
         <Reviews />
-        <TestimonialForm />
+        
+        {/* Section 6: Gallery / Antes y Después (bg-offwhite / Crema) */}
+        <Gallery photos={galleryData} />
+        
+        {/* Section 7: Blog / Artículos (bg-teal / Verde) */}
+        <Blog initialPosts={postsData} />
       </main>
       
       <Footer />

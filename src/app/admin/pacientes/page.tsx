@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { api } from "~/trpc/react";
 import { 
   Search, 
@@ -9,25 +9,27 @@ import {
   Edit3, 
   FileText, 
   X, 
-  CheckCircle,
-  AlertCircle,
-  User as UserIcon,
   Phone,
   Mail,
-  FileCode2,
   Calendar
 } from "lucide-react";
 
 interface Patient {
   id: string;
-  name: string;
+  firstName: string;
+  lastName: string;
   email: string | null;
   phone: string | null;
   rut: string | null;
   birthDate: Date | null;
   notes: string | null;
-  status: string;
-  lastVisit: Date | null;
+  status: "ACTIVE" | "INACTIVE";
+  appointments: Array<{
+    id: string;
+    date: Date | string;
+    title: string;
+    status: string;
+  }>;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -40,12 +42,10 @@ interface Appointment {
   date: Date | string;
   durationMinutes: number;
   status: string;
-  paymentStatus: string;
-  amountPaid: number | null;
   notes: string | null;
 }
 
-interface SelectedPatient extends Patient {
+interface SelectedPatient extends Omit<Patient, "appointments"> {
   appointments?: Appointment[];
 }
 
@@ -54,7 +54,8 @@ export default function PacientesPage() {
   
   // Add Patient form state
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-  const [addName, setAddName] = useState("");
+  const [addFirstName, setAddFirstName] = useState("");
+  const [addLastName, setAddLastName] = useState("");
   const [addEmail, setAddEmail] = useState("");
   const [addPhone, setAddPhone] = useState("");
   const [addRut, setAddRut] = useState("");
@@ -70,15 +71,34 @@ export default function PacientesPage() {
   // Edit patient profile info
   const [isEditProfileModalOpen, setIsEditProfileModalOpen] = useState(false);
   const [editingPatient, setEditingPatient] = useState<Patient | null>(null);
-  const [editName, setEditName] = useState("");
+  const [editFirstName, setEditFirstName] = useState("");
+  const [editLastName, setEditLastName] = useState("");
   const [editEmail, setEditEmail] = useState("");
   const [editPhone, setEditPhone] = useState("");
   const [editRut, setEditRut] = useState("");
   const [editBirthDate, setEditBirthDate] = useState("");
-  const [editStatus, setEditStatus] = useState("Active");
+  const [editStatus, setEditStatus] = useState<"ACTIVE" | "INACTIVE">("ACTIVE");
+  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState("");
+  const [page, setPage] = useState(1);
+
+  // Debounce search query
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedSearchQuery(searchQuery);
+      setPage(1);
+    }, 400);
+    return () => clearTimeout(handler);
+  }, [searchQuery]);
 
   const utils = api.useUtils();
-  const { data: patients, isLoading: patientsLoading } = api.patient.getAll.useQuery();
+  const { data: patientData, isLoading: patientsLoading } = api.patient.getAll.useQuery({
+    page,
+    limit: 20,
+    searchQuery: debouncedSearchQuery,
+  });
+
+  const patientsList = patientData?.patients || [];
+  const totalPages = patientData?.totalPages || 1;
 
   const createPatientMutation = api.patient.create.useMutation({
     onSuccess: async () => {
@@ -107,7 +127,8 @@ export default function PacientesPage() {
   });
 
   const resetAddForm = () => {
-    setAddName("");
+    setAddFirstName("");
+    setAddLastName("");
     setAddEmail("");
     setAddPhone("");
     setAddRut("");
@@ -117,47 +138,50 @@ export default function PacientesPage() {
 
   const handleAddSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!addName) return;
+    if (!addFirstName || !addLastName) return;
 
     createPatientMutation.mutate({
-      name: addName,
+      firstName: addFirstName,
+      lastName: addLastName,
       email: addEmail,
       phone: addPhone,
       rut: addRut,
       birthDate: addBirthDate ? new Date(addBirthDate) : undefined,
       notes: addNotes,
-      status: "Active",
+      status: "ACTIVE",
     });
   };
 
-  const handleEditProfileClick = (patient: Patient) => {
+  const handleEditProfileClick = (patient: any) => {
     setEditingPatient(patient);
-    setEditName(patient.name);
+    setEditFirstName(patient.firstName);
+    setEditLastName(patient.lastName);
     setEditEmail(patient.email || "");
     setEditPhone(patient.phone || "");
     setEditRut(patient.rut || "");
     setEditBirthDate(patient.birthDate ? (new Date(patient.birthDate).toISOString().split('T')[0] ?? "") : "");
-    setEditStatus(patient.status || "Active");
+    setEditStatus(patient.status || "ACTIVE");
     setIsEditProfileModalOpen(true);
   };
 
   const handleEditProfileSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!editingPatient) return;
+    if (!editingPatient || !editFirstName || !editLastName) return;
 
     updatePatientMutation.mutate({
       id: editingPatient.id,
-      name: editName,
+      firstName: editFirstName,
+      lastName: editLastName,
       email: editEmail,
       phone: editPhone,
       rut: editRut,
       birthDate: editBirthDate ? new Date(editBirthDate) : undefined,
       notes: editingPatient.notes ?? undefined,
-      status: editStatus as any,
+      status: editStatus,
     });
   };
 
-  const handleViewClinicalFile = async (patient: Patient) => {
+  const handleViewClinicalFile = async (patient: any) => {
     try {
       const fullPatient = await utils.patient.getById.fetch({ id: patient.id });
       setSelectedPatient(fullPatient as SelectedPatient);
@@ -174,7 +198,8 @@ export default function PacientesPage() {
     
     updatePatientMutation.mutate({
       id: selectedPatient.id,
-      name: selectedPatient.name,
+      firstName: selectedPatient.firstName,
+      lastName: selectedPatient.lastName,
       email: selectedPatient.email || "",
       phone: selectedPatient.phone || "",
       rut: selectedPatient.rut || "",
@@ -194,12 +219,7 @@ export default function PacientesPage() {
     }
   };
 
-  const filteredPatients = patients?.filter((p) => {
-    const query = searchQuery.toLowerCase();
-    return p.name.toLowerCase().includes(query) ||
-           (p.email && p.email.toLowerCase().includes(query)) ||
-           (p.rut && p.rut.toLowerCase().includes(query));
-  }) || [];
+  const filteredPatients = patientsList;
 
   return (
     <div className="space-y-6">
@@ -264,10 +284,14 @@ export default function PacientesPage() {
                 </tr>
               ) : (
                 filteredPatients.map((patient) => {
-                  const lastVisitDate = patient.lastVisit ? new Date(patient.lastVisit) : null;
+                  const lastVisitDate = patient.appointments && patient.appointments[0]
+                    ? new Date(patient.appointments[0].date)
+                    : null;
                   return (
                     <tr key={patient.id} className="hover:bg-offwhite/30 transition-colors">
-                      <td className="px-6 py-4 font-subtitle font-bold text-teal">{patient.name}</td>
+                      <td className="px-6 py-4 font-subtitle font-bold text-teal">
+                        {patient.firstName} {patient.lastName}
+                      </td>
                       <td className="px-6 py-4">
                         <div className="flex flex-col gap-0.5">
                           {patient.email && <span className="flex items-center gap-1 text-[10px] text-teal/70"><Mail size={10} /> {patient.email}</span>}
@@ -277,11 +301,11 @@ export default function PacientesPage() {
                       <td className="px-6 py-4 font-semibold text-teal/80">{patient.rut || "—"}</td>
                       <td className="px-6 py-4">
                         <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-subtitle font-bold uppercase tracking-wider ${
-                          patient.status === "Active"
+                          patient.status === "ACTIVE"
                             ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
                             : "bg-redbrown/10 text-redbrown border border-redbrown/20"
                         }`}>
-                          {patient.status === "Active" ? "Activo" : "Inactivo"}
+                          {patient.status === "ACTIVE" ? "Activo" : "Inactivo"}
                         </span>
                       </td>
                       <td className="px-6 py-4">
@@ -333,20 +357,24 @@ export default function PacientesPage() {
           </div>
         ) : (
           filteredPatients.map((patient) => {
-            const lastVisitDate = patient.lastVisit ? new Date(patient.lastVisit) : null;
+            const lastVisitDate = patient.appointments && patient.appointments[0]
+              ? new Date(patient.appointments[0].date)
+              : null;
             return (
               <div key={patient.id} className="bg-white p-5 rounded-3xl border border-cream/30 shadow-xs space-y-3">
                 <div className="flex justify-between items-start">
                   <div>
-                    <h3 className="font-subtitle font-bold text-teal text-sm">{patient.name}</h3>
+                    <h3 className="font-subtitle font-bold text-teal text-sm">
+                      {patient.firstName} {patient.lastName}
+                    </h3>
                     {patient.rut && <p className="text-[11px] text-teal/60 font-semibold mt-0.5">RUT: {patient.rut}</p>}
                   </div>
                   <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-subtitle font-bold uppercase tracking-wider ${
-                    patient.status === "Active"
+                    patient.status === "ACTIVE"
                       ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
                       : "bg-redbrown/10 text-redbrown border border-redbrown/20"
                   }`}>
-                    {patient.status === "Active" ? "Activo" : "Inactivo"}
+                    {patient.status === "ACTIVE" ? "Activo" : "Inactivo"}
                   </span>
                 </div>
 
@@ -397,6 +425,29 @@ export default function PacientesPage() {
         )}
       </div>
 
+      {/* Pagination Controls */}
+      {totalPages > 1 && (
+        <div className="flex items-center justify-between border-t border-cream/30 pt-4 bg-white p-4 rounded-3xl border border-cream/10 shadow-xs">
+          <button
+            onClick={() => setPage((p) => Math.max(p - 1, 1))}
+            disabled={page === 1}
+            className="px-4 py-2 bg-offwhite hover:bg-cream/10 border border-cream text-teal rounded-xl text-xs font-subtitle uppercase tracking-widest font-bold disabled:opacity-50 transition"
+          >
+            Anterior
+          </button>
+          <span className="text-xs font-body text-teal/70 font-semibold">
+            Página {page} de {totalPages}
+          </span>
+          <button
+            onClick={() => setPage((p) => Math.min(p + 1, totalPages))}
+            disabled={page === totalPages}
+            className="px-4 py-2 bg-offwhite hover:bg-cream/10 border border-cream text-teal rounded-xl text-xs font-subtitle uppercase tracking-widest font-bold disabled:opacity-50 transition"
+          >
+            Siguiente
+          </button>
+        </div>
+      )}
+
       {/* Add Patient Modal */}
       {isAddModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#0f3f3e]/40 backdrop-blur-xs animate-in fade-in duration-300">
@@ -409,16 +460,29 @@ export default function PacientesPage() {
             </div>
             
             <form onSubmit={handleAddSubmit} className="flex-1 overflow-y-auto p-6 space-y-5">
-              <div className="space-y-1.5">
-                <label className="font-subtitle text-[10px] tracking-wider uppercase font-bold text-teal block">Nombre Completo *</label>
-                <input
-                  type="text"
-                  required
-                  value={addName}
-                  onChange={(e) => setAddName(e.target.value)}
-                  placeholder="Ej: Camila Ortiz"
-                  className="w-full px-4 py-3 bg-white border border-cream rounded-xl font-body text-sm text-teal focus:outline-none focus:border-terracotta"
-                />
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <label className="font-subtitle text-[10px] tracking-wider uppercase font-bold text-teal block">Nombres *</label>
+                  <input
+                    type="text"
+                    required
+                    value={addFirstName}
+                    onChange={(e) => setAddFirstName(e.target.value)}
+                    placeholder="Ej: Camila"
+                    className="w-full px-4 py-3 bg-white border border-cream rounded-xl font-body text-sm text-teal focus:outline-none focus:border-terracotta"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="font-subtitle text-[10px] tracking-wider uppercase font-bold text-teal block">Apellidos *</label>
+                  <input
+                    type="text"
+                    required
+                    value={addLastName}
+                    onChange={(e) => setAddLastName(e.target.value)}
+                    placeholder="Ej: Ortiz"
+                    className="w-full px-4 py-3 bg-white border border-cream rounded-xl font-body text-sm text-teal focus:outline-none focus:border-terracotta"
+                  />
+                </div>
               </div>
 
               <div className="grid grid-cols-2 gap-4">
@@ -510,15 +574,27 @@ export default function PacientesPage() {
             </div>
             
             <form onSubmit={handleEditProfileSubmit} className="flex-1 overflow-y-auto p-6 space-y-5">
-              <div className="space-y-1.5">
-                <label className="font-subtitle text-[10px] tracking-wider uppercase font-bold text-teal block">Nombre Completo *</label>
-                <input
-                  type="text"
-                  required
-                  value={editName}
-                  onChange={(e) => setEditName(e.target.value)}
-                  className="w-full px-4 py-3 bg-white border border-cream rounded-xl font-body text-sm text-teal focus:outline-none focus:border-terracotta"
-                />
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <label className="font-subtitle text-[10px] tracking-wider uppercase font-bold text-teal block">Nombres *</label>
+                  <input
+                    type="text"
+                    required
+                    value={editFirstName}
+                    onChange={(e) => setEditFirstName(e.target.value)}
+                    className="w-full px-4 py-3 bg-white border border-cream rounded-xl font-body text-sm text-teal focus:outline-none focus:border-terracotta"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="font-subtitle text-[10px] tracking-wider uppercase font-bold text-teal block">Apellidos *</label>
+                  <input
+                    type="text"
+                    required
+                    value={editLastName}
+                    onChange={(e) => setEditLastName(e.target.value)}
+                    className="w-full px-4 py-3 bg-white border border-cream rounded-xl font-body text-sm text-teal focus:outline-none focus:border-terracotta"
+                  />
+                </div>
               </div>
 
               <div className="grid grid-cols-2 gap-4">
@@ -567,11 +643,11 @@ export default function PacientesPage() {
                 <label className="font-subtitle text-[10px] tracking-wider uppercase font-bold text-teal block">Estado del Paciente</label>
                 <select
                   value={editStatus}
-                  onChange={(e) => setEditStatus(e.target.value)}
+                  onChange={(e) => setEditStatus(e.target.value as any)}
                   className="w-full px-4 py-3 bg-white border border-cream rounded-xl font-body text-sm text-teal focus:outline-none focus:border-terracotta"
                 >
-                  <option value="Active">Activo</option>
-                  <option value="Inactive">Inactivo</option>
+                  <option value="ACTIVE">Activo</option>
+                  <option value="INACTIVE">Inactivo</option>
                 </select>
               </div>
 
@@ -605,7 +681,7 @@ export default function PacientesPage() {
               <div className="flex items-center gap-2">
                 <FileText className="text-terracotta" size={22} />
                 <div>
-                  <h3 className="font-title text-xl text-teal font-bold">Ficha Clínica: {selectedPatient.name}</h3>
+                  <h3 className="font-title text-xl text-teal font-bold">Ficha Clínica: {selectedPatient.firstName} {selectedPatient.lastName}</h3>
                   {selectedPatient.rut && <p className="font-body text-[10px] text-teal/60">RUT: {selectedPatient.rut}</p>}
                 </div>
               </div>
@@ -687,12 +763,19 @@ export default function PacientesPage() {
                           </p>
                           <div className="mt-2 flex justify-between items-center">
                             <span className={`px-2 py-0.5 rounded-full text-[8px] font-subtitle font-bold uppercase tracking-wider ${
-                              appt.status === "Confirmed" ? "bg-emerald-50 text-emerald-700" : "bg-redbrown/10 text-redbrown"
+                              appt.status === "ATTENDED" || appt.status === "TRANSFERRED"
+                                ? "bg-emerald-50 text-emerald-700" 
+                                : appt.status === "CANCELLED" 
+                                ? "bg-redbrown/10 text-redbrown"
+                                : "bg-blue-50 text-blue-700"
                             }`}>
-                              {appt.status === "Confirmed" ? "Confirmada" : "Cancelada"}
-                            </span>
-                            <span className="font-subtitle text-[9px] font-bold text-terracotta">
-                              ${appt.amountPaid?.toLocaleString("es-CL")}
+                              {appt.status === "ATTENDED" 
+                                ? "Asistió" 
+                                : appt.status === "TRANSFERRED" 
+                                ? "Transferido"
+                                : appt.status === "CANCELLED"
+                                ? "Cancelada"
+                                : "Reservada"}
                             </span>
                           </div>
                         </div>

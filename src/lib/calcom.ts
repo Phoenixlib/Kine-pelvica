@@ -1,0 +1,242 @@
+import { env } from "~/env";
+
+interface CalComCancelResponse {
+  status: string;
+  data: {
+    id: number;
+    uid: string;
+    status: string;
+  };
+}
+
+interface CalComRescheduleResponse {
+  status: string;
+  data: {
+    id: number;
+    uid: string;
+    startTime: string;
+    status: string;
+  };
+}
+
+interface CalComEventTypeResponse {
+  status: string;
+  data: {
+    id: number;
+    slug: string;
+    bookingUrl?: string; 
+  };
+}
+
+/**
+ * Cancels a booking in Cal.com.
+ * @param bookingUid The uid of the booking (stored in our db as calComEventId)
+ * @param reason The cancellation reason
+ */
+export async function cancelCalComBooking(bookingUid: string, reason?: string): Promise<CalComCancelResponse | null> {
+  if (!env.CALCOM_API_KEY) {
+    console.warn("CALCOM_API_KEY is not set. Skipping Cal.com cancellation.");
+    return null;
+  }
+
+  const baseUrl = env.CALCOM_API_URL || "https://api.cal.com/v2";
+  const url = `${baseUrl}/bookings/${bookingUid}/cancel`;
+
+  try {
+    const res = await fetch(url, {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${env.CALCOM_API_KEY}`,
+        "Content-Type": "application/json",
+        "cal-api-version": "2024-06-14",
+      },
+      body: JSON.stringify({
+        cancellationReason: reason || "Cancelada desde la aplicación médica",
+      }),
+    });
+
+    if (!res.ok) {
+      const errText = await res.text();
+      console.error(`Failed to cancel booking ${bookingUid} on Cal.com:`, errText);
+      throw new Error(`Cal.com error: ${res.statusText} (${errText})`);
+    }
+
+    return await res.json() as CalComCancelResponse;
+  } catch (error) {
+    console.error(`Error calling Cal.com cancel API for booking ${bookingUid}:`, error);
+    throw error;
+  }
+}
+
+/**
+ * Reschedules a booking in Cal.com to a new start date/time.
+ * @param bookingUid The uid of the booking (stored in our db as calComEventId)
+ * @param newDate The new date and time for the booking
+ */
+export async function rescheduleCalComBooking(bookingUid: string, newDate: Date): Promise<CalComRescheduleResponse | null> {
+  if (!env.CALCOM_API_KEY) {
+    console.warn("CALCOM_API_KEY is not set. Skipping Cal.com reschedule.");
+    return null;
+  }
+
+  const baseUrl = env.CALCOM_API_URL || "https://api.cal.com/v2";
+  const url = `${baseUrl}/bookings/${bookingUid}/reschedule`;
+
+  try {
+    const res = await fetch(url, {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${env.CALCOM_API_KEY}`,
+        "Content-Type": "application/json",
+        "cal-api-version": "2024-06-14",
+      },
+      body: JSON.stringify({
+        start: newDate.toISOString(),
+      }),
+    });
+
+    if (!res.ok) {
+      const errText = await res.text();
+      console.error(`Failed to reschedule booking ${bookingUid} on Cal.com:`, errText);
+      throw new Error(`Cal.com error: ${res.statusText} (${errText})`);
+    }
+
+    return await res.json() as CalComRescheduleResponse;
+  } catch (error) {
+    console.error(`Error calling Cal.com reschedule API for booking ${bookingUid}:`, error);
+    throw error;
+  }
+}
+
+/**
+ * Creates an Event Type on Cal.com.
+ */
+export async function createCalComEventType(
+  title: string,
+  lengthInMinutes: number,
+  description?: string
+): Promise<CalComEventTypeResponse["data"] | null> {
+  if (!env.CALCOM_API_KEY) {
+    console.warn("CALCOM_API_KEY not set. Skipping Cal.com event type creation.");
+    return null;
+  }
+
+  const slug = title
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/(^-|-$)/g, "");
+
+  const baseUrl = env.CALCOM_API_URL || "https://api.cal.com/v2";
+  const url = `${baseUrl}/event-types`;
+
+  try {
+    const res = await fetch(url, {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${env.CALCOM_API_KEY}`,
+        "Content-Type": "application/json",
+        "cal-api-version": "2024-06-14",
+      },
+      body: JSON.stringify({
+        title,
+        slug,
+        lengthInMinutes,
+        description: description || "",
+      }),
+    });
+
+    if (!res.ok) {
+      const errText = await res.text();
+      console.error("Failed to create event type in Cal.com:", errText);
+      throw new Error(`Cal.com error: ${res.statusText} (${errText})`);
+    }
+
+    const payload = await res.json() as CalComEventTypeResponse;
+    return payload.data;
+  } catch (error) {
+    console.error("Error calling Cal.com event types API:", error);
+    throw error;
+  }
+}
+
+/**
+ * Updates an Event Type on Cal.com.
+ */
+export async function updateCalComEventType(
+  eventTypeId: number,
+  title: string,
+  lengthInMinutes: number,
+  description?: string
+): Promise<CalComEventTypeResponse["data"] | null> {
+  if (!env.CALCOM_API_KEY) {
+    console.warn("CALCOM_API_KEY not set. Skipping Cal.com event type update.");
+    return null;
+  }
+
+  const baseUrl = env.CALCOM_API_URL || "https://api.cal.com/v2";
+  const url = `${baseUrl}/event-types/${eventTypeId}`;
+
+  try {
+    const res = await fetch(url, {
+      method: "PATCH",
+      headers: {
+        "Authorization": `Bearer ${env.CALCOM_API_KEY}`,
+        "Content-Type": "application/json",
+        "cal-api-version": "2024-06-14",
+      },
+      body: JSON.stringify({
+        title,
+        lengthInMinutes,
+        description: description || "",
+      }),
+    });
+
+    if (!res.ok) {
+      const errText = await res.text();
+      console.error(`Failed to update event type ${eventTypeId} in Cal.com:`, errText);
+      throw new Error(`Cal.com error: ${res.statusText} (${errText})`);
+    }
+
+    const payload = await res.json() as CalComEventTypeResponse;
+    return payload.data;
+  } catch (error) {
+    console.error(`Error calling Cal.com update event type API for ${eventTypeId}:`, error);
+    throw error;
+  }
+}
+
+/**
+ * Deletes an Event Type on Cal.com.
+ */
+export async function deleteCalComEventType(eventTypeId: number): Promise<boolean> {
+  if (!env.CALCOM_API_KEY) {
+    console.warn("CALCOM_API_KEY not set. Skipping Cal.com event type deletion.");
+    return true;
+  }
+
+  const baseUrl = env.CALCOM_API_URL || "https://api.cal.com/v2";
+  const url = `${baseUrl}/event-types/${eventTypeId}`;
+
+  try {
+    const res = await fetch(url, {
+      method: "DELETE",
+      headers: {
+        "Authorization": `Bearer ${env.CALCOM_API_KEY}`,
+        "cal-api-version": "2024-06-14",
+      },
+    });
+
+    if (!res.ok) {
+      const errText = await res.text();
+      console.error(`Failed to delete event type ${eventTypeId} in Cal.com:`, errText);
+      throw new Error(`Cal.com error: ${res.statusText} (${errText})`);
+    }
+
+    return true;
+  } catch (error) {
+    console.error(`Error calling Cal.com delete event type API for ${eventTypeId}:`, error);
+    throw error;
+  }
+}

@@ -4,23 +4,26 @@ import { useState } from "react";
 import { api } from "~/trpc/react";
 import { 
   Search, 
-  Filter, 
-  MoreVertical, 
   Trash2, 
   Edit3, 
-  Calendar as CalendarIcon, 
-  CreditCard,
   X,
-  CheckCircle,
-  AlertCircle
+  Calendar as CalendarIcon,
+  DollarSign
 } from "lucide-react";
 
 interface Patient {
   id: string;
-  name: string;
+  firstName: string;
+  lastName: string;
   email: string | null;
   phone: string | null;
   rut: string | null;
+}
+
+interface Service {
+  id: string;
+  name: string;
+  price: number;
 }
 
 interface Appointment {
@@ -28,30 +31,44 @@ interface Appointment {
   patientId: string;
   patient: Patient;
   title: string;
-  serviceCategory: string | null;
+  serviceId: string | null;
+  service: Service | null;
   date: Date | string;
   durationMinutes: number;
-  status: string;
-  paymentStatus: string;
-  amountPaid: number | null;
+  status: "BOOKED" | "CASH_PENDING" | "TRANSFERRED" | "CANCELLED" | "ATTENDED" | "NO_SHOW";
+  paymentMethod: "CASH" | "TRANSFER" | null;
+  cancelReason: string | null;
   notes: string | null;
 }
+
+const STATUS_LABELS: Record<Appointment["status"], string> = {
+  BOOKED: "Reservada",
+  CASH_PENDING: "Efectivo Pendiente",
+  TRANSFERRED: "Transferido",
+  CANCELLED: "Cancelada",
+  ATTENDED: "Asistió y Pagado",
+  NO_SHOW: "No Asistió",
+};
 
 export default function CitasPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("All");
-  const [paymentFilter, setPaymentFilter] = useState("All");
 
   // Editing state
   const [editingAppt, setEditingAppt] = useState<Appointment | null>(null);
   const [editTitle, setEditTitle] = useState("");
-  const [editStatus, setEditStatus] = useState("Confirmed");
-  const [editPaymentStatus, setEditPaymentStatus] = useState("Unpaid");
-  const [editAmountPaid, setEditAmountPaid] = useState(0);
+  const [editServiceId, setEditServiceId] = useState<string>("");
+  const [editDate, setEditDate] = useState("");
+  const [editTime, setEditTime] = useState("");
+  const [editDuration, setEditDuration] = useState(60);
+  const [editStatus, setEditStatus] = useState<Appointment["status"]>("BOOKED");
+  const [editPaymentMethod, setEditPaymentMethod] = useState<"CASH" | "TRANSFER" | "PENDING">("PENDING");
+  const [editCancelReason, setEditCancelReason] = useState("");
   const [editNotes, setEditNotes] = useState("");
 
   const utils = api.useUtils();
-  const { data: appointments, isLoading: apptsLoading } = api.appointment.getAll.useQuery();
+  const { data: appointmentsData, isLoading: apptsLoading } = api.appointment.getAll.useQuery();
+  const { data: services } = api.service.getAll.useQuery();
 
   const updateMutation = api.appointment.update.useMutation({
     onSuccess: async () => {
@@ -71,9 +88,15 @@ export default function CitasPage() {
   const handleEditClick = (appt: Appointment) => {
     setEditingAppt(appt);
     setEditTitle(appt.title);
+    setEditServiceId(appt.serviceId || "");
+    
+    const d = new Date(appt.date);
+    setEditDate(d.toISOString().split("T")[0] ?? "");
+    setEditTime(d.toTimeString().split(" ")[0]?.substring(0, 5) ?? "");
+    setEditDuration(appt.durationMinutes);
     setEditStatus(appt.status);
-    setEditPaymentStatus(appt.paymentStatus);
-    setEditAmountPaid(appt.amountPaid || 0);
+    setEditPaymentMethod(appt.paymentMethod || "PENDING");
+    setEditCancelReason(appt.cancelReason || "");
     setEditNotes(appt.notes || "");
   };
 
@@ -81,14 +104,19 @@ export default function CitasPage() {
     e.preventDefault();
     if (!editingAppt) return;
 
+    // Combine date and time
+    const dateTimeStr = `${editDate}T${editTime}:00`;
+    const finalDate = new Date(dateTimeStr);
+
     updateMutation.mutate({
       id: editingAppt.id,
       title: editTitle,
-      date: new Date(editingAppt.date),
-      durationMinutes: editingAppt.durationMinutes,
-      status: editStatus as "Confirmed" | "Pending" | "Cancelled",
-      paymentStatus: editPaymentStatus as "Paid" | "Unpaid" | "Partial",
-      amountPaid: Number(editAmountPaid),
+      serviceId: editServiceId || null,
+      date: finalDate,
+      durationMinutes: Number(editDuration),
+      status: editStatus,
+      paymentMethod: editPaymentMethod === "PENDING" ? null : editPaymentMethod,
+      cancelReason: editStatus === "CANCELLED" ? editCancelReason : null,
       notes: editNotes,
     });
   };
@@ -99,15 +127,17 @@ export default function CitasPage() {
     }
   };
 
-  const filteredAppts = appointments?.filter((appt) => {
-    const matchSearch = appt.patient.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+  const appointmentsList = appointmentsData?.appointments as unknown as Appointment[] || [];
+
+  const filteredAppts = appointmentsList.filter((appt) => {
+    const fullName = `${appt.patient.firstName} ${appt.patient.lastName}`.toLowerCase();
+    const matchSearch = fullName.includes(searchQuery.toLowerCase()) ||
                         appt.title.toLowerCase().includes(searchQuery.toLowerCase());
     
     const matchStatus = statusFilter === "All" || appt.status === statusFilter;
-    const matchPayment = paymentFilter === "All" || appt.paymentStatus === paymentFilter;
 
-    return matchSearch && matchStatus && matchPayment;
-  }) || [];
+    return matchSearch && matchStatus;
+  });
 
   return (
     <div className="space-y-6">
@@ -140,21 +170,12 @@ export default function CitasPage() {
             className="px-4 py-2.5 bg-offwhite border border-cream rounded-xl font-body text-xs text-teal focus:outline-none"
           >
             <option value="All">Todos los Estados</option>
-            <option value="Confirmed">Confirmadas</option>
-            <option value="Pending">Pendientes</option>
-            <option value="Cancelled">Canceladas</option>
-          </select>
-
-          {/* Payment Filter */}
-          <select
-            value={paymentFilter}
-            onChange={(e) => setPaymentFilter(e.target.value)}
-            className="px-4 py-2.5 bg-offwhite border border-cream rounded-xl font-body text-xs text-teal focus:outline-none"
-          >
-            <option value="All">Todos los Pagos</option>
-            <option value="Paid">Pagadas</option>
-            <option value="Unpaid">Impagas</option>
-            <option value="Partial">Pago Parcial</option>
+            <option value="BOOKED">Reservadas</option>
+            <option value="CASH_PENDING">Efectivo Pendiente</option>
+            <option value="TRANSFERRED">Transferidas</option>
+            <option value="ATTENDED">Asistió y Pagado</option>
+            <option value="NO_SHOW">No Asistió</option>
+            <option value="CANCELLED">Canceladas</option>
           </select>
         </div>
       </div>
@@ -169,8 +190,8 @@ export default function CitasPage() {
                 <th className="px-6 py-4">Cita / Terapia</th>
                 <th className="px-6 py-4">Fecha y Hora</th>
                 <th className="px-6 py-4">Estado Cita</th>
-                <th className="px-6 py-4">Estado Pago</th>
-                <th className="px-6 py-4">Monto</th>
+                <th className="px-6 py-4">Medio Pago</th>
+                <th className="px-6 py-4">Precio Servicio</th>
                 <th className="px-6 py-4 text-right">Acciones</th>
               </tr>
             </thead>
@@ -193,41 +214,45 @@ export default function CitasPage() {
                   const date = new Date(appt.date);
                   return (
                     <tr key={appt.id} className="hover:bg-offwhite/30 transition-colors">
-                      <td className="px-6 py-4 font-subtitle font-bold text-teal">{appt.patient.name}</td>
+                      <td className="px-6 py-4 font-subtitle font-bold text-teal">
+                        {appt.patient.firstName} {appt.patient.lastName}
+                      </td>
                       <td className="px-6 py-4">
                         <span className="font-semibold">{appt.title}</span>
-                        {appt.serviceCategory && (
-                          <span className="block text-[9px] text-teal/45 font-bold uppercase tracking-wide mt-0.5">{appt.serviceCategory}</span>
+                        {appt.service && (
+                          <span className="block text-[9px] text-teal/45 font-bold uppercase tracking-wide mt-0.5">
+                            {appt.service.name}
+                          </span>
                         )}
                       </td>
                       <td className="px-6 py-4">
                         <span className="font-semibold block">{date.toLocaleDateString("es-CL")}</span>
-                        <span className="text-[10px] text-teal/60">{date.toLocaleTimeString("es-CL", { hour: "2-digit", minute: "2-digit" })}</span>
-                      </td>
-                      <td className="px-6 py-4">
-                        <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-subtitle font-bold uppercase tracking-wider ${
-                          appt.status === "Confirmed"
-                            ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
-                            : appt.status === "Pending"
-                            ? "bg-amber-50 text-amber-700 border border-amber-200"
-                            : "bg-redbrown/10 text-redbrown border border-redbrown/20"
-                        }`}>
-                          {appt.status === "Confirmed" ? "Confirmada" : appt.status === "Pending" ? "Pendiente" : "Cancelada"}
+                        <span className="text-[10px] text-teal/60">
+                          {date.toLocaleTimeString("es-CL", { hour: "2-digit", minute: "2-digit" })}
                         </span>
                       </td>
                       <td className="px-6 py-4">
                         <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-subtitle font-bold uppercase tracking-wider ${
-                          appt.paymentStatus === "Paid"
+                          appt.status === "ATTENDED" || appt.status === "TRANSFERRED"
                             ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
-                            : appt.paymentStatus === "Partial"
-                            ? "bg-amber-50 text-amber-700 border border-amber-200"
-                            : "bg-redbrown/10 text-redbrown border border-redbrown/20"
+                            : appt.status === "CANCELLED"
+                            ? "bg-redbrown/10 text-redbrown border border-redbrown/20"
+                            : "bg-amber-50 text-amber-700 border border-amber-200"
                         }`}>
-                          {appt.paymentStatus === "Paid" ? "Pagado" : appt.paymentStatus === "Partial" ? "Parcial" : "Impago"}
+                          {STATUS_LABELS[appt.status]}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4">
+                        <span className="font-semibold">
+                          {appt.paymentMethod === "CASH" 
+                            ? "Efectivo" 
+                            : appt.paymentMethod === "TRANSFER" 
+                            ? "Transferencia" 
+                            : "Pendiente"}
                         </span>
                       </td>
                       <td className="px-6 py-4 font-semibold text-teal/80">
-                        ${appt.amountPaid?.toLocaleString("es-CL")}
+                        {appt.service ? `$${appt.service.price.toLocaleString("es-CL")}` : "—"}
                       </td>
                       <td className="px-6 py-4 text-right">
                         <div className="flex items-center justify-end gap-2">
@@ -288,13 +313,13 @@ export default function CitasPage() {
                   </div>
                   
                   <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[9px] font-subtitle font-bold uppercase tracking-wider ${
-                    appt.status === "Confirmed"
+                    appt.status === "ATTENDED" || appt.status === "TRANSFERRED"
                       ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
-                      : appt.status === "Pending"
-                      ? "bg-amber-50 text-amber-700 border border-amber-200"
-                      : "bg-redbrown/10 text-redbrown border border-redbrown/20"
+                      : appt.status === "CANCELLED"
+                      ? "bg-redbrown/10 text-redbrown border border-redbrown/20"
+                      : "bg-amber-50 text-amber-700 border border-amber-200"
                   }`}>
-                    {appt.status === "Confirmed" ? "Confirmada" : appt.status === "Pending" ? "Pendiente" : "Cancelada"}
+                    {STATUS_LABELS[appt.status]}
                   </span>
                 </div>
 
@@ -302,7 +327,9 @@ export default function CitasPage() {
                 <div className="bg-offwhite/50 border border-cream/20 rounded-2xl p-4">
                   <div className="grid grid-cols-3 gap-y-2 text-xs font-body text-teal">
                     <span className="col-span-1 text-teal/50 font-medium">Paciente:</span>
-                    <span className="col-span-2 text-teal font-bold text-right">{appt.patient.name}</span>
+                    <span className="col-span-2 text-teal font-bold text-right">
+                      {appt.patient.firstName} {appt.patient.lastName}
+                    </span>
 
                     {appt.patient.rut && (
                       <>
@@ -324,23 +351,27 @@ export default function CitasPage() {
                     <span className="col-span-1 text-teal/50 font-medium mt-1">Servicio:</span>
                     <div className="col-span-2 text-right mt-1">
                       <span className="text-teal font-semibold block">{appt.title}</span>
-                      {appt.serviceCategory && (
-                        <span className="text-[9px] text-teal/45 font-bold uppercase tracking-wide">{appt.serviceCategory}</span>
+                      {appt.service && (
+                        <span className="text-[9px] text-teal/45 font-bold uppercase tracking-wide">
+                          {appt.service.name}
+                        </span>
                       )}
                     </div>
 
                     <span className="col-span-1 text-teal/50 font-medium mt-1">Pago:</span>
                     <div className="col-span-2 text-right flex flex-col items-end gap-1 mt-1">
-                      <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-subtitle font-bold uppercase tracking-wider ${
-                        appt.paymentStatus === "Paid"
-                          ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
-                          : appt.paymentStatus === "Partial"
-                          ? "bg-amber-50 text-amber-700 border border-amber-200"
-                          : "bg-redbrown/10 text-redbrown border border-redbrown/20"
-                      }`}>
-                        {appt.paymentStatus === "Paid" ? "Pagado" : appt.paymentStatus === "Partial" ? "Parcial" : "Impago"}
+                      <span className="font-semibold block text-xs">
+                        {appt.paymentMethod === "CASH" 
+                          ? "Efectivo" 
+                          : appt.paymentMethod === "TRANSFER" 
+                          ? "Transferencia" 
+                          : "Pendiente"}
                       </span>
-                      <span className="text-teal/80 font-bold text-xs">${appt.amountPaid?.toLocaleString("es-CL")}</span>
+                      {appt.service && (
+                        <span className="text-teal/80 font-bold text-xs">
+                          ${appt.service.price.toLocaleString("es-CL")}
+                        </span>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -375,7 +406,9 @@ export default function CitasPage() {
             
             {/* Modal Header */}
             <div className="p-6 border-b border-cream/30 bg-white flex items-center justify-between flex-shrink-0">
-              <h3 className="font-title text-xl text-teal">Editar Cita de {editingAppt.patient.name}</h3>
+              <h3 className="font-title text-xl text-teal">
+                Editar Cita: {editingAppt.patient.firstName} {editingAppt.patient.lastName}
+              </h3>
               <button 
                 onClick={() => setEditingAppt(null)}
                 className="p-1.5 hover:bg-offwhite rounded-xl text-teal/50"
@@ -389,14 +422,75 @@ export default function CitasPage() {
               {/* Title */}
               <div className="space-y-1.5">
                 <label className="font-subtitle text-[10px] tracking-wider uppercase font-bold text-teal block">
-                  Servicio / Terapia
+                  Título de la Cita / Comentario
                 </label>
                 <input
                   type="text"
                   required
                   value={editTitle}
                   onChange={(e) => setEditTitle(e.target.value)}
-                  className="w-full px-4 py-3 bg-white border border-cream rounded-xl font-body text-sm text-teal focus:outline-none focus:border-terracotta focus:ring-1 focus:ring-terracotta transition-colors"
+                  className="w-full px-4 py-3 bg-white border border-cream rounded-xl font-body text-sm text-teal focus:outline-none"
+                />
+              </div>
+
+              {/* Service Selection */}
+              <div className="space-y-1.5">
+                <label className="font-subtitle text-[10px] tracking-wider uppercase font-bold text-teal block">
+                  Asociar Terapia / Servicio
+                </label>
+                <select
+                  value={editServiceId}
+                  onChange={(e) => setEditServiceId(e.target.value)}
+                  className="w-full px-4 py-3 bg-white border border-cream rounded-xl font-body text-sm text-teal focus:outline-none"
+                >
+                  <option value="">Ninguno (Servicio Libre)</option>
+                  {services?.map((service) => (
+                    <option key={service.id} value={service.id}>
+                      {service.name} (${service.price.toLocaleString("es-CL")})
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Date and Time */}
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <label className="font-subtitle text-[10px] tracking-wider uppercase font-bold text-teal block">
+                    Fecha
+                  </label>
+                  <input
+                    type="date"
+                    required
+                    value={editDate}
+                    onChange={(e) => setEditDate(e.target.value)}
+                    className="w-full px-4 py-3 bg-white border border-cream rounded-xl font-body text-sm text-teal focus:outline-none"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="font-subtitle text-[10px] tracking-wider uppercase font-bold text-teal block">
+                    Hora
+                  </label>
+                  <input
+                    type="time"
+                    required
+                    value={editTime}
+                    onChange={(e) => setEditTime(e.target.value)}
+                    className="w-full px-4 py-3 bg-white border border-cream rounded-xl font-body text-sm text-teal focus:outline-none"
+                  />
+                </div>
+              </div>
+
+              {/* Duration */}
+              <div className="space-y-1.5">
+                <label className="font-subtitle text-[10px] tracking-wider uppercase font-bold text-teal block">
+                  Duración (Minutos)
+                </label>
+                <input
+                  type="number"
+                  required
+                  value={editDuration}
+                  onChange={(e) => setEditDuration(Number(e.target.value))}
+                  className="w-full px-4 py-3 bg-white border border-cream rounded-xl font-body text-sm text-teal focus:outline-none"
                 />
               </div>
 
@@ -407,44 +501,50 @@ export default function CitasPage() {
                 </label>
                 <select
                   value={editStatus}
-                  onChange={(e) => setEditStatus(e.target.value)}
-                  className="w-full px-4 py-3 bg-white border border-cream rounded-xl font-body text-sm text-teal focus:outline-none focus:border-terracotta focus:ring-1 focus:ring-terracotta transition-colors"
+                  onChange={(e) => setEditStatus(e.target.value as any)}
+                  className="w-full px-4 py-3 bg-white border border-cream rounded-xl font-body text-sm text-teal focus:outline-none"
                 >
-                  <option value="Confirmed">Confirmada</option>
-                  <option value="Pending">Pendiente</option>
-                  <option value="Cancelled">Cancelada</option>
+                  <option value="BOOKED">Reservada</option>
+                  <option value="CASH_PENDING">Pago Efectivo Pendiente</option>
+                  <option value="TRANSFERRED">Transferido (Pagado)</option>
+                  <option value="ATTENDED">Asistió y Pagado</option>
+                  <option value="NO_SHOW">No Asistió</option>
+                  <option value="CANCELLED">Cancelada</option>
                 </select>
               </div>
 
-              {/* Payment Status */}
+              {/* Payment Method */}
               <div className="space-y-1.5">
                 <label className="font-subtitle text-[10px] tracking-wider uppercase font-bold text-teal block">
-                  Estado de Pago
+                  Medio de Pago
                 </label>
                 <select
-                  value={editPaymentStatus}
-                  onChange={(e) => setEditPaymentStatus(e.target.value)}
-                  className="w-full px-4 py-3 bg-white border border-cream rounded-xl font-body text-sm text-teal focus:outline-none focus:border-terracotta focus:ring-1 focus:ring-terracotta transition-colors"
+                  value={editPaymentMethod}
+                  onChange={(e) => setEditPaymentMethod(e.target.value as any)}
+                  className="w-full px-4 py-3 bg-white border border-cream rounded-xl font-body text-sm text-teal focus:outline-none"
                 >
-                  <option value="Paid">Pagado</option>
-                  <option value="Unpaid">Impago</option>
-                  <option value="Partial">Pago Parcial</option>
+                  <option value="PENDING">Pendiente / Sin Registrar</option>
+                  <option value="CASH">Efectivo</option>
+                  <option value="TRANSFER">Transferencia</option>
                 </select>
               </div>
 
-              {/* Amount */}
-              <div className="space-y-1.5">
-                <label className="font-subtitle text-[10px] tracking-wider uppercase font-bold text-teal block">
-                  Monto Cobrado ($)
-                </label>
-                <input
-                  type="number"
-                  required
-                  value={editAmountPaid}
-                  onChange={(e) => setEditAmountPaid(Number(e.target.value))}
-                  className="w-full px-4 py-3 bg-white border border-cream rounded-xl font-body text-sm text-teal focus:outline-none focus:border-terracotta focus:ring-1 focus:ring-terracotta transition-colors"
-                />
-              </div>
+              {/* Cancel Reason (Only show if Cancelled) */}
+              {editStatus === "CANCELLED" && (
+                <div className="space-y-1.5">
+                  <label className="font-subtitle text-[10px] tracking-wider uppercase font-bold text-teal block">
+                    Motivo de Cancelación *
+                  </label>
+                  <textarea
+                    required
+                    value={editCancelReason}
+                    onChange={(e) => setEditCancelReason(e.target.value)}
+                    placeholder="Indica el motivo de la cancelación..."
+                    rows={2}
+                    className="w-full px-4 py-3 bg-white border border-cream rounded-xl font-body text-sm text-teal focus:outline-none resize-none"
+                  />
+                </div>
+              )}
 
               {/* Notes */}
               <div className="space-y-1.5">
@@ -454,8 +554,8 @@ export default function CitasPage() {
                 <textarea
                   value={editNotes}
                   onChange={(e) => setEditNotes(e.target.value)}
-                  rows={3}
-                  className="w-full px-4 py-3 bg-white border border-cream rounded-xl font-body text-sm text-teal focus:outline-none focus:border-terracotta focus:ring-1 focus:ring-terracotta transition-colors resize-none"
+                  rows={2}
+                  className="w-full px-4 py-3 bg-white border border-cream rounded-xl font-body text-sm text-teal focus:outline-none resize-none"
                 />
               </div>
 

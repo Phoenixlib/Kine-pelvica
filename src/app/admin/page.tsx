@@ -25,9 +25,10 @@ export default function AdminDashboardPage() {
     api.stats.getDashboardStats.useQuery();
   const { data: chartData, isLoading: chartLoading } = 
     api.stats.getForecastChartData.useQuery();
-  const { data: appointments, isLoading: apptsLoading } = 
-    api.appointment.getAll.useQuery();
+  const { data: apptData, isLoading: apptsLoading } = 
+    api.appointment.getAll.useQuery({ limit: 10 });
 
+  const appointments = apptData?.appointments;
   const loading = statsLoading || chartLoading || apptsLoading;
 
   if (loading) {
@@ -200,7 +201,7 @@ export default function AdminDashboardPage() {
                   >
                     <div className="min-w-0">
                       <h4 className="font-subtitle text-xs font-bold text-teal truncate">
-                        {appt.patient.name}
+                        {appt.patient.firstName} {appt.patient.lastName}
                       </h4>
                       <p className="font-body text-[11px] text-teal/60 mt-1 truncate">
                         {appt.title}

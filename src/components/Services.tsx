@@ -4,9 +4,10 @@ import { useState } from "react";
 
 interface Service {
   name: string;
-  price: string;
-  duration?: string;
-  details?: string;
+  price: string | number;
+  duration?: string | number;
+  details?: string | null;
+  bookingUrl?: string | null;
 }
 
 interface ServiceCategory {
@@ -25,46 +26,46 @@ export function Services({ initialCategories }: ServicesProps) {
     {
       name: "ATENCIONES PÉLVICAS",
       services: [
-        { name: "Evaluación pélvica", price: "$35.000", duration: "", details: "Primera sesión pélvica. Conoceremos el enfoque del tratamiento según las necesidades..." },
-        { name: "Hipopresivos", price: "$30.000", duration: "40 min", details: "Clase individual o grupal" },
-        { name: "Control pélvico", price: "$30.000", duration: "", details: "Sesión posterior a una evaluación pélvica 👩🏻‍⚕️" }
+        { name: "Evaluación pélvica", price: 35000, duration: 60, details: "Primera sesión pélvica. Conoceremos el enfoque del tratamiento según las necesidades..." },
+        { name: "Hipopresivos", price: 30000, duration: 40, details: "Clase individual o grupal" },
+        { name: "Control pélvico", price: 30000, duration: 60, details: "Sesión posterior a una evaluación pélvica 👩🏻‍⚕️" }
       ]
     },
     {
       name: "PREPARACIÓN DURANTE EL EMBARAZO",
       services: [
-        { name: "Evaluación pélvica en el embarazo", price: "$35.000", duration: "40 min", details: "Se realiza una evaluación pélvica abdominal completa. Realizando ademas una evaluación de ph vaginal que permite conocer el estado..." },
-        { name: "Gimnasia pre natal", price: "$30.000", duration: "40 min", details: "Clase grupal de 1-3 personas, la sesión se puede compartir con personas no embarazadas y le aumentamos las cargas." },
-        { name: "Control embarazo", price: "$30.000", duration: "", details: "Prepara tu cuerpo para que quede con los menos daños posibles durante tu embarazo ✨" },
-        { name: "Taller embarazo: práctica de pujos", price: "$30.000", duration: "", details: "Sesión dedicada a la educación del puño fisiológico y cómo podemos evitar desgarros durante la realización de ellos..." },
-        { name: "Taller junto a pareja: manejo del dolor y qué hacer el día del nacimiento", price: "$30.000", duration: "40 min", details: "Sesión dedicada a entregar herramientas al acompañante..." }
+        { name: "Evaluación pélvica en el embarazo", price: 35000, duration: 40, details: "Se realiza una evaluación pélvica abdominal completa. Realizando ademas una evaluación de ph vaginal que permite conocer el estado..." },
+        { name: "Gimnasia pre natal", price: 30000, duration: 40, details: "Clase grupal de 1-3 personas, la sesión se puede compartir con personas no embarazadas y le aumentamos las cargas." },
+        { name: "Control embarazo", price: 30000, duration: 60, details: "Prepara tu cuerpo para que quede con los menos daños posibles durante tu embarazo ✨" },
+        { name: "Taller embarazo: práctica de pujos", price: 30000, duration: 60, details: "Sesión dedicada a la educación del puño fisiológico y cómo podemos evitar desgarros durante la realización de ellos..." },
+        { name: "Taller junto a pareja: manejo del dolor y qué hacer el día del nacimiento", price: 30000, duration: 40, details: "Sesión dedicada a entregar herramientas al acompañante..." }
       ]
     },
     {
       name: "DRENAJE-CICATRICES-MASAJES",
       services: [
-        { name: "Manejo de cicatrices", price: "$30.000", duration: "", details: "Tratamiento de cicatrices de cualquier zona del cuerpo." },
-        { name: "Drenaje linfático", price: "$30.000", duration: "", details: "- Post operatorios\n- Embarazos" },
-        { name: "Masaje descontracturante", price: "$30.000", duration: "", details: "Justo y necesario 🙌🏻" }
+        { name: "Manejo de cicatrices", price: 30000, duration: 60, details: "Tratamiento de cicatrices de cualquier zona del cuerpo." },
+        { name: "Drenaje linfático", price: 30000, duration: 60, details: "- Post operatorios\n- Embarazos" },
+        { name: "Masaje descontracturante", price: 30000, duration: 60, details: "Justo y necesario 🙌🏻" }
       ]
     },
     {
       name: "RESPIRATORIO",
       services: [
-        { name: "Kinesiterapia respiratoria infantil", price: "$30.000", duration: "40 min", details: "Realizadas con amor y cariño + educación a padres y manejo en casa" }
+        { name: "Kinesiterapia respiratoria infantil", price: 30000, duration: 40, details: "Realizadas con amor y cariño + educación a padres y manejo en casa" }
       ]
     },
     {
       name: "Servicios empresas",
       services: [
-        { name: "Charla corporativa educativa", price: "$40.000", duration: "1 hrs", details: "" }
+        { name: "Charla corporativa educativa", price: 40000, duration: 60, details: "" }
       ]
     }
   ];
 
   const categories = initialCategories || fallbackCategories;
 
-  // Protect against empty category lists from Sanity
+  // Protect against empty category lists
   if (!categories || categories.length === 0) {
     return null;
   }
@@ -72,6 +73,21 @@ export function Services({ initialCategories }: ServicesProps) {
   // Handle activeCategory out of bounds if initialCategories has fewer categories than state index
   const safeActiveIndex = activeCategory >= categories.length ? 0 : activeCategory;
   const currentCategory = categories[safeActiveIndex];
+
+  const formatPrice = (price: string | number) => {
+    if (typeof price === "number") {
+      return `$${price.toLocaleString("es-CL")}`;
+    }
+    return price;
+  };
+
+  const formatDuration = (duration?: string | number) => {
+    if (duration === undefined || duration === null || duration === "") return "";
+    if (typeof duration === "number") {
+      return `${duration} min`;
+    }
+    return duration;
+  };
 
   return (
     <section id="servicios" className="py-24 bg-offwhite">
@@ -112,8 +128,8 @@ export function Services({ initialCategories }: ServicesProps) {
                   <div className="flex-1">
                     <h4 className="font-subtitle text-[13px] font-bold text-[#0f3f3e] mb-1">{service.name}</h4>
                     <div className="font-body text-sm text-[#0f3f3e]/60 mb-2 flex justify-between items-center">
-                      {service.duration && <span>{service.duration}</span>}
-                      <span className="font-bold text-terracotta text-base">{service.price}</span>
+                      {service.duration && <span>{formatDuration(service.duration)}</span>}
+                      <span className="font-bold text-terracotta text-base">{formatPrice(service.price)}</span>
                     </div>
                     {service.details && (
                       <p className="font-body text-xs text-[#0f3f3e]/70 leading-relaxed mb-4 line-clamp-3 group-hover:line-clamp-none transition-all">
@@ -123,7 +139,9 @@ export function Services({ initialCategories }: ServicesProps) {
                     {!service.details && <div className="mb-4"></div>}
                   </div>
                   <a 
-                    href="#contacto" 
+                    href={service.bookingUrl || "#contacto"} 
+                    target={service.bookingUrl ? "_blank" : undefined}
+                    rel={service.bookingUrl ? "noopener noreferrer" : undefined}
                     className="mt-auto block text-center bg-terracotta text-white py-2.5 rounded-full font-subtitle text-[10px] uppercase tracking-widest font-bold hover:bg-teal transition-colors shadow-sm"
                   >
                     Agendar servicio

@@ -38,7 +38,7 @@ export function Blog({ initialPosts }: BlogProps) {
   const posts = initialPosts || fallbackPosts;
 
   return (
-    <section id="blog" className="py-24 bg-cream">
+    <section id="blog" className="py-24 bg-offwhite">
       <div className="container mx-auto px-4 lg:px-8 max-w-6xl">
         <div className="flex flex-col md:flex-row justify-between items-end mb-16 gap-6">
           <div>

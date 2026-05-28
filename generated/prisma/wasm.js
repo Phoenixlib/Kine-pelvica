@@ -87,6 +87,9 @@ Prisma.NullTypes = {
  * Enums
  */
 exports.Prisma.TransactionIsolationLevel = makeStrictEnum({
+  ReadUncommitted: 'ReadUncommitted',
+  ReadCommitted: 'ReadCommitted',
+  RepeatableRead: 'RepeatableRead',
   Serializable: 'Serializable'
 });
 
@@ -101,14 +104,14 @@ exports.Prisma.UserScalarFieldEnum = {
 
 exports.Prisma.PatientScalarFieldEnum = {
   id: 'id',
-  name: 'name',
+  firstName: 'firstName',
+  lastName: 'lastName',
   email: 'email',
   phone: 'phone',
   rut: 'rut',
   birthDate: 'birthDate',
   notes: 'notes',
   status: 'status',
-  lastVisit: 'lastVisit',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 };
@@ -117,15 +120,63 @@ exports.Prisma.AppointmentScalarFieldEnum = {
   id: 'id',
   patientId: 'patientId',
   title: 'title',
-  serviceCategory: 'serviceCategory',
+  serviceId: 'serviceId',
   date: 'date',
   durationMinutes: 'durationMinutes',
   status: 'status',
-  paymentStatus: 'paymentStatus',
-  amountPaid: 'amountPaid',
+  paymentMethod: 'paymentMethod',
+  cancelReason: 'cancelReason',
   calComEventId: 'calComEventId',
+  calComBookingId: 'calComBookingId',
   notes: 'notes',
   createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.ServiceCategoryScalarFieldEnum = {
+  id: 'id',
+  name: 'name',
+  order: 'order',
+  isActive: 'isActive',
+  createdAt: 'createdAt'
+};
+
+exports.Prisma.ServiceScalarFieldEnum = {
+  id: 'id',
+  name: 'name',
+  price: 'price',
+  duration: 'duration',
+  description: 'description',
+  isActive: 'isActive',
+  order: 'order',
+  categoryId: 'categoryId',
+  calComEventTypeId: 'calComEventTypeId',
+  calComBookingUrl: 'calComBookingUrl',
+  calComSlug: 'calComSlug'
+};
+
+exports.Prisma.GalleryPhotoScalarFieldEnum = {
+  id: 'id',
+  beforeUrl: 'beforeUrl',
+  afterUrl: 'afterUrl',
+  caption: 'caption',
+  order: 'order',
+  isVisible: 'isVisible',
+  createdAt: 'createdAt'
+};
+
+exports.Prisma.TestimonialScalarFieldEnum = {
+  id: 'id',
+  name: 'name',
+  email: 'email',
+  message: 'message',
+  status: 'status',
+  createdAt: 'createdAt'
+};
+
+exports.Prisma.SiteConfigScalarFieldEnum = {
+  key: 'key',
+  value: 'value',
   updatedAt: 'updatedAt'
 };
 
@@ -134,16 +185,49 @@ exports.Prisma.SortOrder = {
   desc: 'desc'
 };
 
+exports.Prisma.QueryMode = {
+  default: 'default',
+  insensitive: 'insensitive'
+};
+
 exports.Prisma.NullsOrder = {
   first: 'first',
   last: 'last'
 };
+exports.PatientStatus = exports.$Enums.PatientStatus = {
+  ACTIVE: 'ACTIVE',
+  INACTIVE: 'INACTIVE'
+};
 
+exports.AppointmentStatus = exports.$Enums.AppointmentStatus = {
+  BOOKED: 'BOOKED',
+  CASH_PENDING: 'CASH_PENDING',
+  TRANSFERRED: 'TRANSFERRED',
+  CANCELLED: 'CANCELLED',
+  ATTENDED: 'ATTENDED',
+  NO_SHOW: 'NO_SHOW'
+};
+
+exports.PaymentMethod = exports.$Enums.PaymentMethod = {
+  CASH: 'CASH',
+  TRANSFER: 'TRANSFER'
+};
+
+exports.TestimonialStatus = exports.$Enums.TestimonialStatus = {
+  PENDING: 'PENDING',
+  READ: 'READ',
+  ARCHIVED: 'ARCHIVED'
+};
 
 exports.Prisma.ModelName = {
   User: 'User',
   Patient: 'Patient',
-  Appointment: 'Appointment'
+  Appointment: 'Appointment',
+  ServiceCategory: 'ServiceCategory',
+  Service: 'Service',
+  GalleryPhoto: 'GalleryPhoto',
+  Testimonial: 'Testimonial',
+  SiteConfig: 'SiteConfig'
 };
 /**
  * Create the Client
@@ -183,22 +267,23 @@ const config = {
   "datasourceNames": [
     "db"
   ],
-  "activeProvider": "sqlite",
+  "activeProvider": "postgresql",
+  "postinstall": false,
   "inlineDatasources": {
     "db": {
       "url": {
-        "fromEnvVar": null,
-        "value": "file:./dev.db"
+        "fromEnvVar": "DATABASE_URL",
+        "value": null
       }
     }
   },
-  "inlineSchema": "// This is your Prisma schema file,\n// learn more about it in the docs: https://pris.ly/d/prisma-schema\n\ngenerator client {\n  provider = \"prisma-client-js\"\n  output   = \"../generated/prisma\"\n}\n\ndatasource db {\n  provider = \"sqlite\"\n  url      = \"file:./dev.db\"\n}\n\n// Administradores del sistema (solo Camila en la práctica)\nmodel User {\n  id        String   @id @default(cuid())\n  name      String?\n  email     String   @unique\n  password  String // bcrypt hash\n  createdAt DateTime @default(now())\n  updatedAt DateTime @updatedAt\n}\n\n// Pacientes / Clientes\nmodel Patient {\n  id           String        @id @default(cuid())\n  name         String\n  email        String?       @unique\n  phone        String?\n  rut          String?       @unique // RUT chileno\n  birthDate    DateTime?\n  notes        String? // Notas clínicas privadas (SQLite standard text)\n  status       String        @default(\"Active\") // \"Active\" | \"Inactive\"\n  lastVisit    DateTime?\n  appointments Appointment[]\n  createdAt    DateTime      @default(now())\n  updatedAt    DateTime      @updatedAt\n}\n\n// Citas / Atenciones\nmodel Appointment {\n  id              String   @id @default(cuid())\n  patientId       String\n  patient         Patient  @relation(fields: [patientId], references: [id], onDelete: Cascade)\n  title           String // Ej: \"Evaluación Pélvica\"\n  serviceCategory String? // Categoría del servicio\n  date            DateTime\n  durationMinutes Int      @default(60)\n  status          String   @default(\"Confirmed\") // \"Confirmed\" | \"Pending\" | \"Cancelled\"\n  paymentStatus   String   @default(\"Unpaid\") // \"Paid\" | \"Unpaid\" | \"Partial\"\n  amountPaid      Float?\n  calComEventId   String?  @unique // ID de sincronización con Cal.com\n  notes           String? // SQLite standard text\n  createdAt       DateTime @default(now())\n  updatedAt       DateTime @updatedAt\n}\n",
-  "inlineSchemaHash": "8aae52552291cb247fc292fe808447e2925cdd6f4e68a869d5c3330bc3f56d8c",
+  "inlineSchema": "// This is your Prisma schema file,\n// learn more about it in the docs: https://pris.ly/d/prisma-schema\n\ngenerator client {\n  provider = \"prisma-client-js\"\n  output   = \"../generated/prisma\"\n}\n\ndatasource db {\n  provider  = \"postgresql\"\n  url       = env(\"DATABASE_URL\")\n  directUrl = env(\"DIRECT_URL\")\n}\n\n// --- Autenticación ---\nmodel User {\n  id        String   @id @default(cuid())\n  name      String?\n  email     String   @unique\n  password  String // bcrypt hash\n  createdAt DateTime @default(now())\n  updatedAt DateTime @updatedAt\n}\n\n// --- Pacientes ---\nmodel Patient {\n  id           String        @id @default(cuid())\n  firstName    String\n  lastName     String\n  email        String?       @unique\n  phone        String?\n  rut          String?       @unique\n  birthDate    DateTime?\n  notes        String?\n  status       PatientStatus @default(ACTIVE)\n  createdAt    DateTime      @default(now())\n  updatedAt    DateTime      @updatedAt\n  appointments Appointment[]\n}\n\nenum PatientStatus {\n  ACTIVE\n  INACTIVE\n}\n\n// --- Citas ---\nmodel Appointment {\n  id              String            @id @default(cuid())\n  patientId       String\n  patient         Patient           @relation(fields: [patientId], references: [id], onDelete: Cascade)\n  title           String\n  serviceId       String?\n  service         Service?          @relation(fields: [serviceId], references: [id])\n  date            DateTime\n  durationMinutes Int               @default(60)\n  status          AppointmentStatus @default(BOOKED)\n  paymentMethod   PaymentMethod? // null hasta que informen\n  cancelReason    String? // obligatorio si status=CANCELLED\n  calComEventId   String?           @unique\n  calComBookingId String?           @unique\n  notes           String?\n  createdAt       DateTime          @default(now())\n  updatedAt       DateTime          @updatedAt\n}\n\nenum AppointmentStatus {\n  BOOKED // Reservado (hora pedida)\n  CASH_PENDING // Pago en efectivo (informó que pagará el día)\n  TRANSFERRED // Transferido (pagó por transferencia)\n  CANCELLED // Cancelado desde el admin (requiere cancelReason)\n  ATTENDED // Asistió y todo pagado\n  NO_SHOW // No asistió\n}\n\nenum PaymentMethod {\n  CASH\n  TRANSFER\n}\n\n// --- Servicios ---\nmodel ServiceCategory {\n  id        String    @id @default(cuid())\n  name      String\n  order     Int       @default(0)\n  isActive  Boolean   @default(true)\n  createdAt DateTime  @default(now())\n  services  Service[]\n}\n\nmodel Service {\n  id                String           @id @default(cuid())\n  name              String\n  price             Int // CLP, sin decimales\n  duration          Int // minutos\n  description       String?\n  isActive          Boolean          @default(true)\n  order             Int              @default(0)\n  categoryId        String?\n  category          ServiceCategory? @relation(fields: [categoryId], references: [id])\n  calComEventTypeId Int? // ID numérico del event type en Cal.com\n  calComBookingUrl  String? // URL pública de reserva: cal.com/camila-ortiz/evaluacion\n  calComSlug        String? // slug del evento para construir URLs\n  appointments      Appointment[]\n}\n\n// --- Galería Antes/Después ---\nmodel GalleryPhoto {\n  id        String   @id @default(cuid())\n  beforeUrl String // Cloudinary URL \"Antes\"\n  afterUrl  String // Cloudinary URL \"Después\"\n  caption   String?\n  order     Int      @default(0)\n  isVisible Boolean  @default(true)\n  createdAt DateTime @default(now())\n}\n\n// --- Testimonios (del formulario del landing) ---\nmodel Testimonial {\n  id        String            @id @default(cuid())\n  name      String\n  email     String?\n  message   String\n  status    TestimonialStatus @default(PENDING)\n  createdAt DateTime          @default(now())\n}\n\nenum TestimonialStatus {\n  PENDING // Sin leer\n  READ // Leído\n  ARCHIVED // Archivado\n}\n\n// --- Config general del sitio (Quién Soy, etc.) ---\nmodel SiteConfig {\n  key       String   @id // \"about_title\", \"about_description\"\n  value     String\n  updatedAt DateTime @updatedAt\n}\n",
+  "inlineSchemaHash": "9902cdc18dd7f79784efd08b99c6428fb8f1ccbd75cca2dba5631c845443d5a4",
   "copyEngine": true
 }
 config.dirname = '/'
 
-config.runtimeDataModel = JSON.parse("{\"models\":{\"User\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"name\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"email\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"password\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"createdAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"updatedAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"}],\"dbName\":null},\"Patient\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"name\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"email\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"phone\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"rut\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"birthDate\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"notes\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"status\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"lastVisit\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"appointments\",\"kind\":\"object\",\"type\":\"Appointment\",\"relationName\":\"AppointmentToPatient\"},{\"name\":\"createdAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"updatedAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"}],\"dbName\":null},\"Appointment\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"patientId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"patient\",\"kind\":\"object\",\"type\":\"Patient\",\"relationName\":\"AppointmentToPatient\"},{\"name\":\"title\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"serviceCategory\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"date\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"durationMinutes\",\"kind\":\"scalar\",\"type\":\"Int\"},{\"name\":\"status\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"paymentStatus\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"amountPaid\",\"kind\":\"scalar\",\"type\":\"Float\"},{\"name\":\"calComEventId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"notes\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"createdAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"updatedAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"}],\"dbName\":null}},\"enums\":{},\"types\":{}}")
+config.runtimeDataModel = JSON.parse("{\"models\":{\"User\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"name\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"email\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"password\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"createdAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"updatedAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"}],\"dbName\":null},\"Patient\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"firstName\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"lastName\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"email\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"phone\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"rut\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"birthDate\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"notes\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"status\",\"kind\":\"enum\",\"type\":\"PatientStatus\"},{\"name\":\"createdAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"updatedAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"appointments\",\"kind\":\"object\",\"type\":\"Appointment\",\"relationName\":\"AppointmentToPatient\"}],\"dbName\":null},\"Appointment\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"patientId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"patient\",\"kind\":\"object\",\"type\":\"Patient\",\"relationName\":\"AppointmentToPatient\"},{\"name\":\"title\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"serviceId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"service\",\"kind\":\"object\",\"type\":\"Service\",\"relationName\":\"AppointmentToService\"},{\"name\":\"date\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"durationMinutes\",\"kind\":\"scalar\",\"type\":\"Int\"},{\"name\":\"status\",\"kind\":\"enum\",\"type\":\"AppointmentStatus\"},{\"name\":\"paymentMethod\",\"kind\":\"enum\",\"type\":\"PaymentMethod\"},{\"name\":\"cancelReason\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"calComEventId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"calComBookingId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"notes\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"createdAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"updatedAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"}],\"dbName\":null},\"ServiceCategory\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"name\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"order\",\"kind\":\"scalar\",\"type\":\"Int\"},{\"name\":\"isActive\",\"kind\":\"scalar\",\"type\":\"Boolean\"},{\"name\":\"createdAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"services\",\"kind\":\"object\",\"type\":\"Service\",\"relationName\":\"ServiceToServiceCategory\"}],\"dbName\":null},\"Service\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"name\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"price\",\"kind\":\"scalar\",\"type\":\"Int\"},{\"name\":\"duration\",\"kind\":\"scalar\",\"type\":\"Int\"},{\"name\":\"description\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"isActive\",\"kind\":\"scalar\",\"type\":\"Boolean\"},{\"name\":\"order\",\"kind\":\"scalar\",\"type\":\"Int\"},{\"name\":\"categoryId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"category\",\"kind\":\"object\",\"type\":\"ServiceCategory\",\"relationName\":\"ServiceToServiceCategory\"},{\"name\":\"calComEventTypeId\",\"kind\":\"scalar\",\"type\":\"Int\"},{\"name\":\"calComBookingUrl\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"calComSlug\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"appointments\",\"kind\":\"object\",\"type\":\"Appointment\",\"relationName\":\"AppointmentToService\"}],\"dbName\":null},\"GalleryPhoto\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"beforeUrl\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"afterUrl\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"caption\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"order\",\"kind\":\"scalar\",\"type\":\"Int\"},{\"name\":\"isVisible\",\"kind\":\"scalar\",\"type\":\"Boolean\"},{\"name\":\"createdAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"}],\"dbName\":null},\"Testimonial\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"name\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"email\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"message\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"status\",\"kind\":\"enum\",\"type\":\"TestimonialStatus\"},{\"name\":\"createdAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"}],\"dbName\":null},\"SiteConfig\":{\"fields\":[{\"name\":\"key\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"value\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"updatedAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"}],\"dbName\":null}},\"enums\":{},\"types\":{}}")
 defineDmmfProperty(exports.Prisma, config.runtimeDataModel)
 config.engineWasm = {
   getRuntime: async () => require('./query_engine_bg.js'),
@@ -211,7 +296,9 @@ config.engineWasm = {
 config.compilerWasm = undefined
 
 config.injectableEdgeEnv = () => ({
-  parsed: {}
+  parsed: {
+    DATABASE_URL: typeof globalThis !== 'undefined' && globalThis['DATABASE_URL'] || typeof process !== 'undefined' && process.env && process.env.DATABASE_URL || undefined
+  }
 })
 
 if (typeof globalThis !== 'undefined' && globalThis['DEBUG'] || typeof process !== 'undefined' && process.env && process.env.DEBUG || undefined) {

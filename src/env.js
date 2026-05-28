@@ -15,6 +15,15 @@ export const env = createEnv({
     SANITY_API_TOKEN: z.string().optional(),
     CALCOM_WEBHOOK_SECRET: z.string().optional(),
     CALCOM_API_KEY: z.string().optional(),
+    CALCOM_API_URL: z.string().optional(),
+    GOOGLE_CALENDAR_CLIENT_ID: z.string().optional(),
+    GOOGLE_CALENDAR_CLIENT_SECRET: z.string().optional(),
+    GOOGLE_CALENDAR_REFRESH_TOKEN: z.string().optional(),
+    GOOGLE_PLACES_API_KEY: z.string().optional(),
+    GOOGLE_PLACE_ID: z.string().optional(),
+    GOOGLE_REVIEW_URL: z.string().optional(),
+    CLOUDINARY_API_KEY: z.string().optional(),
+    CLOUDINARY_API_SECRET: z.string().optional(),
     NODE_ENV: z
       .enum(["development", "test", "production"])
       .default("development"),
@@ -29,6 +38,7 @@ export const env = createEnv({
     NEXT_PUBLIC_SANITY_PROJECT_ID: z.string().optional(),
     NEXT_PUBLIC_SANITY_DATASET: z.string().optional(),
     NEXT_PUBLIC_GOOGLE_PLACE_ID: z.string().optional(),
+    NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME: z.string().optional(),
   },
 
   /**
@@ -41,10 +51,20 @@ export const env = createEnv({
     SANITY_API_TOKEN: process.env.SANITY_API_TOKEN,
     CALCOM_WEBHOOK_SECRET: process.env.CALCOM_WEBHOOK_SECRET,
     CALCOM_API_KEY: process.env.CALCOM_API_KEY,
+    CALCOM_API_URL: process.env.CALCOM_API_URL,
+    GOOGLE_CALENDAR_CLIENT_ID: process.env.GOOGLE_CALENDAR_CLIENT_ID,
+    GOOGLE_CALENDAR_CLIENT_SECRET: process.env.GOOGLE_CALENDAR_CLIENT_SECRET,
+    GOOGLE_CALENDAR_REFRESH_TOKEN: process.env.GOOGLE_CALENDAR_REFRESH_TOKEN,
+    GOOGLE_PLACES_API_KEY: process.env.GOOGLE_PLACES_API_KEY,
+    GOOGLE_PLACE_ID: process.env.GOOGLE_PLACE_ID,
+    GOOGLE_REVIEW_URL: process.env.GOOGLE_REVIEW_URL,
+    CLOUDINARY_API_KEY: process.env.CLOUDINARY_API_KEY,
+    CLOUDINARY_API_SECRET: process.env.CLOUDINARY_API_SECRET,
     NODE_ENV: process.env.NODE_ENV,
     NEXT_PUBLIC_SANITY_PROJECT_ID: process.env.NEXT_PUBLIC_SANITY_PROJECT_ID,
     NEXT_PUBLIC_SANITY_DATASET: process.env.NEXT_PUBLIC_SANITY_DATASET,
     NEXT_PUBLIC_GOOGLE_PLACE_ID: process.env.NEXT_PUBLIC_GOOGLE_PLACE_ID,
+    NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME: process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME,
   },
   /**
    * Run `build` or `dev` with `SKIP_ENV_VALIDATION` to skip env validation. This is especially
