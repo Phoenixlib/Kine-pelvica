@@ -38,10 +38,17 @@ export default function GaleriaPage() {
   const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "success" | "error">("idle");
   const [saveError, setSaveError] = useState("");
 
+  // Pagination, custom delete modal, and lightbox state
+  const [page, setPage] = useState(1);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [photoToDelete, setPhotoToDelete] = useState<string | null>(null);
+  const [viewingPhoto, setViewingPhoto] = useState<GalleryPhoto | null>(null);
+
   const { uploadFiles, uploading: imageUploading } = useCloudinaryUpload();
 
   const utils = api.useUtils();
-  const { data: photos, isLoading: photosLoading } = api.gallery.getAllAdmin.useQuery();
+  const { data, isLoading: photosLoading } = api.gallery.getAllAdmin.useQuery({ page, limit: 9 });
+  const photos = data?.items || [];
 
   const createPhoto = api.gallery.create.useMutation({
     onSuccess: async () => {
@@ -62,6 +69,8 @@ export default function GaleriaPage() {
   const deletePhoto = api.gallery.delete.useMutation({
     onSuccess: async () => {
       await utils.gallery.getAllAdmin.invalidate();
+      setIsDeleteModalOpen(false);
+      setPhotoToDelete(null);
     }
   });
 
@@ -122,8 +131,13 @@ export default function GaleriaPage() {
   };
 
   const handleDelete = (id: string) => {
-    if (confirm("¿Estás segura de que deseas eliminar este par de imágenes? Se borrarán permanentemente de Cloudinary.")) {
-      deletePhoto.mutate({ id });
+    setPhotoToDelete(id);
+    setIsDeleteModalOpen(true);
+  };
+
+  const confirmDelete = () => {
+    if (photoToDelete) {
+      deletePhoto.mutate({ id: photoToDelete });
     }
   };
 
@@ -173,7 +187,10 @@ export default function GaleriaPage() {
             <div key={photo.id} className="bg-white rounded-3xl border border-cream/30 overflow-hidden shadow-xs flex flex-col justify-between group hover:shadow-md transition">
               
               {/* Image side-by-side view */}
-              <div className="grid grid-cols-2 gap-px bg-cream/20 relative aspect-4/3">
+              <div 
+                onClick={() => setViewingPhoto(photo)}
+                className="grid grid-cols-2 gap-px bg-cream/20 relative aspect-4/3 cursor-pointer group-hover:opacity-95 transition-opacity"
+              >
                 <div className="relative h-full overflow-hidden">
                   <img src={photo.beforeUrl} alt="Antes" className="w-full h-full object-cover" />
                   <span className="absolute bottom-2 left-2 bg-[#0f3f3e]/80 text-white text-[9px] font-subtitle uppercase tracking-widest font-bold px-2 py-0.5 rounded-md">Antes</span>
@@ -235,6 +252,29 @@ export default function GaleriaPage() {
               </div>
             </div>
           ))}
+        </div>
+      )}
+
+      {/* Pagination Controls */}
+      {data && data.totalPages > 1 && (
+        <div className="flex items-center justify-between border-t border-cream/20 pt-6">
+          <button
+            onClick={() => setPage(p => Math.max(1, p - 1))}
+            disabled={page === 1}
+            className="px-4 py-2 border border-cream text-teal rounded-xl font-subtitle text-[10px] uppercase tracking-wider font-bold hover:bg-cream/50 transition disabled:opacity-50"
+          >
+            Anterior
+          </button>
+          <span className="font-body text-xs text-teal/70">
+            Página {page} de {data.totalPages}
+          </span>
+          <button
+            onClick={() => setPage(p => Math.min(data.totalPages, p + 1))}
+            disabled={page >= data.totalPages}
+            className="px-4 py-2 border border-cream text-teal rounded-xl font-subtitle text-[10px] uppercase tracking-wider font-bold hover:bg-cream/50 transition disabled:opacity-50"
+          >
+            Siguiente
+          </button>
         </div>
       )}
 
@@ -368,6 +408,86 @@ export default function GaleriaPage() {
                 </div>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {isDeleteModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-teal/40 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-white rounded-3xl w-full max-w-sm overflow-hidden shadow-2xl animate-in zoom-in-95 duration-200">
+            <div className="p-6 text-center space-y-4">
+              <div className="w-12 h-12 rounded-full bg-redbrown/10 text-redbrown flex items-center justify-center mx-auto">
+                <Trash2 size={24} />
+              </div>
+              <div>
+                <h3 className="font-title text-xl text-teal">¿Eliminar comparación?</h3>
+                <p className="font-body text-sm text-teal/70 mt-2">
+                  Esta acción borrará de forma permanente estas fotos de Cloudinary y de la galería. No se puede deshacer.
+                </p>
+              </div>
+            </div>
+            <div className="p-4 bg-offwhite/50 border-t border-cream flex gap-3">
+              <button
+                onClick={() => {
+                  setIsDeleteModalOpen(false);
+                  setPhotoToDelete(null);
+                }}
+                disabled={deletePhoto.isPending}
+                className="flex-1 px-4 py-2.5 border border-cream text-teal rounded-xl font-subtitle text-[10px] uppercase tracking-wider font-bold hover:bg-cream/50 transition disabled:opacity-50"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={confirmDelete}
+                disabled={deletePhoto.isPending}
+                className="flex-1 px-4 py-2.5 bg-redbrown text-white rounded-xl font-subtitle text-[10px] uppercase tracking-wider font-bold hover:bg-redbrown/90 transition disabled:opacity-50 flex justify-center items-center gap-2"
+              >
+                {deletePhoto.isPending ? (
+                  <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+                ) : (
+                  "Eliminar"
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Lightbox / Expand Modal */}
+      {viewingPhoto && (
+        <div className="fixed inset-0 z-[100] bg-black/95 flex items-center justify-center flex-col p-4 animate-in fade-in duration-200">
+          <button 
+            onClick={() => setViewingPhoto(null)} 
+            className="absolute top-4 right-4 text-white hover:text-white/70 p-2 bg-white/10 hover:bg-white/20 rounded-full transition"
+          >
+            <X size={24} />
+          </button>
+          
+          <div className="w-full max-w-5xl h-full flex flex-col md:flex-row gap-4 items-center justify-center p-4 md:p-8">
+            {/* Antes */}
+            <div className="w-full h-1/2 md:w-1/2 md:h-full relative flex items-center justify-center bg-zinc-900/50 rounded-2xl overflow-hidden border border-white/5">
+              <img 
+                src={viewingPhoto.beforeUrl} 
+                alt="Antes" 
+                className="max-w-full max-h-full object-contain" 
+              />
+              <span className="absolute bottom-4 left-4 bg-black/75 text-white px-3 py-1 rounded-md font-subtitle text-[10px] uppercase tracking-widest font-bold">
+                Antes
+              </span>
+            </div>
+            
+            {/* Después */}
+            <div className="w-full h-1/2 md:w-1/2 md:h-full relative flex items-center justify-center bg-zinc-900/50 rounded-2xl overflow-hidden border border-white/5">
+              <img 
+                src={viewingPhoto.afterUrl} 
+                alt="Después" 
+                className="max-w-full max-h-full object-contain" 
+              />
+              <span className="absolute bottom-4 right-4 bg-terracotta/90 text-white px-3 py-1 rounded-md font-subtitle text-[10px] uppercase tracking-widest font-bold">
+                Después
+              </span>
+            </div>
           </div>
         </div>
       )}

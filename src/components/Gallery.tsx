@@ -1,3 +1,8 @@
+"use client";
+
+import { useState } from "react";
+import { X } from "lucide-react";
+
 interface GalleryPhoto {
   id: string;
   beforeUrl: string;
@@ -10,6 +15,8 @@ interface GalleryProps {
 }
 
 export function Gallery({ photos }: GalleryProps) {
+  const [viewingPhoto, setViewingPhoto] = useState<GalleryPhoto | null>(null);
+
   const fallbackPhotos: GalleryPhoto[] = [
     {
       id: "1",
@@ -32,7 +39,7 @@ export function Gallery({ photos }: GalleryProps) {
   }
 
   return (
-    <section id="galeria" className="py-24 bg-teal">
+    <section id="galeria" className="py-24 bg-teal overflow-hidden">
       <div className="container mx-auto px-4 lg:px-8 max-w-5xl">
         <div className="text-center mb-16">
           <h2 className="text-[11px] font-subtitle font-bold tracking-[0.2em] text-cream uppercase mb-4">Galería</h2>
@@ -42,9 +49,13 @@ export function Gallery({ photos }: GalleryProps) {
           </p>
         </div>
         
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+        <div className="flex overflow-x-auto gap-8 pb-8 snap-x snap-mandatory max-w-full justify-start md:justify-center scrollbar-none [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden px-4 md:px-0">
           {displayPhotos.map((photo) => (
-            <div key={photo.id} className="relative group overflow-hidden rounded-3xl shadow-lg border-[6px] border-white max-w-md mx-auto w-full bg-white">
+            <div 
+              key={photo.id} 
+              onClick={() => setViewingPhoto(photo)}
+              className="flex-shrink-0 snap-center w-[290px] sm:w-[360px] md:w-[440px] relative group overflow-hidden rounded-3xl shadow-lg border-[6px] border-white bg-white cursor-pointer hover:shadow-xl hover:scale-[1.01] transition-all duration-300"
+            >
               
               {/* Image side-by-side view */}
               <div className="grid grid-cols-2 gap-px bg-cream/20 relative aspect-[4/3] w-full">
@@ -72,13 +83,45 @@ export function Gallery({ photos }: GalleryProps) {
             </div>
           ))}
         </div>
-
-        <div className="mt-12 text-center">
-          <a href="#contacto" className="inline-block px-10 py-3.5 border-2 border-cream text-cream rounded-full font-subtitle text-[11px] uppercase tracking-widest font-bold hover:bg-cream hover:text-teal transition-colors shadow-sm">
-            Consultar por tu caso
-          </a>
-        </div>
       </div>
+
+      {/* Lightbox / Expand Modal */}
+      {viewingPhoto && (
+        <div className="fixed inset-0 z-[100] bg-black/95 flex items-center justify-center flex-col p-4 animate-in fade-in duration-200">
+          <button 
+            onClick={() => setViewingPhoto(null)} 
+            className="absolute top-4 right-4 text-white hover:text-white/70 p-2 bg-white/10 hover:bg-white/20 rounded-full transition"
+          >
+            <X size={24} />
+          </button>
+          
+          <div className="w-full max-w-5xl h-full flex flex-col md:flex-row gap-4 items-center justify-center p-4 md:p-8">
+            {/* Antes */}
+            <div className="w-full h-1/2 md:w-1/2 md:h-full relative flex items-center justify-center bg-zinc-900/50 rounded-2xl overflow-hidden border border-white/5">
+              <img 
+                src={viewingPhoto.beforeUrl} 
+                alt="Antes" 
+                className="max-w-full max-h-full object-contain" 
+              />
+              <span className="absolute bottom-4 left-4 bg-black/75 text-white px-3 py-1 rounded-md font-subtitle text-[10px] uppercase tracking-widest font-bold">
+                Antes
+              </span>
+            </div>
+            
+            {/* Después */}
+            <div className="w-full h-1/2 md:w-1/2 md:h-full relative flex items-center justify-center bg-zinc-900/50 rounded-2xl overflow-hidden border border-white/5">
+              <img 
+                src={viewingPhoto.afterUrl} 
+                alt="Después" 
+                className="max-w-full max-h-full object-contain" 
+              />
+              <span className="absolute bottom-4 right-4 bg-terracotta/90 text-white px-3 py-1 rounded-md font-subtitle text-[10px] uppercase tracking-widest font-bold">
+                Después
+              </span>
+            </div>
+          </div>
+        </div>
+      )}
     </section>
   );
 }

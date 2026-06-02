@@ -10,11 +10,29 @@ export const galleryRouter = createTRPCRouter({
     });
   }),
 
-  getAllAdmin: protectedProcedure.query(async ({ ctx }) => {
-    return ctx.db.galleryPhoto.findMany({
-      orderBy: { order: "asc" },
-    });
-  }),
+  getAllAdmin: protectedProcedure
+    .input(
+      z.object({
+        page: z.number().int().default(1),
+        limit: z.number().int().default(10),
+      })
+    )
+    .query(async ({ ctx, input }) => {
+      const skip = (input.page - 1) * input.limit;
+      const [items, total] = await Promise.all([
+        ctx.db.galleryPhoto.findMany({
+          orderBy: { order: "asc" },
+          skip,
+          take: input.limit,
+        }),
+        ctx.db.galleryPhoto.count(),
+      ]);
+      return {
+        items,
+        total,
+        totalPages: Math.ceil(total / input.limit),
+      };
+    }),
 
   create: protectedProcedure
     .input(
