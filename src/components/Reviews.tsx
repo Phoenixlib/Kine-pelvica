@@ -1,4 +1,5 @@
 import { Star, ChevronLeft, ChevronRight } from "lucide-react";
+import { env } from "~/env";
 
 export function Reviews() {
   const reviews = [
@@ -51,7 +52,7 @@ export function Reviews() {
              <p className="text-[10px] text-teal/50 font-bold uppercase tracking-widest text-center mt-2 border-t border-cream/50 pt-4 w-full">
                4.9 | 175 Reseñas Reales
              </p>
-             <a href="#" className="mt-4 border border-teal text-teal px-6 py-2 rounded-full font-subtitle font-bold text-[10px] uppercase tracking-widest hover:bg-teal hover:text-white transition-colors w-full text-center">
+             <a href={env.GOOGLE_REVIEW_URL || "https://search.google.com/local/writereview?placeid=ChIJRbsg_E4VUpERWEsDb_n9txA"} target="_blank" rel="noopener noreferrer" className="mt-4 border border-teal text-teal px-6 py-2 rounded-full font-subtitle font-bold text-[10px] uppercase tracking-widest hover:bg-teal hover:text-white transition-colors w-full text-center">
                Evaluar
              </a>
           </div>

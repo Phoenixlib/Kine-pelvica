@@ -39,19 +39,34 @@ export async function POST(req: Request) {
       const lastName = nameParts.slice(1).join(" ") || "Sin Apellido";
 
       // Find or create patient by email (upsert)
+      const cleanPhone = (phone: string): string => {
+        let clean = phone.replace(/[^\d+]/g, '');
+        if (clean.length === 9 && clean.startsWith('9')) {
+          clean = '+56' + clean;
+        } else if (clean.length === 11 && clean.startsWith('569')) {
+          clean = '+' + clean;
+        } else if (clean.length === 8) {
+          clean = '+569' + clean;
+        }
+        if (/^\+569\d{8}$/.test(clean)) return clean;
+        if (/^\+\d{10,15}$/.test(clean)) return clean;
+        return clean || "+56900000000";
+      };
+
+      const patientPhone = attendee.phone ? cleanPhone(attendee.phone) : "+56900000000";
+
       const patient = await db.patient.upsert({
         where: { email: attendee.email },
         update: { 
           firstName,
           lastName,
-          phone: attendee.phone || null,
+          phone: patientPhone,
         },
         create: {
           firstName,
           lastName,
           email: attendee.email,
-          phone: attendee.phone || null,
-          status: "ACTIVE",
+          phone: patientPhone,
         },
       });
 

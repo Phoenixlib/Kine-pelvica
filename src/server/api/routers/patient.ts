@@ -1,6 +1,30 @@
 import { z } from "zod";
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
 
+// --- Helpers de Validación ---
+const formatPhone = (phone: string): string | null => {
+  let cleanPhone = phone.replace(/[^\d+]/g, '');
+  
+  if (cleanPhone.length === 9 && cleanPhone.startsWith('9')) {
+    cleanPhone = '+56' + cleanPhone;
+  } else if (cleanPhone.length === 11 && cleanPhone.startsWith('569')) {
+    cleanPhone = '+' + cleanPhone;
+  } else if (cleanPhone.length === 8) {
+     cleanPhone = '+569' + cleanPhone;
+  }
+  
+  if (/^\+569\d{8}$/.test(cleanPhone)) return cleanPhone;
+  if (/^\+\d{10,15}$/.test(cleanPhone)) return cleanPhone;
+  
+  return null;
+};
+
+const phoneSchema = z.string()
+  .min(1, "El teléfono es requerido")
+  .refine(val => formatPhone(val) !== null, { message: "Formato de teléfono inválido" })
+  .transform(val => formatPhone(val)!);
+// -----------------------------
+
 export const patientRouter = createTRPCRouter({
   getAll: protectedProcedure
     .input(
@@ -23,7 +47,6 @@ export const patientRouter = createTRPCRouter({
           { lastName: { contains: input.searchQuery, mode: "insensitive" } },
           { email: { contains: input.searchQuery, mode: "insensitive" } },
           { phone: { contains: input.searchQuery, mode: "insensitive" } },
-          { rut: { contains: input.searchQuery, mode: "insensitive" } },
         ];
       }
 
@@ -60,7 +83,6 @@ export const patientRouter = createTRPCRouter({
 
   getLookupList: protectedProcedure.query(async ({ ctx }) => {
     return ctx.db.patient.findMany({
-      where: { status: "ACTIVE" },
       select: {
         id: true,
         firstName: true,
@@ -89,14 +111,11 @@ export const patientRouter = createTRPCRouter({
   create: protectedProcedure
     .input(
       z.object({
-        firstName: z.string().min(1),
-        lastName: z.string().min(1),
-        email: z.string().email().optional().or(z.literal("")),
-        phone: z.string().optional(),
-        rut: z.string().optional(),
-        birthDate: z.date().optional(),
+        firstName: z.string().min(1, "El nombre es requerido"),
+        lastName: z.string().min(1, "El apellido es requerido"),
+        email: z.string().email("Email inválido").optional().or(z.literal("")),
+        phone: phoneSchema,
         notes: z.string().optional(),
-        status: z.enum(["ACTIVE", "INACTIVE"]).default("ACTIVE"),
       })
     )
     .mutation(async ({ ctx, input }) => {
@@ -105,11 +124,8 @@ export const patientRouter = createTRPCRouter({
           firstName: input.firstName,
           lastName: input.lastName,
           email: input.email || null,
-          phone: input.phone || null,
-          rut: input.rut || null,
-          birthDate: input.birthDate || null,
+          phone: input.phone,
           notes: input.notes || null,
-          status: input.status,
         },
       });
     }),
@@ -118,14 +134,11 @@ export const patientRouter = createTRPCRouter({
     .input(
       z.object({
         id: z.string(),
-        firstName: z.string().min(1),
-        lastName: z.string().min(1),
-        email: z.string().email().optional().or(z.literal("")),
-        phone: z.string().optional(),
-        rut: z.string().optional(),
-        birthDate: z.date().optional(),
+        firstName: z.string().min(1, "El nombre es requerido"),
+        lastName: z.string().min(1, "El apellido es requerido"),
+        email: z.string().email("Email inválido").optional().or(z.literal("")),
+        phone: phoneSchema,
         notes: z.string().optional(),
-        status: z.enum(["ACTIVE", "INACTIVE"]),
       })
     )
     .mutation(async ({ ctx, input }) => {
@@ -135,11 +148,8 @@ export const patientRouter = createTRPCRouter({
           firstName: input.firstName,
           lastName: input.lastName,
           email: input.email || null,
-          phone: input.phone || null,
-          rut: input.rut || null,
-          birthDate: input.birthDate || null,
+          phone: input.phone,
           notes: input.notes || null,
-          status: input.status,
         },
       });
     }),

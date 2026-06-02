@@ -19,11 +19,8 @@ interface Patient {
   firstName: string;
   lastName: string;
   email: string | null;
-  phone: string | null;
-  rut: string | null;
-  birthDate: Date | null;
+  phone: string;
   notes: string | null;
-  status: "ACTIVE" | "INACTIVE";
   appointments: Array<{
     id: string;
     date: Date | string;
@@ -58,9 +55,8 @@ export default function PacientesPage() {
   const [addLastName, setAddLastName] = useState("");
   const [addEmail, setAddEmail] = useState("");
   const [addPhone, setAddPhone] = useState("");
-  const [addRut, setAddRut] = useState("");
-  const [addBirthDate, setAddBirthDate] = useState("");
   const [addNotes, setAddNotes] = useState("");
+  const [addErrors, setAddErrors] = useState<Record<string, string>>({});
 
   // Clinical File view/edit state
   const [selectedPatient, setSelectedPatient] = useState<SelectedPatient | null>(null);
@@ -75,10 +71,12 @@ export default function PacientesPage() {
   const [editLastName, setEditLastName] = useState("");
   const [editEmail, setEditEmail] = useState("");
   const [editPhone, setEditPhone] = useState("");
-  const [editRut, setEditRut] = useState("");
-  const [editBirthDate, setEditBirthDate] = useState("");
-  const [editStatus, setEditStatus] = useState<"ACTIVE" | "INACTIVE">("ACTIVE");
+  const [editErrors, setEditErrors] = useState<Record<string, string>>({});
   const [debouncedSearchQuery, setDebouncedSearchQuery] = useState("");
+  
+  // Delete modal state
+  const [patientToDelete, setPatientToDelete] = useState<string | null>(null);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [page, setPage] = useState(1);
 
   // Debounce search query
@@ -100,22 +98,52 @@ export default function PacientesPage() {
   const patientsList = patientData?.patients || [];
   const totalPages = patientData?.totalPages || 1;
 
+  const parseErrors = (err: any) => {
+    try {
+      const parsed = JSON.parse(err.message);
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        const errors: Record<string, string> = {};
+        parsed.forEach((e: any) => {
+          if (e.path && e.path.length > 0) {
+            errors[e.path[0]] = e.message;
+          }
+        });
+        return errors;
+      }
+    } catch (e) {}
+    return { global: err.message };
+  };
+
   const createPatientMutation = api.patient.create.useMutation({
     onSuccess: async () => {
       await utils.patient.getAll.invalidate();
       setIsAddModalOpen(false);
       resetAddForm();
+      setAddErrors({});
+    },
+    onError: (err) => {
+      setAddErrors(parseErrors(err));
     }
   });
 
   const updatePatientMutation = api.patient.update.useMutation({
-    onSuccess: async () => {
+    onSuccess: async (data, variables) => {
       await utils.patient.getAll.invalidate();
       setIsEditProfileModalOpen(false);
-      if (editingPatient && selectedPatient?.id === editingPatient.id) {
+      setEditErrors({});
+      if (selectedPatient?.id === variables.id) {
         // Update selected patient cache if open
-        const updated = await utils.patient.getById.fetch({ id: editingPatient.id });
+        await utils.patient.getById.invalidate({ id: variables.id });
+        const updated = await utils.patient.getById.fetch({ id: variables.id });
         setSelectedPatient(updated as SelectedPatient);
+      }
+    },
+    onError: (err) => {
+      const errors = parseErrors(err);
+      setEditErrors(errors);
+      // For clinical notes editing
+      if (isEditingNotes) {
+        alert(errors.global || "Ocurrió un error al guardar las notas.");
       }
     }
   });
@@ -123,6 +151,8 @@ export default function PacientesPage() {
   const deletePatientMutation = api.patient.delete.useMutation({
     onSuccess: async () => {
       await utils.patient.getAll.invalidate();
+      setIsDeleteModalOpen(false);
+      setPatientToDelete(null);
     }
   });
 
@@ -131,24 +161,21 @@ export default function PacientesPage() {
     setAddLastName("");
     setAddEmail("");
     setAddPhone("");
-    setAddRut("");
-    setAddBirthDate("");
     setAddNotes("");
+    setAddErrors({});
   };
 
   const handleAddSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!addFirstName || !addLastName) return;
+    if (!addFirstName || !addLastName || !addPhone) return;
+    setAddErrors({});
 
     createPatientMutation.mutate({
       firstName: addFirstName,
       lastName: addLastName,
-      email: addEmail,
+      email: addEmail || undefined,
       phone: addPhone,
-      rut: addRut,
-      birthDate: addBirthDate ? new Date(addBirthDate) : undefined,
       notes: addNotes,
-      status: "ACTIVE",
     });
   };
 
@@ -158,26 +185,21 @@ export default function PacientesPage() {
     setEditLastName(patient.lastName);
     setEditEmail(patient.email || "");
     setEditPhone(patient.phone || "");
-    setEditRut(patient.rut || "");
-    setEditBirthDate(patient.birthDate ? (new Date(patient.birthDate).toISOString().split('T')[0] ?? "") : "");
-    setEditStatus(patient.status || "ACTIVE");
     setIsEditProfileModalOpen(true);
   };
 
   const handleEditProfileSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!editingPatient || !editFirstName || !editLastName) return;
+    if (!editingPatient || !editFirstName || !editLastName || !editPhone) return;
+    setEditErrors({});
 
     updatePatientMutation.mutate({
       id: editingPatient.id,
       firstName: editFirstName,
       lastName: editLastName,
-      email: editEmail,
+      email: editEmail || undefined,
       phone: editPhone,
-      rut: editRut,
-      birthDate: editBirthDate ? new Date(editBirthDate) : undefined,
       notes: editingPatient.notes ?? undefined,
-      status: editStatus,
     });
   };
 
@@ -200,12 +222,9 @@ export default function PacientesPage() {
       id: selectedPatient.id,
       firstName: selectedPatient.firstName,
       lastName: selectedPatient.lastName,
-      email: selectedPatient.email || "",
-      phone: selectedPatient.phone || "",
-      rut: selectedPatient.rut || "",
-      birthDate: selectedPatient.birthDate ? new Date(selectedPatient.birthDate) : undefined,
+      email: selectedPatient.email || undefined,
+      phone: selectedPatient.phone,
       notes: clinicalNotes,
-      status: selectedPatient.status as any,
     }, {
       onSuccess: () => {
         setIsEditingNotes(false);
@@ -214,8 +233,13 @@ export default function PacientesPage() {
   };
 
   const handleDeleteClick = (id: string) => {
-    if (confirm("¿Estás segura de que deseas eliminar este paciente? Esta acción borrará de forma permanente su ficha clínica e historial de citas.")) {
-      deletePatientMutation.mutate({ id });
+    setPatientToDelete(id);
+    setIsDeleteModalOpen(true);
+  };
+
+  const confirmDelete = () => {
+    if (patientToDelete) {
+      deletePatientMutation.mutate({ id: patientToDelete });
     }
   };
 
@@ -246,7 +270,7 @@ export default function PacientesPage() {
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-teal/30 w-4 h-4" />
           <input
             type="text"
-            placeholder="Buscar por nombre, correo, RUT..."
+            placeholder="Buscar por nombre, correo o teléfono..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="w-full pl-10 pr-4 py-2.5 bg-offwhite border border-cream rounded-xl font-body text-xs text-teal focus:outline-none focus:border-terracotta focus:ring-1 focus:ring-terracotta transition-colors placeholder:text-teal/30"
@@ -261,9 +285,8 @@ export default function PacientesPage() {
             <thead className="bg-[#f7f3ef] font-subtitle uppercase tracking-widest text-[9px] font-bold text-teal/65 border-b border-cream/30">
               <tr>
                 <th className="px-6 py-4">Nombre</th>
-                <th className="px-6 py-4">Contacto</th>
-                <th className="px-6 py-4">RUT</th>
-                <th className="px-6 py-4">Estado</th>
+                <th className="px-6 py-4">Correo</th>
+                <th className="px-6 py-4">Teléfono</th>
                 <th className="px-6 py-4">Última Visita</th>
                 <th className="px-6 py-4 text-right">Ficha Clínica / Acciones</th>
               </tr>
@@ -271,14 +294,14 @@ export default function PacientesPage() {
             <tbody className="divide-y divide-cream/10">
               {patientsLoading ? (
                 <tr>
-                  <td colSpan={6} className="px-6 py-12 text-center text-teal/40 font-medium">
+                  <td colSpan={5} className="px-6 py-12 text-center text-teal/40 font-medium">
                     <div className="w-6 h-6 border-2 border-cream border-t-terracotta rounded-full animate-spin mx-auto mb-2"></div>
                     Cargando pacientes...
                   </td>
                 </tr>
               ) : filteredPatients.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="px-6 py-12 text-center text-teal/50 font-medium">
+                  <td colSpan={5} className="px-6 py-12 text-center text-teal/50 font-medium">
                     No se encontraron pacientes registrados.
                   </td>
                 </tr>
@@ -292,21 +315,11 @@ export default function PacientesPage() {
                       <td className="px-6 py-4 font-subtitle font-bold text-teal">
                         {patient.firstName} {patient.lastName}
                       </td>
-                      <td className="px-6 py-4">
-                        <div className="flex flex-col gap-0.5">
-                          {patient.email && <span className="flex items-center gap-1 text-[10px] text-teal/70"><Mail size={10} /> {patient.email}</span>}
-                          {patient.phone && <span className="flex items-center gap-1 text-[10px] text-teal/60"><Phone size={10} /> {patient.phone}</span>}
-                        </div>
+                      <td className="px-6 py-4 text-teal/80">
+                        {patient.email || "—"}
                       </td>
-                      <td className="px-6 py-4 font-semibold text-teal/80">{patient.rut || "—"}</td>
-                      <td className="px-6 py-4">
-                        <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-subtitle font-bold uppercase tracking-wider ${
-                          patient.status === "ACTIVE"
-                            ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
-                            : "bg-redbrown/10 text-redbrown border border-redbrown/20"
-                        }`}>
-                          {patient.status === "ACTIVE" ? "Activo" : "Inactivo"}
-                        </span>
+                      <td className="px-6 py-4 font-semibold text-teal/80">
+                        {patient.phone}
                       </td>
                       <td className="px-6 py-4">
                         <span className="font-semibold block">{lastVisitDate ? lastVisitDate.toLocaleDateString("es-CL") : "Nunca"}</span>
@@ -367,15 +380,7 @@ export default function PacientesPage() {
                     <h3 className="font-subtitle font-bold text-teal text-sm">
                       {patient.firstName} {patient.lastName}
                     </h3>
-                    {patient.rut && <p className="text-[11px] text-teal/60 font-semibold mt-0.5">RUT: {patient.rut}</p>}
                   </div>
-                  <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-subtitle font-bold uppercase tracking-wider ${
-                    patient.status === "ACTIVE"
-                      ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
-                      : "bg-redbrown/10 text-redbrown border border-redbrown/20"
-                  }`}>
-                    {patient.status === "ACTIVE" ? "Activo" : "Inactivo"}
-                  </span>
                 </div>
 
                 <div className="space-y-1.5 pt-1 border-t border-cream/10 text-xs">
@@ -467,10 +472,11 @@ export default function PacientesPage() {
                     type="text"
                     required
                     value={addFirstName}
-                    onChange={(e) => setAddFirstName(e.target.value)}
+                    onChange={(e) => { setAddFirstName(e.target.value); setAddErrors(prev => ({...prev, firstName: ""})); }}
                     placeholder="Ej: Camila"
-                    className="w-full px-4 py-3 bg-white border border-cream rounded-xl font-body text-sm text-teal focus:outline-none focus:border-terracotta"
+                    className={`w-full px-4 py-3 bg-white border ${addErrors.firstName ? 'border-redbrown/50 bg-redbrown/5' : 'border-cream'} rounded-xl font-body text-sm text-teal focus:outline-none focus:border-terracotta`}
                   />
+                  {addErrors.firstName && <p className="text-redbrown text-[10px] font-semibold mt-1">{addErrors.firstName}</p>}
                 </div>
                 <div className="space-y-1.5">
                   <label className="font-subtitle text-[10px] tracking-wider uppercase font-bold text-teal block">Apellidos *</label>
@@ -478,45 +484,25 @@ export default function PacientesPage() {
                     type="text"
                     required
                     value={addLastName}
-                    onChange={(e) => setAddLastName(e.target.value)}
+                    onChange={(e) => { setAddLastName(e.target.value); setAddErrors(prev => ({...prev, lastName: ""})); }}
                     placeholder="Ej: Ortiz"
-                    className="w-full px-4 py-3 bg-white border border-cream rounded-xl font-body text-sm text-teal focus:outline-none focus:border-terracotta"
+                    className={`w-full px-4 py-3 bg-white border ${addErrors.lastName ? 'border-redbrown/50 bg-redbrown/5' : 'border-cream'} rounded-xl font-body text-sm text-teal focus:outline-none focus:border-terracotta`}
                   />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-1.5">
-                  <label className="font-subtitle text-[10px] tracking-wider uppercase font-bold text-teal block">RUT</label>
-                  <input
-                    type="text"
-                    value={addRut}
-                    onChange={(e) => setAddRut(e.target.value)}
-                    placeholder="12.345.678-9"
-                    className="w-full px-4 py-3 bg-white border border-cream rounded-xl font-body text-sm text-teal focus:outline-none focus:border-terracotta"
-                  />
-                </div>
-                
-                <div className="space-y-1.5">
-                  <label className="font-subtitle text-[10px] tracking-wider uppercase font-bold text-teal block">F. Nacimiento</label>
-                  <input
-                    type="date"
-                    value={addBirthDate}
-                    onChange={(e) => setAddBirthDate(e.target.value)}
-                    className="w-full px-4 py-3 bg-white border border-cream rounded-xl font-body text-sm text-teal focus:outline-none focus:border-terracotta"
-                  />
+                  {addErrors.lastName && <p className="text-redbrown text-[10px] font-semibold mt-1">{addErrors.lastName}</p>}
                 </div>
               </div>
 
               <div className="space-y-1.5">
-                <label className="font-subtitle text-[10px] tracking-wider uppercase font-bold text-teal block">Teléfono</label>
+                <label className="font-subtitle text-[10px] tracking-wider uppercase font-bold text-teal block">Teléfono *</label>
                 <input
                   type="tel"
+                  required
                   value={addPhone}
-                  onChange={(e) => setAddPhone(e.target.value)}
+                  onChange={(e) => { setAddPhone(e.target.value); setAddErrors(prev => ({...prev, phone: ""})); }}
                   placeholder="+56 9 1234 5678"
-                  className="w-full px-4 py-3 bg-white border border-cream rounded-xl font-body text-sm text-teal focus:outline-none focus:border-terracotta"
+                  className={`w-full px-4 py-3 bg-white border ${addErrors.phone ? 'border-redbrown/50 bg-redbrown/5' : 'border-cream'} rounded-xl font-body text-sm text-teal focus:outline-none focus:border-terracotta`}
                 />
+                {addErrors.phone && <p className="text-redbrown text-[10px] font-semibold mt-1">{addErrors.phone}</p>}
               </div>
 
               <div className="space-y-1.5">
@@ -524,22 +510,30 @@ export default function PacientesPage() {
                 <input
                   type="email"
                   value={addEmail}
-                  onChange={(e) => setAddEmail(e.target.value)}
+                  onChange={(e) => { setAddEmail(e.target.value); setAddErrors(prev => ({...prev, email: ""})); }}
                   placeholder="correo@ejemplo.com"
-                  className="w-full px-4 py-3 bg-white border border-cream rounded-xl font-body text-sm text-teal focus:outline-none focus:border-terracotta"
+                  className={`w-full px-4 py-3 bg-white border ${addErrors.email ? 'border-redbrown/50 bg-redbrown/5' : 'border-cream'} rounded-xl font-body text-sm text-teal focus:outline-none focus:border-terracotta`}
                 />
+                {addErrors.email && <p className="text-redbrown text-[10px] font-semibold mt-1">{addErrors.email}</p>}
               </div>
 
               <div className="space-y-1.5">
                 <label className="font-subtitle text-[10px] tracking-wider uppercase font-bold text-teal block">Notas / Observaciones Iniciales</label>
                 <textarea
                   value={addNotes}
-                  onChange={(e) => setAddNotes(e.target.value)}
+                  onChange={(e) => { setAddNotes(e.target.value); setAddErrors(prev => ({...prev, notes: ""})); }}
                   placeholder="Antecedentes médicos relevantes, cirugías previas, uroginecología..."
                   rows={3}
-                  className="w-full px-4 py-3 bg-white border border-cream rounded-xl font-body text-sm text-teal focus:outline-none focus:border-terracotta resize-none"
+                  className={`w-full px-4 py-3 bg-white border ${addErrors.notes ? 'border-redbrown/50 bg-redbrown/5' : 'border-cream'} rounded-xl font-body text-sm text-teal focus:outline-none focus:border-terracotta resize-none`}
                 />
+                {addErrors.notes && <p className="text-redbrown text-[10px] font-semibold mt-1">{addErrors.notes}</p>}
               </div>
+
+              {addErrors.global && (
+                <div className="p-3 bg-redbrown/10 border border-redbrown/20 rounded-xl text-redbrown text-xs font-semibold">
+                  {addErrors.global}
+                </div>
+              )}
 
               <div className="pt-4 flex gap-3">
                 <button
@@ -581,9 +575,10 @@ export default function PacientesPage() {
                     type="text"
                     required
                     value={editFirstName}
-                    onChange={(e) => setEditFirstName(e.target.value)}
-                    className="w-full px-4 py-3 bg-white border border-cream rounded-xl font-body text-sm text-teal focus:outline-none focus:border-terracotta"
+                    onChange={(e) => { setEditFirstName(e.target.value); setEditErrors(prev => ({...prev, firstName: ""})); }}
+                    className={`w-full px-4 py-3 bg-white border ${editErrors.firstName ? 'border-redbrown/50 bg-redbrown/5' : 'border-cream'} rounded-xl font-body text-sm text-teal focus:outline-none focus:border-terracotta`}
                   />
+                  {editErrors.firstName && <p className="text-redbrown text-[10px] font-semibold mt-1">{editErrors.firstName}</p>}
                 </div>
                 <div className="space-y-1.5">
                   <label className="font-subtitle text-[10px] tracking-wider uppercase font-bold text-teal block">Apellidos *</label>
@@ -591,42 +586,23 @@ export default function PacientesPage() {
                     type="text"
                     required
                     value={editLastName}
-                    onChange={(e) => setEditLastName(e.target.value)}
-                    className="w-full px-4 py-3 bg-white border border-cream rounded-xl font-body text-sm text-teal focus:outline-none focus:border-terracotta"
+                    onChange={(e) => { setEditLastName(e.target.value); setEditErrors(prev => ({...prev, lastName: ""})); }}
+                    className={`w-full px-4 py-3 bg-white border ${editErrors.lastName ? 'border-redbrown/50 bg-redbrown/5' : 'border-cream'} rounded-xl font-body text-sm text-teal focus:outline-none focus:border-terracotta`}
                   />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-1.5">
-                  <label className="font-subtitle text-[10px] tracking-wider uppercase font-bold text-teal block">RUT</label>
-                  <input
-                    type="text"
-                    value={editRut}
-                    onChange={(e) => setEditRut(e.target.value)}
-                    className="w-full px-4 py-3 bg-white border border-cream rounded-xl font-body text-sm text-teal focus:outline-none focus:border-terracotta"
-                  />
-                </div>
-                
-                <div className="space-y-1.5">
-                  <label className="font-subtitle text-[10px] tracking-wider uppercase font-bold text-teal block">F. Nacimiento</label>
-                  <input
-                    type="date"
-                    value={editBirthDate}
-                    onChange={(e) => setEditBirthDate(e.target.value)}
-                    className="w-full px-4 py-3 bg-white border border-cream rounded-xl font-body text-sm text-teal focus:outline-none focus:border-terracotta"
-                  />
+                  {editErrors.lastName && <p className="text-redbrown text-[10px] font-semibold mt-1">{editErrors.lastName}</p>}
                 </div>
               </div>
 
               <div className="space-y-1.5">
-                <label className="font-subtitle text-[10px] tracking-wider uppercase font-bold text-teal block">Teléfono</label>
+                <label className="font-subtitle text-[10px] tracking-wider uppercase font-bold text-teal block">Teléfono *</label>
                 <input
                   type="tel"
+                  required
                   value={editPhone}
-                  onChange={(e) => setEditPhone(e.target.value)}
-                  className="w-full px-4 py-3 bg-white border border-cream rounded-xl font-body text-sm text-teal focus:outline-none focus:border-terracotta"
+                  onChange={(e) => { setEditPhone(e.target.value); setEditErrors(prev => ({...prev, phone: ""})); }}
+                  className={`w-full px-4 py-3 bg-white border ${editErrors.phone ? 'border-redbrown/50 bg-redbrown/5' : 'border-cream'} rounded-xl font-body text-sm text-teal focus:outline-none focus:border-terracotta`}
                 />
+                {editErrors.phone && <p className="text-redbrown text-[10px] font-semibold mt-1">{editErrors.phone}</p>}
               </div>
 
               <div className="space-y-1.5">
@@ -634,22 +610,17 @@ export default function PacientesPage() {
                 <input
                   type="email"
                   value={editEmail}
-                  onChange={(e) => setEditEmail(e.target.value)}
-                  className="w-full px-4 py-3 bg-white border border-cream rounded-xl font-body text-sm text-teal focus:outline-none focus:border-terracotta"
+                  onChange={(e) => { setEditEmail(e.target.value); setEditErrors(prev => ({...prev, email: ""})); }}
+                  className={`w-full px-4 py-3 bg-white border ${editErrors.email ? 'border-redbrown/50 bg-redbrown/5' : 'border-cream'} rounded-xl font-body text-sm text-teal focus:outline-none focus:border-terracotta`}
                 />
+                {editErrors.email && <p className="text-redbrown text-[10px] font-semibold mt-1">{editErrors.email}</p>}
               </div>
 
-              <div className="space-y-1.5">
-                <label className="font-subtitle text-[10px] tracking-wider uppercase font-bold text-teal block">Estado del Paciente</label>
-                <select
-                  value={editStatus}
-                  onChange={(e) => setEditStatus(e.target.value as any)}
-                  className="w-full px-4 py-3 bg-white border border-cream rounded-xl font-body text-sm text-teal focus:outline-none focus:border-terracotta"
-                >
-                  <option value="ACTIVE">Activo</option>
-                  <option value="INACTIVE">Inactivo</option>
-                </select>
-              </div>
+              {editErrors.global && (
+                <div className="p-3 bg-redbrown/10 border border-redbrown/20 rounded-xl text-redbrown text-xs font-semibold">
+                  {editErrors.global}
+                </div>
+              )}
 
               <div className="pt-4 flex gap-3">
                 <button
@@ -682,7 +653,6 @@ export default function PacientesPage() {
                 <FileText className="text-terracotta" size={22} />
                 <div>
                   <h3 className="font-title text-xl text-teal font-bold">Ficha Clínica: {selectedPatient.firstName} {selectedPatient.lastName}</h3>
-                  {selectedPatient.rut && <p className="font-body text-[10px] text-teal/60">RUT: {selectedPatient.rut}</p>}
                 </div>
               </div>
               <button onClick={() => setIsClinicalModalOpen(false)} className="p-1.5 hover:bg-offwhite rounded-xl text-teal/50">
@@ -784,6 +754,47 @@ export default function PacientesPage() {
                   )}
                 </div>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* Delete Confirmation Modal */}
+      {isDeleteModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-teal/40 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-white rounded-3xl w-full max-w-sm overflow-hidden shadow-2xl animate-in zoom-in-95 duration-200">
+            <div className="p-6 text-center space-y-4">
+              <div className="w-12 h-12 rounded-full bg-redbrown/10 text-redbrown flex items-center justify-center mx-auto">
+                <Trash2 size={24} />
+              </div>
+              <div>
+                <h3 className="font-title text-xl text-teal">¿Eliminar paciente?</h3>
+                <p className="font-body text-sm text-teal/70 mt-2">
+                  Esta acción borrará de forma permanente su ficha clínica e historial de citas. No se puede deshacer.
+                </p>
+              </div>
+            </div>
+            <div className="p-4 bg-offwhite/50 border-t border-cream flex gap-3">
+              <button
+                onClick={() => {
+                  setIsDeleteModalOpen(false);
+                  setPatientToDelete(null);
+                }}
+                disabled={deletePatientMutation.isPending}
+                className="flex-1 px-4 py-2.5 border border-cream text-teal rounded-xl font-subtitle text-[10px] uppercase tracking-wider font-bold hover:bg-cream/50 transition disabled:opacity-50"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={confirmDelete}
+                disabled={deletePatientMutation.isPending}
+                className="flex-1 px-4 py-2.5 bg-redbrown text-white rounded-xl font-subtitle text-[10px] uppercase tracking-wider font-bold hover:bg-redbrown/90 transition disabled:opacity-50 flex justify-center items-center gap-2"
+              >
+                {deletePatientMutation.isPending ? (
+                  <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+                ) : (
+                  "Eliminar"
+                )}
+              </button>
             </div>
           </div>
         </div>

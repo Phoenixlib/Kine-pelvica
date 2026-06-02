@@ -24,8 +24,7 @@ interface Patient {
   firstName: string;
   lastName: string;
   email: string | null;
-  phone: string | null;
-  rut: string | null;
+  phone: string;
 }
 
 interface Service {

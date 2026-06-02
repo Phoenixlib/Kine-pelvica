@@ -58,15 +58,7 @@ export type SiteConfig = $Result.DefaultSelection<Prisma.$SiteConfigPayload>
  * Enums
  */
 export namespace $Enums {
-  export const PatientStatus: {
-  ACTIVE: 'ACTIVE',
-  INACTIVE: 'INACTIVE'
-};
-
-export type PatientStatus = (typeof PatientStatus)[keyof typeof PatientStatus]
-
-
-export const AppointmentStatus: {
+  export const AppointmentStatus: {
   BOOKED: 'BOOKED',
   CASH_PENDING: 'CASH_PENDING',
   TRANSFERRED: 'TRANSFERRED',
@@ -95,10 +87,6 @@ export const TestimonialStatus: {
 export type TestimonialStatus = (typeof TestimonialStatus)[keyof typeof TestimonialStatus]
 
 }
-
-export type PatientStatus = $Enums.PatientStatus
-
-export const PatientStatus: typeof $Enums.PatientStatus
 
 export type AppointmentStatus = $Enums.AppointmentStatus
 
@@ -2672,10 +2660,7 @@ export namespace Prisma {
     lastName: string | null
     email: string | null
     phone: string | null
-    rut: string | null
-    birthDate: Date | null
     notes: string | null
-    status: $Enums.PatientStatus | null
     createdAt: Date | null
     updatedAt: Date | null
   }
@@ -2686,10 +2671,7 @@ export namespace Prisma {
     lastName: string | null
     email: string | null
     phone: string | null
-    rut: string | null
-    birthDate: Date | null
     notes: string | null
-    status: $Enums.PatientStatus | null
     createdAt: Date | null
     updatedAt: Date | null
   }
@@ -2700,10 +2682,7 @@ export namespace Prisma {
     lastName: number
     email: number
     phone: number
-    rut: number
-    birthDate: number
     notes: number
-    status: number
     createdAt: number
     updatedAt: number
     _all: number
@@ -2716,10 +2695,7 @@ export namespace Prisma {
     lastName?: true
     email?: true
     phone?: true
-    rut?: true
-    birthDate?: true
     notes?: true
-    status?: true
     createdAt?: true
     updatedAt?: true
   }
@@ -2730,10 +2706,7 @@ export namespace Prisma {
     lastName?: true
     email?: true
     phone?: true
-    rut?: true
-    birthDate?: true
     notes?: true
-    status?: true
     createdAt?: true
     updatedAt?: true
   }
@@ -2744,10 +2717,7 @@ export namespace Prisma {
     lastName?: true
     email?: true
     phone?: true
-    rut?: true
-    birthDate?: true
     notes?: true
-    status?: true
     createdAt?: true
     updatedAt?: true
     _all?: true
@@ -2830,11 +2800,8 @@ export namespace Prisma {
     firstName: string
     lastName: string
     email: string | null
-    phone: string | null
-    rut: string | null
-    birthDate: Date | null
+    phone: string
     notes: string | null
-    status: $Enums.PatientStatus
     createdAt: Date
     updatedAt: Date
     _count: PatientCountAggregateOutputType | null
@@ -2862,10 +2829,7 @@ export namespace Prisma {
     lastName?: boolean
     email?: boolean
     phone?: boolean
-    rut?: boolean
-    birthDate?: boolean
     notes?: boolean
-    status?: boolean
     createdAt?: boolean
     updatedAt?: boolean
     appointments?: boolean | Patient$appointmentsArgs<ExtArgs>
@@ -2878,10 +2842,7 @@ export namespace Prisma {
     lastName?: boolean
     email?: boolean
     phone?: boolean
-    rut?: boolean
-    birthDate?: boolean
     notes?: boolean
-    status?: boolean
     createdAt?: boolean
     updatedAt?: boolean
   }, ExtArgs["result"]["patient"]>
@@ -2892,10 +2853,7 @@ export namespace Prisma {
     lastName?: boolean
     email?: boolean
     phone?: boolean
-    rut?: boolean
-    birthDate?: boolean
     notes?: boolean
-    status?: boolean
     createdAt?: boolean
     updatedAt?: boolean
   }, ExtArgs["result"]["patient"]>
@@ -2906,15 +2864,12 @@ export namespace Prisma {
     lastName?: boolean
     email?: boolean
     phone?: boolean
-    rut?: boolean
-    birthDate?: boolean
     notes?: boolean
-    status?: boolean
     createdAt?: boolean
     updatedAt?: boolean
   }
 
-  export type PatientOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "firstName" | "lastName" | "email" | "phone" | "rut" | "birthDate" | "notes" | "status" | "createdAt" | "updatedAt", ExtArgs["result"]["patient"]>
+  export type PatientOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "firstName" | "lastName" | "email" | "phone" | "notes" | "createdAt" | "updatedAt", ExtArgs["result"]["patient"]>
   export type PatientInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     appointments?: boolean | Patient$appointmentsArgs<ExtArgs>
     _count?: boolean | PatientCountOutputTypeDefaultArgs<ExtArgs>
@@ -2932,11 +2887,8 @@ export namespace Prisma {
       firstName: string
       lastName: string
       email: string | null
-      phone: string | null
-      rut: string | null
-      birthDate: Date | null
+      phone: string
       notes: string | null
-      status: $Enums.PatientStatus
       createdAt: Date
       updatedAt: Date
     }, ExtArgs["result"]["patient"]>
@@ -3368,10 +3320,7 @@ export namespace Prisma {
     readonly lastName: FieldRef<"Patient", 'String'>
     readonly email: FieldRef<"Patient", 'String'>
     readonly phone: FieldRef<"Patient", 'String'>
-    readonly rut: FieldRef<"Patient", 'String'>
-    readonly birthDate: FieldRef<"Patient", 'DateTime'>
     readonly notes: FieldRef<"Patient", 'String'>
-    readonly status: FieldRef<"Patient", 'PatientStatus'>
     readonly createdAt: FieldRef<"Patient", 'DateTime'>
     readonly updatedAt: FieldRef<"Patient", 'DateTime'>
   }
@@ -10439,10 +10388,7 @@ export namespace Prisma {
     lastName: 'lastName',
     email: 'email',
     phone: 'phone',
-    rut: 'rut',
-    birthDate: 'birthDate',
     notes: 'notes',
-    status: 'status',
     createdAt: 'createdAt',
     updatedAt: 'updatedAt'
   };
@@ -10586,20 +10532,6 @@ export namespace Prisma {
    * Reference to a field of type 'DateTime[]'
    */
   export type ListDateTimeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'DateTime[]'>
-    
-
-
-  /**
-   * Reference to a field of type 'PatientStatus'
-   */
-  export type EnumPatientStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'PatientStatus'>
-    
-
-
-  /**
-   * Reference to a field of type 'PatientStatus[]'
-   */
-  export type ListEnumPatientStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'PatientStatus[]'>
     
 
 
@@ -10748,11 +10680,8 @@ export namespace Prisma {
     firstName?: StringFilter<"Patient"> | string
     lastName?: StringFilter<"Patient"> | string
     email?: StringNullableFilter<"Patient"> | string | null
-    phone?: StringNullableFilter<"Patient"> | string | null
-    rut?: StringNullableFilter<"Patient"> | string | null
-    birthDate?: DateTimeNullableFilter<"Patient"> | Date | string | null
+    phone?: StringFilter<"Patient"> | string
     notes?: StringNullableFilter<"Patient"> | string | null
-    status?: EnumPatientStatusFilter<"Patient"> | $Enums.PatientStatus
     createdAt?: DateTimeFilter<"Patient"> | Date | string
     updatedAt?: DateTimeFilter<"Patient"> | Date | string
     appointments?: AppointmentListRelationFilter
@@ -10763,11 +10692,8 @@ export namespace Prisma {
     firstName?: SortOrder
     lastName?: SortOrder
     email?: SortOrderInput | SortOrder
-    phone?: SortOrderInput | SortOrder
-    rut?: SortOrderInput | SortOrder
-    birthDate?: SortOrderInput | SortOrder
+    phone?: SortOrder
     notes?: SortOrderInput | SortOrder
-    status?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
     appointments?: AppointmentOrderByRelationAggregateInput
@@ -10776,31 +10702,25 @@ export namespace Prisma {
   export type PatientWhereUniqueInput = Prisma.AtLeast<{
     id?: string
     email?: string
-    rut?: string
     AND?: PatientWhereInput | PatientWhereInput[]
     OR?: PatientWhereInput[]
     NOT?: PatientWhereInput | PatientWhereInput[]
     firstName?: StringFilter<"Patient"> | string
     lastName?: StringFilter<"Patient"> | string
-    phone?: StringNullableFilter<"Patient"> | string | null
-    birthDate?: DateTimeNullableFilter<"Patient"> | Date | string | null
+    phone?: StringFilter<"Patient"> | string
     notes?: StringNullableFilter<"Patient"> | string | null
-    status?: EnumPatientStatusFilter<"Patient"> | $Enums.PatientStatus
     createdAt?: DateTimeFilter<"Patient"> | Date | string
     updatedAt?: DateTimeFilter<"Patient"> | Date | string
     appointments?: AppointmentListRelationFilter
-  }, "id" | "email" | "rut">
+  }, "id" | "email">
 
   export type PatientOrderByWithAggregationInput = {
     id?: SortOrder
     firstName?: SortOrder
     lastName?: SortOrder
     email?: SortOrderInput | SortOrder
-    phone?: SortOrderInput | SortOrder
-    rut?: SortOrderInput | SortOrder
-    birthDate?: SortOrderInput | SortOrder
+    phone?: SortOrder
     notes?: SortOrderInput | SortOrder
-    status?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
     _count?: PatientCountOrderByAggregateInput
@@ -10816,11 +10736,8 @@ export namespace Prisma {
     firstName?: StringWithAggregatesFilter<"Patient"> | string
     lastName?: StringWithAggregatesFilter<"Patient"> | string
     email?: StringNullableWithAggregatesFilter<"Patient"> | string | null
-    phone?: StringNullableWithAggregatesFilter<"Patient"> | string | null
-    rut?: StringNullableWithAggregatesFilter<"Patient"> | string | null
-    birthDate?: DateTimeNullableWithAggregatesFilter<"Patient"> | Date | string | null
+    phone?: StringWithAggregatesFilter<"Patient"> | string
     notes?: StringNullableWithAggregatesFilter<"Patient"> | string | null
-    status?: EnumPatientStatusWithAggregatesFilter<"Patient"> | $Enums.PatientStatus
     createdAt?: DateTimeWithAggregatesFilter<"Patient"> | Date | string
     updatedAt?: DateTimeWithAggregatesFilter<"Patient"> | Date | string
   }
@@ -11308,11 +11225,8 @@ export namespace Prisma {
     firstName: string
     lastName: string
     email?: string | null
-    phone?: string | null
-    rut?: string | null
-    birthDate?: Date | string | null
+    phone: string
     notes?: string | null
-    status?: $Enums.PatientStatus
     createdAt?: Date | string
     updatedAt?: Date | string
     appointments?: AppointmentCreateNestedManyWithoutPatientInput
@@ -11323,11 +11237,8 @@ export namespace Prisma {
     firstName: string
     lastName: string
     email?: string | null
-    phone?: string | null
-    rut?: string | null
-    birthDate?: Date | string | null
+    phone: string
     notes?: string | null
-    status?: $Enums.PatientStatus
     createdAt?: Date | string
     updatedAt?: Date | string
     appointments?: AppointmentUncheckedCreateNestedManyWithoutPatientInput
@@ -11338,11 +11249,8 @@ export namespace Prisma {
     firstName?: StringFieldUpdateOperationsInput | string
     lastName?: StringFieldUpdateOperationsInput | string
     email?: NullableStringFieldUpdateOperationsInput | string | null
-    phone?: NullableStringFieldUpdateOperationsInput | string | null
-    rut?: NullableStringFieldUpdateOperationsInput | string | null
-    birthDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    phone?: StringFieldUpdateOperationsInput | string
     notes?: NullableStringFieldUpdateOperationsInput | string | null
-    status?: EnumPatientStatusFieldUpdateOperationsInput | $Enums.PatientStatus
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     appointments?: AppointmentUpdateManyWithoutPatientNestedInput
@@ -11353,11 +11261,8 @@ export namespace Prisma {
     firstName?: StringFieldUpdateOperationsInput | string
     lastName?: StringFieldUpdateOperationsInput | string
     email?: NullableStringFieldUpdateOperationsInput | string | null
-    phone?: NullableStringFieldUpdateOperationsInput | string | null
-    rut?: NullableStringFieldUpdateOperationsInput | string | null
-    birthDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    phone?: StringFieldUpdateOperationsInput | string
     notes?: NullableStringFieldUpdateOperationsInput | string | null
-    status?: EnumPatientStatusFieldUpdateOperationsInput | $Enums.PatientStatus
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     appointments?: AppointmentUncheckedUpdateManyWithoutPatientNestedInput
@@ -11368,11 +11273,8 @@ export namespace Prisma {
     firstName: string
     lastName: string
     email?: string | null
-    phone?: string | null
-    rut?: string | null
-    birthDate?: Date | string | null
+    phone: string
     notes?: string | null
-    status?: $Enums.PatientStatus
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -11382,11 +11284,8 @@ export namespace Prisma {
     firstName?: StringFieldUpdateOperationsInput | string
     lastName?: StringFieldUpdateOperationsInput | string
     email?: NullableStringFieldUpdateOperationsInput | string | null
-    phone?: NullableStringFieldUpdateOperationsInput | string | null
-    rut?: NullableStringFieldUpdateOperationsInput | string | null
-    birthDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    phone?: StringFieldUpdateOperationsInput | string
     notes?: NullableStringFieldUpdateOperationsInput | string | null
-    status?: EnumPatientStatusFieldUpdateOperationsInput | $Enums.PatientStatus
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -11396,11 +11295,8 @@ export namespace Prisma {
     firstName?: StringFieldUpdateOperationsInput | string
     lastName?: StringFieldUpdateOperationsInput | string
     email?: NullableStringFieldUpdateOperationsInput | string | null
-    phone?: NullableStringFieldUpdateOperationsInput | string | null
-    rut?: NullableStringFieldUpdateOperationsInput | string | null
-    birthDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    phone?: StringFieldUpdateOperationsInput | string
     notes?: NullableStringFieldUpdateOperationsInput | string | null
-    status?: EnumPatientStatusFieldUpdateOperationsInput | $Enums.PatientStatus
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -11981,24 +11877,6 @@ export namespace Prisma {
     _max?: NestedDateTimeFilter<$PrismaModel>
   }
 
-  export type DateTimeNullableFilter<$PrismaModel = never> = {
-    equals?: Date | string | DateTimeFieldRefInput<$PrismaModel> | null
-    in?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
-    notIn?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
-    lt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    lte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    gt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    gte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    not?: NestedDateTimeNullableFilter<$PrismaModel> | Date | string | null
-  }
-
-  export type EnumPatientStatusFilter<$PrismaModel = never> = {
-    equals?: $Enums.PatientStatus | EnumPatientStatusFieldRefInput<$PrismaModel>
-    in?: $Enums.PatientStatus[] | ListEnumPatientStatusFieldRefInput<$PrismaModel>
-    notIn?: $Enums.PatientStatus[] | ListEnumPatientStatusFieldRefInput<$PrismaModel>
-    not?: NestedEnumPatientStatusFilter<$PrismaModel> | $Enums.PatientStatus
-  }
-
   export type AppointmentListRelationFilter = {
     every?: AppointmentWhereInput
     some?: AppointmentWhereInput
@@ -12015,10 +11893,7 @@ export namespace Prisma {
     lastName?: SortOrder
     email?: SortOrder
     phone?: SortOrder
-    rut?: SortOrder
-    birthDate?: SortOrder
     notes?: SortOrder
-    status?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
   }
@@ -12029,10 +11904,7 @@ export namespace Prisma {
     lastName?: SortOrder
     email?: SortOrder
     phone?: SortOrder
-    rut?: SortOrder
-    birthDate?: SortOrder
     notes?: SortOrder
-    status?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
   }
@@ -12043,36 +11915,9 @@ export namespace Prisma {
     lastName?: SortOrder
     email?: SortOrder
     phone?: SortOrder
-    rut?: SortOrder
-    birthDate?: SortOrder
     notes?: SortOrder
-    status?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
-  }
-
-  export type DateTimeNullableWithAggregatesFilter<$PrismaModel = never> = {
-    equals?: Date | string | DateTimeFieldRefInput<$PrismaModel> | null
-    in?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
-    notIn?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
-    lt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    lte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    gt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    gte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    not?: NestedDateTimeNullableWithAggregatesFilter<$PrismaModel> | Date | string | null
-    _count?: NestedIntNullableFilter<$PrismaModel>
-    _min?: NestedDateTimeNullableFilter<$PrismaModel>
-    _max?: NestedDateTimeNullableFilter<$PrismaModel>
-  }
-
-  export type EnumPatientStatusWithAggregatesFilter<$PrismaModel = never> = {
-    equals?: $Enums.PatientStatus | EnumPatientStatusFieldRefInput<$PrismaModel>
-    in?: $Enums.PatientStatus[] | ListEnumPatientStatusFieldRefInput<$PrismaModel>
-    notIn?: $Enums.PatientStatus[] | ListEnumPatientStatusFieldRefInput<$PrismaModel>
-    not?: NestedEnumPatientStatusWithAggregatesFilter<$PrismaModel> | $Enums.PatientStatus
-    _count?: NestedIntFilter<$PrismaModel>
-    _min?: NestedEnumPatientStatusFilter<$PrismaModel>
-    _max?: NestedEnumPatientStatusFilter<$PrismaModel>
   }
 
   export type IntFilter<$PrismaModel = never> = {
@@ -12474,14 +12319,6 @@ export namespace Prisma {
     connect?: AppointmentWhereUniqueInput | AppointmentWhereUniqueInput[]
   }
 
-  export type NullableDateTimeFieldUpdateOperationsInput = {
-    set?: Date | string | null
-  }
-
-  export type EnumPatientStatusFieldUpdateOperationsInput = {
-    set?: $Enums.PatientStatus
-  }
-
   export type AppointmentUpdateManyWithoutPatientNestedInput = {
     create?: XOR<AppointmentCreateWithoutPatientInput, AppointmentUncheckedCreateWithoutPatientInput> | AppointmentCreateWithoutPatientInput[] | AppointmentUncheckedCreateWithoutPatientInput[]
     connectOrCreate?: AppointmentCreateOrConnectWithoutPatientInput | AppointmentCreateOrConnectWithoutPatientInput[]
@@ -12781,48 +12618,6 @@ export namespace Prisma {
     _max?: NestedDateTimeFilter<$PrismaModel>
   }
 
-  export type NestedDateTimeNullableFilter<$PrismaModel = never> = {
-    equals?: Date | string | DateTimeFieldRefInput<$PrismaModel> | null
-    in?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
-    notIn?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
-    lt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    lte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    gt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    gte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    not?: NestedDateTimeNullableFilter<$PrismaModel> | Date | string | null
-  }
-
-  export type NestedEnumPatientStatusFilter<$PrismaModel = never> = {
-    equals?: $Enums.PatientStatus | EnumPatientStatusFieldRefInput<$PrismaModel>
-    in?: $Enums.PatientStatus[] | ListEnumPatientStatusFieldRefInput<$PrismaModel>
-    notIn?: $Enums.PatientStatus[] | ListEnumPatientStatusFieldRefInput<$PrismaModel>
-    not?: NestedEnumPatientStatusFilter<$PrismaModel> | $Enums.PatientStatus
-  }
-
-  export type NestedDateTimeNullableWithAggregatesFilter<$PrismaModel = never> = {
-    equals?: Date | string | DateTimeFieldRefInput<$PrismaModel> | null
-    in?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
-    notIn?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
-    lt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    lte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    gt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    gte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    not?: NestedDateTimeNullableWithAggregatesFilter<$PrismaModel> | Date | string | null
-    _count?: NestedIntNullableFilter<$PrismaModel>
-    _min?: NestedDateTimeNullableFilter<$PrismaModel>
-    _max?: NestedDateTimeNullableFilter<$PrismaModel>
-  }
-
-  export type NestedEnumPatientStatusWithAggregatesFilter<$PrismaModel = never> = {
-    equals?: $Enums.PatientStatus | EnumPatientStatusFieldRefInput<$PrismaModel>
-    in?: $Enums.PatientStatus[] | ListEnumPatientStatusFieldRefInput<$PrismaModel>
-    notIn?: $Enums.PatientStatus[] | ListEnumPatientStatusFieldRefInput<$PrismaModel>
-    not?: NestedEnumPatientStatusWithAggregatesFilter<$PrismaModel> | $Enums.PatientStatus
-    _count?: NestedIntFilter<$PrismaModel>
-    _min?: NestedEnumPatientStatusFilter<$PrismaModel>
-    _max?: NestedEnumPatientStatusFilter<$PrismaModel>
-  }
-
   export type NestedEnumAppointmentStatusFilter<$PrismaModel = never> = {
     equals?: $Enums.AppointmentStatus | EnumAppointmentStatusFieldRefInput<$PrismaModel>
     in?: $Enums.AppointmentStatus[] | ListEnumAppointmentStatusFieldRefInput<$PrismaModel>
@@ -13024,11 +12819,8 @@ export namespace Prisma {
     firstName: string
     lastName: string
     email?: string | null
-    phone?: string | null
-    rut?: string | null
-    birthDate?: Date | string | null
+    phone: string
     notes?: string | null
-    status?: $Enums.PatientStatus
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -13038,11 +12830,8 @@ export namespace Prisma {
     firstName: string
     lastName: string
     email?: string | null
-    phone?: string | null
-    rut?: string | null
-    birthDate?: Date | string | null
+    phone: string
     notes?: string | null
-    status?: $Enums.PatientStatus
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -13101,11 +12890,8 @@ export namespace Prisma {
     firstName?: StringFieldUpdateOperationsInput | string
     lastName?: StringFieldUpdateOperationsInput | string
     email?: NullableStringFieldUpdateOperationsInput | string | null
-    phone?: NullableStringFieldUpdateOperationsInput | string | null
-    rut?: NullableStringFieldUpdateOperationsInput | string | null
-    birthDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    phone?: StringFieldUpdateOperationsInput | string
     notes?: NullableStringFieldUpdateOperationsInput | string | null
-    status?: EnumPatientStatusFieldUpdateOperationsInput | $Enums.PatientStatus
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -13115,11 +12901,8 @@ export namespace Prisma {
     firstName?: StringFieldUpdateOperationsInput | string
     lastName?: StringFieldUpdateOperationsInput | string
     email?: NullableStringFieldUpdateOperationsInput | string | null
-    phone?: NullableStringFieldUpdateOperationsInput | string | null
-    rut?: NullableStringFieldUpdateOperationsInput | string | null
-    birthDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    phone?: StringFieldUpdateOperationsInput | string
     notes?: NullableStringFieldUpdateOperationsInput | string | null
-    status?: EnumPatientStatusFieldUpdateOperationsInput | $Enums.PatientStatus
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }

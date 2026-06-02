@@ -44,7 +44,7 @@ export const appointmentRouter = createTRPCRouter({
                 { firstName: { contains: input.searchQuery, mode: "insensitive" } },
                 { lastName: { contains: input.searchQuery, mode: "insensitive" } },
                 { email: { contains: input.searchQuery, mode: "insensitive" } },
-                { rut: { contains: input.searchQuery, mode: "insensitive" } },
+                { phone: { contains: input.searchQuery, mode: "insensitive" } },
               ],
             },
           },

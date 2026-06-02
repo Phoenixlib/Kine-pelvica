@@ -112,14 +112,12 @@ async function getBlogPosts() {
 }
 
 export default async function Home() {
-  // Fetch everything in parallel to optimize Server Component performance
-  const [servicesData, aboutData, testimonialsData, galleryData, postsData] = await Promise.all([
-    getServicesFromDb(),
-    getAboutConfig(),
-    getTestimonialsFromDb(),
-    getGalleryFromDb(),
-    getBlogPosts(),
-  ]);
+  // Fetch data sequentially to avoid Prisma connection pool exhaustion in dev
+  const servicesData = await getServicesFromDb();
+  const aboutData = await getAboutConfig();
+  const testimonialsData = await getTestimonialsFromDb();
+  const galleryData = await getGalleryFromDb();
+  const postsData = await getBlogPosts();
 
   return (
     <>

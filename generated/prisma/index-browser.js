@@ -136,10 +136,7 @@ exports.Prisma.PatientScalarFieldEnum = {
   lastName: 'lastName',
   email: 'email',
   phone: 'phone',
-  rut: 'rut',
-  birthDate: 'birthDate',
   notes: 'notes',
-  status: 'status',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 };
@@ -222,11 +219,6 @@ exports.Prisma.NullsOrder = {
   first: 'first',
   last: 'last'
 };
-exports.PatientStatus = exports.$Enums.PatientStatus = {
-  ACTIVE: 'ACTIVE',
-  INACTIVE: 'INACTIVE'
-};
-
 exports.AppointmentStatus = exports.$Enums.AppointmentStatus = {
   BOOKED: 'BOOKED',
   CASH_PENDING: 'CASH_PENDING',

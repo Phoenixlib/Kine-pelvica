@@ -48,6 +48,14 @@ export function TRPCReactProvider(props: { children: React.ReactNode }) {
           enabled: (op) =>
             process.env.NODE_ENV === "development" ||
             (op.direction === "down" && op.result instanceof Error),
+          console: {
+            log: console.log,
+            error: (message, ...args) => {
+              // Intercept TRPC errors. Next.js 14 dev overlay catches console.error.
+              // We log it as a warning instead so it doesn't block the UI in dev.
+              console.warn(message, ...args);
+            },
+          },
         }),
         httpBatchStreamLink({
           transformer: SuperJSON,

@@ -16,8 +16,7 @@ interface Patient {
   firstName: string;
   lastName: string;
   email: string | null;
-  phone: string | null;
-  rut: string | null;
+  phone: string;
 }
 
 interface Service {
@@ -331,12 +330,6 @@ export default function CitasPage() {
                       {appt.patient.firstName} {appt.patient.lastName}
                     </span>
 
-                    {appt.patient.rut && (
-                      <>
-                        <span className="col-span-1 text-teal/50 font-medium">RUT:</span>
-                        <span className="col-span-2 text-teal font-semibold text-right">{appt.patient.rut}</span>
-                      </>
-                    )}
 
                     {(appt.patient.phone || appt.patient.email) && (
                       <>

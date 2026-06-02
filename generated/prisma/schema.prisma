@@ -28,19 +28,11 @@ model Patient {
   firstName    String
   lastName     String
   email        String?       @unique
-  phone        String?
-  rut          String?       @unique
-  birthDate    DateTime?
+  phone        String
   notes        String?
-  status       PatientStatus @default(ACTIVE)
   createdAt    DateTime      @default(now())
   updatedAt    DateTime      @updatedAt
   appointments Appointment[]
-}
-
-enum PatientStatus {
-  ACTIVE
-  INACTIVE
 }
 
 // --- Citas ---
