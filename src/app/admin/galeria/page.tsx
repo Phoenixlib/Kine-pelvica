@@ -1,6 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
+import { arrayMove, SortableContext, sortableKeyboardCoordinates, rectSortingStrategy, useSortable } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 import { api } from "~/trpc/react";
 import { useCloudinaryUpload } from "~/hooks/useCloudinaryUpload";
 import { 
@@ -14,7 +17,8 @@ import {
   Eye,
   EyeOff,
   MoveUp,
-  MoveDown
+  MoveDown,
+  GripHorizontal
 } from "lucide-react";
 
 interface GalleryPhoto {
@@ -26,7 +30,101 @@ interface GalleryPhoto {
   isVisible: boolean;
 }
 
+
+function SortablePhotoCard({ photo, setViewingPhoto, toggleVisibility, setEditingPhoto, setBeforeUrl, setAfterUrl, setCaption, setOrder, setIsModalOpen, handleDelete }: any) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: photo.id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    zIndex: isDragging ? 50 : 1,
+  };
+
+  return (
+    <div 
+      ref={setNodeRef} 
+      style={style} 
+      className={`bg-white rounded-3xl border border-cream/30 overflow-hidden shadow-xs flex flex-col justify-between group hover:shadow-md transition ${isDragging ? "opacity-50 shadow-xl scale-105" : ""}`}
+    >
+      <div className="flex items-center justify-between p-3 border-b border-cream/20 bg-offwhite/50">
+        <button 
+          {...attributes} 
+          {...listeners}
+          className="text-teal/40 hover:text-teal transition p-1 cursor-grab active:cursor-grabbing"
+          title="Arrastrar para reordenar"
+        >
+          <GripHorizontal size={18} />
+        </button>
+        <span className="text-[10px] font-subtitle uppercase tracking-widest font-bold text-teal/50">
+          Orden: {photo.order}
+        </span>
+      </div>
+      
+      <div 
+        onClick={() => setViewingPhoto(photo)}
+        className="grid grid-cols-2 gap-px bg-cream/20 relative aspect-4/3 cursor-pointer group-hover:opacity-95 transition-opacity"
+      >
+        <div className="relative h-full overflow-hidden">
+          <img src={photo.beforeUrl} alt="Antes" className="w-full h-full object-cover pointer-events-none" />
+          <span className="absolute bottom-2 left-2 bg-[#0f3f3e]/80 text-white text-[9px] font-subtitle uppercase tracking-widest font-bold px-2 py-0.5 rounded-md pointer-events-none">Antes</span>
+        </div>
+        <div className="relative h-full overflow-hidden">
+          <img src={photo.afterUrl} alt="Después" className="w-full h-full object-cover pointer-events-none" />
+          <span className="absolute bottom-2 right-2 bg-terracotta/90 text-white text-[9px] font-subtitle uppercase tracking-widest font-bold px-2 py-0.5 rounded-md pointer-events-none">Después</span>
+        </div>
+      </div>
+
+      <div className="p-5 flex-1 flex flex-col justify-between gap-4">
+        <div>
+          <p className="text-xs font-body text-teal/80 line-clamp-2 italic">
+            {photo.caption || "Sin descripción clínica"}
+          </p>
+          <div className="flex items-center gap-2 mt-3 text-[10px] text-teal/50 font-semibold uppercase">
+            <span className={photo.isVisible ? "text-emerald-600" : "text-redbrown"}>
+              {photo.isVisible ? "Visible" : "Oculta"}
+            </span>
+          </div>
+        </div>
+
+        <div className="flex items-center justify-between border-t border-cream/20 pt-3">
+          <button
+            onClick={() => toggleVisibility(photo)}
+            className="p-2 text-teal/60 hover:text-terracotta hover:bg-offwhite rounded-xl transition cursor-pointer"
+            title={photo.isVisible ? "Ocultar de la Web" : "Mostrar en la Web"}
+          >
+            {photo.isVisible ? <EyeOff size={15} /> : <Eye size={15} />}
+          </button>
+
+          <div className="flex gap-2">
+            <button
+              onClick={() => {
+                setEditingPhoto(photo);
+                setBeforeUrl(photo.beforeUrl);
+                setAfterUrl(photo.afterUrl);
+                setCaption(photo.caption || "");
+                setOrder(photo.order);
+                setIsModalOpen(true);
+              }}
+              className="px-3 py-1.5 bg-offwhite hover:bg-cream/10 border border-cream text-teal rounded-xl text-[10px] font-subtitle uppercase tracking-widest font-bold transition cursor-pointer"
+            >
+              Editar
+            </button>
+            <button
+              onClick={() => handleDelete(photo.id)}
+              className="p-2 text-redbrown hover:bg-redbrown/5 rounded-xl transition cursor-pointer"
+              title="Eliminar Entrada"
+            >
+              <Trash2 size={15} />
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function GaleriaPage() {
+
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingPhoto, setEditingPhoto] = useState<GalleryPhoto | null>(null);
 
@@ -50,7 +148,54 @@ export default function GaleriaPage() {
   const { data, isLoading: photosLoading } = api.gallery.getAllAdmin.useQuery({ page, limit: 9 });
   const photos = data?.items || [];
 
+
+  const [localPhotos, setLocalPhotos] = useState<GalleryPhoto[]>([]);
+
+  useEffect(() => {
+    if (data?.items) {
+      setLocalPhotos(data.items as unknown as GalleryPhoto[]);
+    }
+  }, [data?.items]);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
+  );
+
+  const reorderPhotos = api.gallery.reorder.useMutation({
+    onSuccess: async () => {
+      await utils.gallery.getAllAdmin.invalidate();
+      await utils.gallery.getAll.invalidate();
+    }
+  });
+
+  const handleDragEnd = (event: any) => {
+    const { active, over } = event;
+    if (over && active.id !== over.id) {
+      setLocalPhotos((items) => {
+        const oldIndex = items.findIndex((i) => i.id === active.id);
+        const newIndex = items.findIndex((i) => i.id === over.id);
+        const newItems = arrayMove(items, oldIndex, newIndex);
+        
+        const baseOrder = (page - 1) * 9;
+        
+        const updates = newItems.map((item, idx) => ({
+          id: item.id,
+          order: baseOrder + idx
+        }));
+
+        reorderPhotos.mutate(updates);
+        
+        return newItems.map((item, idx) => ({
+          ...item,
+          order: baseOrder + idx
+        }));
+      });
+    }
+  };
+
   const createPhoto = api.gallery.create.useMutation({
+
     onSuccess: async () => {
       await utils.gallery.getAllAdmin.invalidate();
       setIsModalOpen(false);
@@ -117,15 +262,14 @@ export default function GaleriaPage() {
         beforeUrl,
         afterUrl,
         caption: caption || null,
-        order,
         isVisible: editingPhoto.isVisible,
+        order: editingPhoto.order,
       });
     } else {
       createPhoto.mutate({
         beforeUrl,
         afterUrl,
         caption: caption || null,
-        order,
       });
     }
   };
@@ -182,77 +326,30 @@ export default function GaleriaPage() {
         </div>
       ) : (
         /* Gallery Grid */
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {(photos as unknown as GalleryPhoto[])?.map((photo) => (
-            <div key={photo.id} className="bg-white rounded-3xl border border-cream/30 overflow-hidden shadow-xs flex flex-col justify-between group hover:shadow-md transition">
-              
-              {/* Image side-by-side view */}
-              <div 
-                onClick={() => setViewingPhoto(photo)}
-                className="grid grid-cols-2 gap-px bg-cream/20 relative aspect-4/3 cursor-pointer group-hover:opacity-95 transition-opacity"
-              >
-                <div className="relative h-full overflow-hidden">
-                  <img src={photo.beforeUrl} alt="Antes" className="w-full h-full object-cover" />
-                  <span className="absolute bottom-2 left-2 bg-[#0f3f3e]/80 text-white text-[9px] font-subtitle uppercase tracking-widest font-bold px-2 py-0.5 rounded-md">Antes</span>
-                </div>
-                <div className="relative h-full overflow-hidden">
-                  <img src={photo.afterUrl} alt="Después" className="w-full h-full object-cover" />
-                  <span className="absolute bottom-2 right-2 bg-terracotta/90 text-white text-[9px] font-subtitle uppercase tracking-widest font-bold px-2 py-0.5 rounded-md">Después</span>
-                </div>
-              </div>
-
-              {/* Body */}
-              <div className="p-5 flex-1 flex flex-col justify-between gap-4">
-                <div>
-                  <p className="text-xs font-body text-teal/80 line-clamp-2 italic">
-                    {photo.caption || "Sin descripción clínica"}
-                  </p>
-                  <div className="flex items-center gap-2 mt-3 text-[10px] text-teal/50 font-semibold uppercase">
-                    <span>Orden: {photo.order}</span>
-                    <span>•</span>
-                    <span className={photo.isVisible ? "text-emerald-600" : "text-redbrown"}>
-                      {photo.isVisible ? "Visible" : "Oculta"}
-                    </span>
-                  </div>
-                </div>
-
-                {/* Actions */}
-                <div className="flex items-center justify-between border-t border-cream/20 pt-3">
-                  <button
-                    onClick={() => toggleVisibility(photo)}
-                    className="p-2 text-teal/60 hover:text-terracotta hover:bg-offwhite rounded-xl transition"
-                    title={photo.isVisible ? "Ocultar de la Web" : "Mostrar en la Web"}
-                  >
-                    {photo.isVisible ? <EyeOff size={15} /> : <Eye size={15} />}
-                  </button>
-
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() => {
-                        setEditingPhoto(photo);
-                        setBeforeUrl(photo.beforeUrl);
-                        setAfterUrl(photo.afterUrl);
-                        setCaption(photo.caption || "");
-                        setOrder(photo.order);
-                        setIsModalOpen(true);
-                      }}
-                      className="px-3 py-1.5 bg-offwhite hover:bg-cream/10 border border-cream text-teal rounded-xl text-[10px] font-subtitle uppercase tracking-widest font-bold transition"
-                    >
-                      Editar
-                    </button>
-                    <button
-                      onClick={() => handleDelete(photo.id)}
-                      className="p-2 text-redbrown hover:bg-redbrown/5 rounded-xl transition"
-                      title="Eliminar Entrada"
-                    >
-                      <Trash2 size={15} />
-                    </button>
-                  </div>
-                </div>
-              </div>
+        
+        <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+          <SortableContext items={localPhotos.map(p => p.id)} strategy={rectSortingStrategy}>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              {localPhotos.map((photo) => (
+                <SortablePhotoCard 
+                  key={photo.id}
+                  photo={photo}
+                  setViewingPhoto={setViewingPhoto}
+                  toggleVisibility={toggleVisibility}
+                  setEditingPhoto={setEditingPhoto}
+                  setBeforeUrl={setBeforeUrl}
+                  setAfterUrl={setAfterUrl}
+                  setCaption={setCaption}
+                  setOrder={setOrder}
+                  setIsModalOpen={setIsModalOpen}
+                  handleDelete={handleDelete}
+                />
+              ))}
             </div>
-          ))}
-        </div>
+          </SortableContext>
+        </DndContext>
+
+          
       )}
 
       {/* Pagination Controls */}
@@ -353,19 +450,7 @@ export default function GaleriaPage() {
                 </div>
               </div>
 
-              {/* Order */}
-              <div className="space-y-1.5">
-                <label className="font-subtitle text-[10px] tracking-wider uppercase font-bold text-teal block">
-                  Orden de Visualización
-                </label>
-                <input
-                  type="number"
-                  required
-                  value={order}
-                  onChange={(e) => setOrder(Number(e.target.value))}
-                  className="w-full px-4 py-3 bg-white border border-cream rounded-xl font-body text-sm text-teal focus:outline-none"
-                />
-              </div>
+              
 
               {/* Caption */}
               <div className="space-y-1.5">

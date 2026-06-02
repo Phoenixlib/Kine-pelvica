@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { createTRPCRouter, protectedProcedure, publicProcedure } from "~/server/api/trpc";
 import { destroyByUrls } from "~/lib/cloudinary";
+import { revalidatePath } from "next/cache";
 
 export const galleryRouter = createTRPCRouter({
   getAll: publicProcedure.query(async ({ ctx }) => {
@@ -40,19 +41,25 @@ export const galleryRouter = createTRPCRouter({
         beforeUrl: z.string().url(),
         afterUrl: z.string().url(),
         caption: z.string().optional().nullable(),
-        order: z.number().int().default(0),
       })
     )
     .mutation(async ({ ctx, input }) => {
-      return ctx.db.galleryPhoto.create({
+      const maxOrderPhoto = await ctx.db.galleryPhoto.findFirst({
+        orderBy: { order: 'desc' }
+      });
+      const nextOrder = maxOrderPhoto ? maxOrderPhoto.order + 1 : 1;
+      
+      const result = await ctx.db.galleryPhoto.create({
         data: {
           beforeUrl: input.beforeUrl,
           afterUrl: input.afterUrl,
           caption: input.caption || null,
-          order: input.order,
+          order: nextOrder,
           isVisible: true,
         },
       });
+      revalidatePath("/");
+      return result;
     }),
 
   update: protectedProcedure
@@ -91,7 +98,7 @@ export const galleryRouter = createTRPCRouter({
         console.error("Failed to delete old gallery photos from Cloudinary:", err);
       }
 
-      return ctx.db.galleryPhoto.update({
+      const result = await ctx.db.galleryPhoto.update({
         where: { id: input.id },
         data: {
           beforeUrl: input.beforeUrl,
@@ -101,6 +108,8 @@ export const galleryRouter = createTRPCRouter({
           isVisible: input.isVisible,
         },
       });
+      revalidatePath("/");
+      return result;
     }),
 
   delete: protectedProcedure
@@ -118,8 +127,25 @@ export const galleryRouter = createTRPCRouter({
         }
       }
 
-      return ctx.db.galleryPhoto.delete({
+      const result = await ctx.db.galleryPhoto.delete({
         where: { id: input.id },
       });
+      revalidatePath("/");
+      return result;
+    }),
+
+  reorder: protectedProcedure
+    .input(z.array(z.object({ id: z.string(), order: z.number().int() })))
+    .mutation(async ({ ctx, input }) => {
+      await ctx.db.$transaction(
+        input.map((item) =>
+          ctx.db.galleryPhoto.update({
+            where: { id: item.id },
+            data: { order: item.order },
+          })
+        )
+      );
+      revalidatePath("/");
+      return { success: true };
     }),
 });

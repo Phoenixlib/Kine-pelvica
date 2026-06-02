@@ -48,6 +48,20 @@ export function Gallery({ photos }: GalleryProps) {
     }
   };
 
+  const scrollLeftManual = () => {
+    if (scrollRef.current) {
+      const cardWidth = scrollRef.current.clientWidth * 0.8;
+      scrollRef.current.scrollBy({ left: -cardWidth, behavior: "smooth" });
+    }
+  };
+
+  const scrollRightManual = () => {
+    if (scrollRef.current) {
+      const cardWidth = scrollRef.current.clientWidth * 0.8;
+      scrollRef.current.scrollBy({ left: cardWidth, behavior: "smooth" });
+    }
+  };
+
   useEffect(() => {
     handleScroll();
     window.addEventListener("resize", handleScroll);
@@ -77,19 +91,41 @@ export function Gallery({ photos }: GalleryProps) {
   return (
     <section id="galeria" className="py-24 bg-teal overflow-hidden">
       <div className="container mx-auto px-4 lg:px-8 max-w-5xl">
-        <motion.div 
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: "-100px" }}
-          transition={{ duration: 0.6 }}
-          className="text-center mb-16"
-        >
-          <h2 className="text-[11px] font-subtitle font-bold tracking-[0.2em] text-cream uppercase mb-4">Galería</h2>
-          <h3 className="font-title text-4xl md:text-5xl text-white">Antes y <span className="italic font-light text-terracotta">Después</span></h3>
-          <p className="font-body text-xl text-white/80 mt-6 max-w-2xl mx-auto">
-            Resultados de tratamiento integral de cicatrices y rehabilitación. Cada cuerpo tiene su proceso.
-          </p>
-        </motion.div>
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-16">
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: "-100px" }}
+            transition={{ duration: 0.6 }}
+            className="text-center md:text-left"
+          >
+            <h2 className="text-[11px] font-subtitle font-bold tracking-[0.2em] text-cream uppercase mb-4">Galería</h2>
+            <h3 className="font-title text-4xl md:text-5xl text-white">Antes y <span className="italic font-light text-terracotta">Después</span></h3>
+            <p className="font-body text-xl text-white/80 mt-6 max-w-2xl">
+              Resultados de tratamiento integral de cicatrices y rehabilitación. Cada cuerpo tiene su proceso.
+            </p>
+          </motion.div>
+
+          {/* Flechas de Navegación del Carrusel */}
+          {displayPhotos.length > 1 && (
+            <div className="flex justify-center md:justify-end gap-3 pb-2">
+              <button
+                onClick={scrollLeftManual}
+                className="p-3.5 bg-white/10 hover:bg-white/20 border border-white/20 rounded-full transition-all duration-300 transform active:scale-95 flex items-center justify-center text-white"
+                aria-label="Desplazar a la izquierda"
+              >
+                <ChevronLeft size={20} />
+              </button>
+              <button
+                onClick={scrollRightManual}
+                className="p-3.5 bg-white/10 hover:bg-white/20 border border-white/20 rounded-full transition-all duration-300 transform active:scale-95 flex items-center justify-center text-white"
+                aria-label="Desplazar a la derecha"
+              >
+                <ChevronRight size={20} />
+              </button>
+            </div>
+          )}
+        </div>
 
         {/* Contained Carousel */}
         <div className="w-full relative">
@@ -106,7 +142,7 @@ export function Gallery({ photos }: GalleryProps) {
                 viewport={{ once: true, margin: "-50px" }}
                 transition={{ duration: 0.45, delay: idx * 0.05 }}
                 onClick={() => setSelectedIdx(idx)}
-                className="flex-shrink-0 snap-start w-[85vw] sm:w-[320px] md:w-[380px] lg:w-[440px] relative aspect-[4/3] rounded-[2rem] overflow-hidden group cursor-pointer border-[4px] border-cream/10 shadow-lg hover:shadow-2xl transition-all duration-500 bg-white"
+                className="flex-shrink-0 snap-start w-[85vw] sm:w-[320px] md:w-[380px] lg:w-[400px] relative aspect-[4/3] rounded-[2rem] overflow-hidden group cursor-pointer border-[4px] border-cream/10 shadow-lg hover:shadow-2xl transition-all duration-500 bg-white"
               >
                 
                 {/* Image side-by-side view */}
