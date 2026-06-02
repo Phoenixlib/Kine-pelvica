@@ -23,7 +23,6 @@ export function Navbar() {
     { name: "Antes y Después", href: "/#galeria" },
     { name: "Blog", href: "/#blog" },
     { name: "Contáctanos", href: "/#contacto" },
-    { name: "Opciones Heros", href: "/heros" },
   ];
 
   return (
