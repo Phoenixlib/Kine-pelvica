@@ -48,13 +48,16 @@ export function Gallery({ photos }: GalleryProps) {
             Resultados de tratamiento integral de cicatrices y rehabilitación. Cada cuerpo tiene su proceso.
           </p>
         </div>
+      </div>
         
-        <div className="flex overflow-x-auto gap-8 pb-8 snap-x snap-mandatory max-w-full justify-start md:justify-center scrollbar-none [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden px-4 md:px-0">
+      {/* Full Bleed Carousel */}
+      <div className="w-full">
+        <div className="flex overflow-x-auto gap-6 pb-12 pt-4 snap-x snap-mandatory justify-start px-4 md:px-[calc((100vw-1024px)/2+2rem)] scrollbar-none [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
           {displayPhotos.map((photo) => (
             <div 
               key={photo.id} 
               onClick={() => setViewingPhoto(photo)}
-              className="flex-shrink-0 snap-center w-[290px] sm:w-[360px] md:w-[440px] relative group overflow-hidden rounded-3xl shadow-lg border-[6px] border-white bg-white cursor-pointer hover:shadow-xl hover:scale-[1.01] transition-all duration-300"
+              className="flex-shrink-0 snap-center w-[85vw] sm:w-[340px] md:w-[400px] relative group overflow-hidden rounded-3xl shadow-lg border-[6px] border-white bg-white cursor-pointer hover:shadow-xl hover:-translate-y-1 transition-all duration-300"
             >
               
               {/* Image side-by-side view */}
@@ -82,6 +85,9 @@ export function Gallery({ photos }: GalleryProps) {
               )}
             </div>
           ))}
+          
+          {/* Invisible spacer to allow last item to scroll to center/start properly */}
+          <div className="flex-shrink-0 w-4 md:w-[calc((100vw-1024px)/2)]" aria-hidden="true"></div>
         </div>
       </div>
 
