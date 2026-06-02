@@ -90,71 +90,70 @@ export function Gallery({ photos }: GalleryProps) {
             Resultados de tratamiento integral de cicatrices y rehabilitación. Cada cuerpo tiene su proceso.
           </p>
         </motion.div>
-      </div>
-        
-      {/* Full Bleed Carousel */}
-      <div className="w-full">
-        <div 
-          ref={scrollRef}
-          onScroll={handleScroll}
-          className="flex overflow-x-auto gap-6 pb-6 pt-4 snap-x snap-mandatory justify-start px-4 md:px-[calc((100vw-1024px)/2+2rem)] scrollbar-none [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
-        >
-          {displayPhotos.map((photo, idx) => (
-            <motion.div 
-              key={photo.id}
-              initial={{ opacity: 0, scale: 0.95 }}
-              whileInView={{ opacity: 1, scale: 1 }}
-              viewport={{ once: true, margin: "-50px" }}
-              transition={{ duration: 0.45, delay: idx * 0.05 }}
-              onClick={() => setSelectedIdx(idx)}
-              className="flex-shrink-0 snap-center w-[85vw] sm:w-[340px] md:w-[400px] relative aspect-[4/3] rounded-[2rem] overflow-hidden group cursor-pointer border-[4px] border-cream/10 shadow-lg hover:shadow-2xl transition-all duration-500 bg-white"
-            >
-              
-              {/* Image side-by-side view */}
-              <div className="grid grid-cols-2 gap-px bg-black relative w-full h-full">
-                <div className="relative h-full overflow-hidden">
-                  <img src={photo.beforeUrl} alt="Antes" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
-                  <span className="absolute top-4 left-4 bg-black/60 backdrop-blur-md text-white text-[9px] font-subtitle uppercase tracking-widest font-bold px-3 py-1.5 rounded-full border border-white/10">Antes</span>
-                </div>
-                <div className="relative h-full overflow-hidden">
-                  <img src={photo.afterUrl} alt="Después" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
-                  <span className="absolute top-4 right-4 bg-terracotta/90 backdrop-blur-md text-white text-[9px] font-subtitle uppercase tracking-widest font-bold px-3 py-1.5 rounded-full shadow-lg">Después</span>
-                </div>
+
+        {/* Contained Carousel */}
+        <div className="w-full relative">
+          <div 
+            ref={scrollRef}
+            onScroll={handleScroll}
+            className="flex overflow-x-auto gap-6 pb-6 pt-4 snap-x snap-mandatory justify-start px-1 scrollbar-none [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
+          >
+            {displayPhotos.map((photo, idx) => (
+              <motion.div 
+                key={photo.id}
+                initial={{ opacity: 0, scale: 0.95 }}
+                whileInView={{ opacity: 1, scale: 1 }}
+                viewport={{ once: true, margin: "-50px" }}
+                transition={{ duration: 0.45, delay: idx * 0.05 }}
+                onClick={() => setSelectedIdx(idx)}
+                className="flex-shrink-0 snap-start w-[85vw] sm:w-[320px] md:w-[380px] lg:w-[440px] relative aspect-[4/3] rounded-[2rem] overflow-hidden group cursor-pointer border-[4px] border-cream/10 shadow-lg hover:shadow-2xl transition-all duration-500 bg-white"
+              >
                 
-                {/* Visual Separator Line */}
-                <div className="absolute inset-y-0 left-1/2 w-[1px] bg-white pointer-events-none opacity-50"></div>
-                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-white flex items-center justify-center shadow-2xl pointer-events-none border-[3px] border-black/10">
-                  <div className="w-1 h-3 border-l border-r border-teal/30"></div>
-                </div>
+                {/* Image side-by-side view */}
+                <div className="grid grid-cols-2 gap-px bg-black relative w-full h-full">
+                  <div className="relative h-full overflow-hidden">
+                    <img src={photo.beforeUrl} alt="Antes" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
+                    <span className="absolute top-4 left-4 bg-black/60 backdrop-blur-md text-white text-[9px] font-subtitle uppercase tracking-widest font-bold px-3 py-1.5 rounded-full border border-white/10">Antes</span>
+                  </div>
+                  <div className="relative h-full overflow-hidden">
+                    <img src={photo.afterUrl} alt="Después" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
+                    <span className="absolute top-4 right-4 bg-terracotta/90 backdrop-blur-md text-white text-[9px] font-subtitle uppercase tracking-widest font-bold px-3 py-1.5 rounded-full shadow-lg">Después</span>
+                  </div>
+                  
+                  {/* Visual Separator Line */}
+                  <div className="absolute inset-y-0 left-1/2 w-[1px] bg-white pointer-events-none opacity-50"></div>
+                  <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-white flex items-center justify-center shadow-2xl pointer-events-none border-[3px] border-black/10">
+                    <div className="w-1 h-3 border-l border-r border-teal/30"></div>
+                  </div>
 
-                {/* Subtle Elegant Overlay */}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-black/0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end p-6 z-10">
-                  <span className="text-[10px] uppercase font-bold tracking-widest text-cream/90 mb-2">
-                    Ver Detalle ✦
-                  </span>
-                  {photo.caption && (
-                    <p className="text-white text-sm font-medium leading-relaxed line-clamp-2">
-                      {photo.caption}
-                    </p>
-                  )}
+                  {/* Subtle Elegant Overlay */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-black/0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end p-6 z-10">
+                    <span className="text-[10px] uppercase font-bold tracking-widest text-cream/90 mb-2">
+                      Ver Detalle ✦
+                    </span>
+                    {photo.caption && (
+                      <p className="text-white text-sm font-medium leading-relaxed line-clamp-2">
+                        {photo.caption}
+                      </p>
+                    )}
+                  </div>
                 </div>
-              </div>
-            </motion.div>
-          ))}
-          
-          {/* Invisible spacer to allow last item to scroll to center/start properly */}
-          <div className="flex-shrink-0 w-4 md:w-[calc((100vw-1024px)/2)]" aria-hidden="true"></div>
-        </div>
-
-        {/* Barra de progreso de desplazamiento sutil */}
-        {displayPhotos.length > 1 && (
-          <div className="mt-8 max-w-xs mx-auto h-[3px] bg-white/10 rounded-full overflow-hidden">
-            <div
-              className="h-full rounded-full transition-all duration-150 ease-out bg-cream"
-              style={{ width: `${scrollProgress}%` }}
-            />
+              </motion.div>
+            ))}
+            
+            {/* Invisible spacer removed, no longer needed inside a fixed container */}
           </div>
-        )}
+
+          {/* Barra de progreso de desplazamiento sutil */}
+          {displayPhotos.length > 1 && (
+            <div className="mt-8 max-w-xs mx-auto h-[3px] bg-white/10 rounded-full overflow-hidden">
+              <div
+                className="h-full rounded-full transition-all duration-150 ease-out bg-cream"
+                style={{ width: `${scrollProgress}%` }}
+              />
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Fullscreen Lightbox Modal */}
