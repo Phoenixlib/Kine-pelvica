@@ -203,7 +203,16 @@ export default function AgendaPage() {
           </p>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3">
+          <a
+            href={process.env.NEXT_PUBLIC_CALCOM_ADMIN_URL || "https://app.cal.com/availability"}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-2 px-4 py-2.5 bg-white border border-cream hover:bg-offwhite text-xs font-subtitle uppercase tracking-widest font-bold rounded-xl transition shadow-xs text-teal"
+          >
+            <Clock size={14} className="text-teal" /> Gestionar Disponibilidad
+          </a>
+
           <button 
             onClick={handleExport} 
             className="flex items-center gap-2 px-4 py-2.5 bg-white border border-cream hover:bg-offwhite text-xs font-subtitle uppercase tracking-widest font-bold rounded-xl transition shadow-xs"

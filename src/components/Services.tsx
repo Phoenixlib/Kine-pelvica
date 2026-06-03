@@ -1,6 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import BookingFlow from "./booking/BookingFlow";
+import { X } from "lucide-react";
 
 interface Service {
   name: string;
@@ -21,6 +23,10 @@ interface ServicesProps {
 
 export function Services({ initialCategories }: ServicesProps) {
   const [activeCategory, setActiveCategory] = useState<number>(0);
+  const [bookingModal, setBookingModal] = useState<{ open: boolean; calLink: string }>({
+    open: false,
+    calLink: "",
+  });
 
   const fallbackCategories: ServiceCategory[] = [
     {
@@ -138,20 +144,36 @@ export function Services({ initialCategories }: ServicesProps) {
                     )}
                     {!service.details && <div className="mb-4"></div>}
                   </div>
-                  <a 
-                    href={service.bookingUrl || "#contacto"} 
-                    target={service.bookingUrl ? "_blank" : undefined}
-                    rel={service.bookingUrl ? "noopener noreferrer" : undefined}
-                    className="mt-auto block text-center bg-terracotta text-white py-2.5 rounded-full font-subtitle text-[10px] uppercase tracking-widest font-bold hover:bg-teal transition-colors shadow-sm"
+                  <button 
+                    onClick={() => {
+                      const calPath = service.bookingUrl?.replace("https://cal.com/", "") ?? "";
+                      setBookingModal({ open: true, calLink: calPath });
+                    }}
+                    className="mt-auto block text-center bg-terracotta text-white w-full py-2.5 rounded-full font-subtitle text-[10px] uppercase tracking-widest font-bold hover:bg-teal transition-colors shadow-sm"
                   >
                     Agendar servicio
-                  </a>
+                  </button>
                 </div>
               ))}
             </div>
           </div>
         )}
       </div>
+
+      {/* Modal overlay */}
+      {bookingModal.open && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-charcoal/60 backdrop-blur-sm p-4">
+          <div className="relative w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+            <button
+              onClick={() => setBookingModal({ open: false, calLink: "" })}
+              className="absolute top-4 right-4 z-10 p-2 bg-white rounded-full shadow hover:bg-offwhite transition"
+            >
+              <X size={16} className="text-charcoal" />
+            </button>
+            <BookingFlow calLink={bookingModal.calLink} />
+          </div>
+        </div>
+      )}
     </section>
   );
 }

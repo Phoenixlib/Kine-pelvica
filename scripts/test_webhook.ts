@@ -1,7 +1,7 @@
 import crypto from "crypto";
 import { env } from "../src/env.js";
 
-const BASE_URL = "http://localhost:3002";
+const BASE_URL = "http://localhost:3000";
 const SECRET = process.env.CALCOM_WEBHOOK_SECRET || "5lviqcAbtf93Y0nbKPNF7R0RrRab2n/RTCNfgCoOSGw=";
 
 async function sendWebhook(payload: any) {

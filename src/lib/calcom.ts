@@ -146,6 +146,31 @@ export async function createCalComEventType(
         lengthInMinutes,
         description: description || "",
         locations: address ? [{ type: "address", address, public: true }] : undefined,
+        disableGuests: true,
+        bookingFields: [
+          {
+            type: "name",
+            label: "Nombre completo",
+            required: true,
+          },
+          {
+            type: "email",
+            label: "Correo electrónico",
+            required: true,
+          },
+          {
+            type: "phone",
+            slug: "phone",
+            label: "Número de teléfono",
+            required: true,
+          },
+          {
+            type: "textarea",
+            slug: "notes",
+            label: "Notas adicionales",
+            required: false,
+          },
+        ],
       }),
     });
 
@@ -202,6 +227,13 @@ export async function updateCalComEventType(
         lengthInMinutes,
         description: description || "",
         locations: address ? [{ type: "address", address, public: true }] : undefined,
+        disableGuests: true,
+        bookingFields: [
+          { type: "name",     label: "Nombre completo",       required: true  },
+          { type: "email",    label: "Correo electrónico",    required: true  },
+          { type: "phone",    slug: "phone", label: "Número de teléfono",    required: true  },
+          { type: "textarea", slug: "notes", label: "Notas adicionales",     required: false },
+        ],
       }),
     });
 

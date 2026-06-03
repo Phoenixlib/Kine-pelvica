@@ -39,6 +39,7 @@ export const env = createEnv({
     NEXT_PUBLIC_SANITY_DATASET: z.string().optional(),
     NEXT_PUBLIC_GOOGLE_PLACE_ID: z.string().optional(),
     NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME: z.string().optional(),
+    NEXT_PUBLIC_CALCOM_ADMIN_URL: z.string().url().optional(),
   },
 
   /**
@@ -65,6 +66,7 @@ export const env = createEnv({
     NEXT_PUBLIC_SANITY_DATASET: process.env.NEXT_PUBLIC_SANITY_DATASET,
     NEXT_PUBLIC_GOOGLE_PLACE_ID: process.env.NEXT_PUBLIC_GOOGLE_PLACE_ID,
     NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME: process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME,
+    NEXT_PUBLIC_CALCOM_ADMIN_URL: process.env.NEXT_PUBLIC_CALCOM_ADMIN_URL,
   },
   /**
    * Run `build` or `dev` with `SKIP_ENV_VALIDATION` to skip env validation. This is especially
