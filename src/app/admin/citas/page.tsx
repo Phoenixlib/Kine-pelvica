@@ -606,6 +606,7 @@ function AppointmentDetailModal({
   const [cancelReason, setCancelReason] = useState(appt.cancelReason || "");
   const [showCancelInput, setShowCancelInput] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [cancelReasonError, setCancelReasonError] = useState(false);
 
   useEffect(() => {
     setNotes(appt.notes || "");
@@ -614,11 +615,12 @@ function AppointmentDetailModal({
     setCancelReason(appt.cancelReason || "");
     setShowCancelInput(appt.status === "CANCELLED");
     setConfirmDelete(false);
+    setCancelReasonError(false);
   }, [appt]);
 
   const handleSave = () => {
     if (status === "CANCELLED" && !cancelReason.trim()) {
-      alert("Por favor, ingresa un motivo de cancelación.");
+      setCancelReasonError(true);
       return;
     }
 
@@ -638,6 +640,7 @@ function AppointmentDetailModal({
       setShowCancelInput(true);
     } else {
       setShowCancelInput(false);
+      setCancelReasonError(false);
     }
   };
 
@@ -791,13 +794,26 @@ function AppointmentDetailModal({
                   Motivo de Cancelación *
                 </label>
                 <textarea
-                  required
                   value={cancelReason}
-                  onChange={(e) => setCancelReason(e.target.value)}
+                  onChange={(e) => {
+                    setCancelReason(e.target.value);
+                    if (e.target.value.trim()) {
+                      setCancelReasonError(false);
+                    }
+                  }}
                   placeholder="Indica el motivo de la cancelación para sincronizar con Cal.com..."
                   rows={2}
-                  className="w-full px-3 py-2 bg-white border border-red-200 rounded-xl font-body text-xs text-teal focus:outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500 resize-none"
+                  className={`w-full px-3 py-2 bg-white border rounded-xl font-body text-xs text-teal focus:outline-none resize-none transition-colors ${
+                    cancelReasonError 
+                      ? "border-red-500 focus:border-red-600 focus:ring-1 focus:ring-red-600" 
+                      : "border-red-200 focus:border-red-500 focus:ring-1 focus:ring-red-500"
+                  }`}
                 />
+                {cancelReasonError && (
+                  <p className="text-red-500 text-[10px] font-bold mt-1">
+                    El motivo de cancelación es obligatorio
+                  </p>
+                )}
               </div>
             )}
 
@@ -934,10 +950,14 @@ function CancelReasonModal({
   onConfirm: (reason: string) => void;
 }) {
   const [reason, setReason] = useState("");
+  const [error, setError] = useState(false);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!reason.trim()) return;
+    if (!reason.trim()) {
+      setError(true);
+      return;
+    }
     onConfirm(reason);
   };
 
@@ -961,20 +981,33 @@ function CancelReasonModal({
         </div>
 
         {/* Content */}
-        <form onSubmit={handleSubmit}>
+        <form onSubmit={handleSubmit} noValidate>
           <div className="p-6 space-y-4">
             <p className="text-xs text-teal/70 font-body leading-relaxed">
               La cancelación se sincronizará con Cal.com. Por favor, ingresa el motivo de la cancelación (este campo es obligatorio):
             </p>
             <textarea
-              required
               autoFocus
               value={reason}
-              onChange={(e) => setReason(e.target.value)}
+              onChange={(e) => {
+                setReason(e.target.value);
+                if (e.target.value.trim()) {
+                  setError(false);
+                }
+              }}
               placeholder="Ej. El paciente solicitó cambiar de hora o no puede asistir..."
               rows={3}
-              className="w-full px-3 py-2 bg-white border border-cream rounded-xl font-body text-xs text-teal focus:outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500 resize-none"
+              className={`w-full px-3 py-2 bg-white border rounded-xl font-body text-xs text-teal focus:outline-none resize-none transition-colors ${
+                error 
+                  ? "border-red-500 focus:border-red-600 focus:ring-1 focus:ring-red-600" 
+                  : "border-cream focus:border-red-500 focus:ring-1 focus:ring-red-500"
+              }`}
             />
+            {error && (
+              <p className="text-red-500 text-[10px] font-bold mt-1">
+                El motivo de cancelación es obligatorio
+              </p>
+            )}
           </div>
 
           {/* Footer */}
