@@ -258,7 +258,7 @@ export default function CitasPage() {
           <table className="w-full text-left text-xs font-body text-teal">
             <thead className="bg-[#f7f3ef] font-subtitle uppercase tracking-widest text-[9px] font-bold text-teal/65 border-b border-cream/30">
               <tr>
-                <th className="px-6 py-4">Fecha y Hora</th>
+                <th className="px-6 py-4 whitespace-nowrap w-[120px] min-w-[120px]">Fecha y Hora</th>
                 <th className="px-6 py-4">Paciente</th>
                 <th className="px-6 py-4">Cita / Terapia</th>
                 <th className="px-6 py-4">Medio de Pago</th>
@@ -308,9 +308,9 @@ export default function CitasPage() {
                       onClick={() => setSelectedAppt(appt)}
                       className="hover:bg-offwhite/30 transition-colors cursor-pointer"
                     >
-                      <td className="px-6 py-4">
-                        <span className="font-semibold block">{formattedDate}</span>
-                        <span className="text-[10px] text-teal/60">{formattedTime} hrs</span>
+                      <td className="px-6 py-4 whitespace-nowrap w-[120px] min-w-[120px]">
+                        <span className="font-semibold block leading-tight">{formattedDate}</span>
+                        <span className="text-[10px] text-teal/60 block mt-0.5 leading-none">{formattedTime} hrs</span>
                       </td>
                       <td className="px-6 py-4 font-subtitle font-bold text-teal">
                         {appt.patient.firstName} {appt.patient.lastName}
