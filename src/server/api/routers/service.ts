@@ -153,12 +153,16 @@ export const serviceRouter = createTRPCRouter({
       // Sync event type details with Cal.com
       if (calComEventTypeId) {
         try {
-          await updateCalComEventType(
+          const calEvent = await updateCalComEventType(
             calComEventTypeId,
             input.name,
             input.duration,
             input.description || undefined
           );
+          if (calEvent) {
+            calComBookingUrl = calEvent.bookingUrl || `https://cal.com/camila-ortiz/${calEvent.slug}`;
+            calComSlug = calEvent.slug;
+          }
         } catch (error) {
           console.error(`Cal.com event type update failed for ${calComEventTypeId}:`, error);
         }

@@ -175,6 +175,13 @@ export async function updateCalComEventType(
     return null;
   }
 
+  const slug = title
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/(^-|-$)/g, "");
+
   const baseUrl = env.CALCOM_API_URL || "https://api.cal.com/v2";
   const url = `${baseUrl}/event-types/${eventTypeId}`;
 
@@ -188,6 +195,7 @@ export async function updateCalComEventType(
       },
       body: JSON.stringify({
         title,
+        slug,
         lengthInMinutes,
         description: description || "",
       }),
