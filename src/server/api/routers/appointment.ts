@@ -10,7 +10,7 @@ export const appointmentRouter = createTRPCRouter({
         endDate: z.date().optional(),
         page: z.number().int().min(1).optional().default(1),
         limit: z.number().int().min(1).optional().default(20),
-        status: z.enum(["BOOKED", "CASH_PENDING", "TRANSFERRED", "CANCELLED", "ATTENDED", "NO_SHOW"]).optional(),
+        status: z.enum(["BOOKED", "CONFIRMED", "ATTENDED", "NO_SHOW", "CANCELLED"]).optional(),
         searchQuery: z.string().optional(),
       }).optional()
     )
@@ -82,8 +82,8 @@ export const appointmentRouter = createTRPCRouter({
         serviceId: z.string().optional().nullable(),
         date: z.date(),
         durationMinutes: z.number().int().default(60),
-        status: z.enum(["BOOKED", "CASH_PENDING", "TRANSFERRED", "CANCELLED", "ATTENDED", "NO_SHOW"]).default("BOOKED"),
-        paymentMethod: z.enum(["CASH", "TRANSFER"]).optional().nullable(),
+        status: z.enum(["BOOKED", "CONFIRMED", "ATTENDED", "NO_SHOW", "CANCELLED"]).default("BOOKED"),
+        paymentMethod: z.enum(["PENDING", "CASH_PENDING", "TRANSFER", "CASH_PAID"]).default("PENDING").nullable(),
         cancelReason: z.string().optional().nullable(),
         notes: z.string().optional().nullable(),
       })
@@ -97,7 +97,7 @@ export const appointmentRouter = createTRPCRouter({
           date: input.date,
           durationMinutes: input.durationMinutes,
           status: input.status,
-          paymentMethod: input.paymentMethod || null,
+          paymentMethod: input.paymentMethod || "PENDING",
           cancelReason: input.cancelReason || null,
           notes: input.notes || null,
         },
@@ -108,12 +108,12 @@ export const appointmentRouter = createTRPCRouter({
     .input(
       z.object({
         id: z.string(),
-        title: z.string().min(1),
+        title: z.string().min(1).optional(),
         serviceId: z.string().optional().nullable(),
-        date: z.date(),
-        durationMinutes: z.number().int(),
-        status: z.enum(["BOOKED", "CASH_PENDING", "TRANSFERRED", "CANCELLED", "ATTENDED", "NO_SHOW"]),
-        paymentMethod: z.enum(["CASH", "TRANSFER"]).optional().nullable(),
+        date: z.date().optional(),
+        durationMinutes: z.number().int().optional(),
+        status: z.enum(["BOOKED", "CONFIRMED", "ATTENDED", "NO_SHOW", "CANCELLED"]).optional(),
+        paymentMethod: z.enum(["PENDING", "CASH_PENDING", "TRANSFER", "CASH_PAID"]).optional().nullable(),
         cancelReason: z.string().optional().nullable(),
         notes: z.string().optional().nullable(),
       })
@@ -132,7 +132,7 @@ export const appointmentRouter = createTRPCRouter({
         try {
           if (input.status === "CANCELLED" && existing.status !== "CANCELLED") {
             await cancelCalComBooking(existing.calComEventId, input.cancelReason || undefined);
-          } else if (input.date.getTime() !== existing.date.getTime()) {
+          } else if (input.date && input.date.getTime() !== existing.date.getTime()) {
             await rescheduleCalComBooking(existing.calComEventId, input.date);
           }
         } catch (calError) {
@@ -140,18 +140,19 @@ export const appointmentRouter = createTRPCRouter({
         }
       }
 
+      const updateData: any = {};
+      if (input.title !== undefined) updateData.title = input.title;
+      if (input.serviceId !== undefined) updateData.serviceId = input.serviceId;
+      if (input.date !== undefined) updateData.date = input.date;
+      if (input.durationMinutes !== undefined) updateData.durationMinutes = input.durationMinutes;
+      if (input.status !== undefined) updateData.status = input.status;
+      if (input.paymentMethod !== undefined) updateData.paymentMethod = input.paymentMethod;
+      if (input.cancelReason !== undefined) updateData.cancelReason = input.cancelReason;
+      if (input.notes !== undefined) updateData.notes = input.notes;
+
       return ctx.db.appointment.update({
         where: { id: input.id },
-        data: {
-          title: input.title,
-          serviceId: input.serviceId || null,
-          date: input.date,
-          durationMinutes: input.durationMinutes,
-          status: input.status,
-          paymentMethod: input.paymentMethod || null,
-          cancelReason: input.cancelReason || null,
-          notes: input.notes || null,
-        },
+        data: updateData,
       });
     }),
 

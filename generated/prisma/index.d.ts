@@ -60,19 +60,20 @@ export type SiteConfig = $Result.DefaultSelection<Prisma.$SiteConfigPayload>
 export namespace $Enums {
   export const AppointmentStatus: {
   BOOKED: 'BOOKED',
-  CASH_PENDING: 'CASH_PENDING',
-  TRANSFERRED: 'TRANSFERRED',
-  CANCELLED: 'CANCELLED',
+  CONFIRMED: 'CONFIRMED',
   ATTENDED: 'ATTENDED',
-  NO_SHOW: 'NO_SHOW'
+  NO_SHOW: 'NO_SHOW',
+  CANCELLED: 'CANCELLED'
 };
 
 export type AppointmentStatus = (typeof AppointmentStatus)[keyof typeof AppointmentStatus]
 
 
 export const PaymentMethod: {
-  CASH: 'CASH',
-  TRANSFER: 'TRANSFER'
+  PENDING: 'PENDING',
+  CASH_PENDING: 'CASH_PENDING',
+  TRANSFER: 'TRANSFER',
+  CASH_PAID: 'CASH_PAID'
 };
 
 export type PaymentMethod = (typeof PaymentMethod)[keyof typeof PaymentMethod]

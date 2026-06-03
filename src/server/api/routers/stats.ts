@@ -24,7 +24,7 @@ export const statsRouter = createTRPCRouter({
     const revenueToday = appointmentsToday.reduce(
       (sum, appt) => {
         // Sum price if attended, transferred or pending cash payment (which means it's booked for today)
-        if (appt.status === "ATTENDED" || appt.status === "TRANSFERRED" || appt.status === "CASH_PENDING") {
+        if (appt.status !== "CANCELLED" && appt.status !== "NO_SHOW" && (appt.status === "ATTENDED" || appt.paymentMethod === "CASH_PAID" || appt.paymentMethod === "TRANSFER" || appt.paymentMethod === "CASH_PENDING")) {
           return sum + (appt.service?.price ?? 0);
         }
         return sum;
@@ -89,7 +89,7 @@ export const statsRouter = createTRPCRouter({
       });
 
       const revenue = dayAppts.reduce((sum, appt) => {
-        if (appt.status === "ATTENDED" || appt.status === "TRANSFERRED" || appt.status === "CASH_PENDING") {
+        if (appt.status !== "CANCELLED" && appt.status !== "NO_SHOW" && (appt.status === "ATTENDED" || appt.paymentMethod === "CASH_PAID" || appt.paymentMethod === "TRANSFER" || appt.paymentMethod === "CASH_PENDING")) {
           return sum + (appt.service?.price ?? 0);
         }
         return sum;

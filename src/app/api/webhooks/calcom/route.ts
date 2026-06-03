@@ -127,6 +127,7 @@ export async function POST(req: Request) {
 
       // Create or update the appointment
       try {
+        const bookingIdVal = booking.bookingId ? String(booking.bookingId) : (booking.id ? String(booking.id) : null);
         await db.appointment.upsert({
           where: { calComEventId: String(booking.uid) },
           update: { 
@@ -136,11 +137,12 @@ export async function POST(req: Request) {
             title: booking.title || booking.eventType?.title || "Cita de Kinesiología",
             serviceId,
             notes: booking.responses?.notes?.value || null,
+            ...(bookingIdVal ? { calComBookingId: bookingIdVal } : {}),
           },
           create: {
             patientId: patient.id,
             calComEventId: String(booking.uid),
-            calComBookingId: String(booking.id || ""),
+            calComBookingId: bookingIdVal,
             title: booking.title || booking.eventType?.title || "Cita de Kinesiología",
             date: new Date(booking.startTime),
             durationMinutes: booking.eventDuration || booking.length || 60,

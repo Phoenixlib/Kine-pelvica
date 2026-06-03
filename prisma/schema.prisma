@@ -46,7 +46,7 @@ model Appointment {
   date            DateTime
   durationMinutes Int               @default(60)
   status          AppointmentStatus @default(BOOKED)
-  paymentMethod   PaymentMethod?    // null hasta que informen
+  paymentMethod   PaymentMethod?    @default(PENDING)
   cancelReason    String?           // obligatorio si status=CANCELLED
   calComEventId   String?           @unique
   calComBookingId String?           @unique
@@ -57,16 +57,17 @@ model Appointment {
 
 enum AppointmentStatus {
   BOOKED          // Reservado (hora pedida)
-  CASH_PENDING    // Pago en efectivo (informó que pagará el día)
-  TRANSFERRED     // Transferido (pagó por transferencia)
-  CANCELLED       // Cancelado desde el admin (requiere cancelReason)
-  ATTENDED        // Asistió y todo pagado
+  CONFIRMED       // Confirmado
+  ATTENDED        // Asistió
   NO_SHOW         // No asistió
+  CANCELLED       // Cancelado (requiere cancelReason)
 }
 
 enum PaymentMethod {
-  CASH
-  TRANSFER
+  PENDING         // Pendiente
+  CASH_PENDING    // Pago en efectivo (pendiente)
+  TRANSFER        // Transferido (pagó por transferencia)
+  CASH_PAID       // Pagado efectivo
 }
 
 // --- Servicios ---

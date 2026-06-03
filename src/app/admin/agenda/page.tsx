@@ -41,8 +41,8 @@ interface Appointment {
   serviceId: string | null;
   date: Date | string;
   durationMinutes: number;
-  status: "BOOKED" | "CASH_PENDING" | "TRANSFERRED" | "CANCELLED" | "ATTENDED" | "NO_SHOW";
-  paymentMethod: "CASH" | "TRANSFER" | null;
+  status: "BOOKED" | "CONFIRMED" | "ATTENDED" | "NO_SHOW" | "CANCELLED";
+  paymentMethod: "PENDING" | "CASH_PENDING" | "TRANSFER" | "CASH_PAID" | null;
   notes: string | null;
 }
 
@@ -58,7 +58,7 @@ export default function AgendaPage() {
   const [apptTime, setApptTime] = useState("09:00");
   const [durationMinutes, setDurationMinutes] = useState(60);
   const [apptStatus, setApptStatus] = useState<Appointment["status"]>("BOOKED");
-  const [paymentMethod, setPaymentMethod] = useState<"CASH" | "TRANSFER" | "PENDING">("PENDING");
+  const [paymentMethod, setPaymentMethod] = useState<"PENDING" | "CASH_PENDING" | "TRANSFER" | "CASH_PAID">("PENDING");
   const [notes, setNotes] = useState("");
   const [isSuccessMessageOpen, setIsSuccessMessageOpen] = useState(false);
 
@@ -145,7 +145,7 @@ export default function AgendaPage() {
       date: fullDate,
       durationMinutes: Number(durationMinutes),
       status: apptStatus,
-      paymentMethod: paymentMethod === "PENDING" ? null : paymentMethod,
+      paymentMethod,
       notes,
     });
   };
@@ -162,18 +162,28 @@ export default function AgendaPage() {
   const getStatusColor = (status: Appointment["status"]) => {
     switch (status) {
       case "ATTENDED":
-      case "TRANSFERRED":
         return {
           bg: "#ecfdf5",
           border: "#a7f3d0",
           text: "#064e3b"
         };
-      case "CASH_PENDING":
+      case "CONFIRMED":
+        return {
+          bg: "#eff6ff",
+          border: "#bfdbfe",
+          text: "#1e3a8a"
+        };
       case "BOOKED":
         return {
           bg: "#fffbeb",
           border: "#fde68a",
           text: "#78350f"
+        };
+      case "NO_SHOW":
+        return {
+          bg: "#fff7ed",
+          border: "#ffedd5",
+          text: "#c2410c"
         };
       case "CANCELLED":
         return {
@@ -474,9 +484,8 @@ export default function AgendaPage() {
                   className="w-full px-4 py-3 bg-white border border-cream rounded-xl font-body text-sm text-teal focus:outline-none"
                 >
                   <option value="BOOKED">Reservada</option>
-                  <option value="CASH_PENDING">Pago Efectivo Pendiente</option>
-                  <option value="TRANSFERRED">Transferido (Pagado)</option>
-                  <option value="ATTENDED">Asistió y Pagado</option>
+                  <option value="CONFIRMED">Confirmada</option>
+                  <option value="ATTENDED">Asistió</option>
                   <option value="NO_SHOW">No Asistió</option>
                   <option value="CANCELLED">Cancelada</option>
                 </select>
@@ -492,9 +501,10 @@ export default function AgendaPage() {
                   onChange={(e) => setPaymentMethod(e.target.value as any)}
                   className="w-full px-4 py-3 bg-white border border-cream rounded-xl font-body text-sm text-teal focus:outline-none"
                 >
-                  <option value="PENDING">Pendiente / Sin Registrar</option>
-                  <option value="CASH">Efectivo</option>
+                  <option value="PENDING">Pendiente</option>
+                  <option value="CASH_PENDING">Efectivo Pendiente</option>
                   <option value="TRANSFER">Transferencia</option>
+                  <option value="CASH_PAID">Efectivo Pagado</option>
                 </select>
               </div>
 

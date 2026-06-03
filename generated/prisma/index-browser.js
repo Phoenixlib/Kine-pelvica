@@ -221,16 +221,17 @@ exports.Prisma.NullsOrder = {
 };
 exports.AppointmentStatus = exports.$Enums.AppointmentStatus = {
   BOOKED: 'BOOKED',
-  CASH_PENDING: 'CASH_PENDING',
-  TRANSFERRED: 'TRANSFERRED',
-  CANCELLED: 'CANCELLED',
+  CONFIRMED: 'CONFIRMED',
   ATTENDED: 'ATTENDED',
-  NO_SHOW: 'NO_SHOW'
+  NO_SHOW: 'NO_SHOW',
+  CANCELLED: 'CANCELLED'
 };
 
 exports.PaymentMethod = exports.$Enums.PaymentMethod = {
-  CASH: 'CASH',
-  TRANSFER: 'TRANSFER'
+  PENDING: 'PENDING',
+  CASH_PENDING: 'CASH_PENDING',
+  TRANSFER: 'TRANSFER',
+  CASH_PAID: 'CASH_PAID'
 };
 
 exports.TestimonialStatus = exports.$Enums.TestimonialStatus = {
