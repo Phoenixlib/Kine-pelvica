@@ -176,17 +176,19 @@ export default function CitasPage() {
   }) => {
     updateMutation.mutate(data, {
       onSuccess: (updated) => {
-        // Sync open modal data with the updated one
-        if (selectedAppt && selectedAppt.id === updated.id) {
-          const fresh = {
-            ...selectedAppt,
-            status: updated.status,
-            paymentMethod: updated.paymentMethod,
-            notes: updated.notes,
-            cancelReason: updated.cancelReason,
-          } as Appointment;
-          setSelectedAppt(fresh);
-        }
+        // Sync open modal data with the updated one using functional update to prevent reopening if closed
+        setSelectedAppt((prev) => {
+          if (prev && prev.id === updated.id) {
+            return {
+              ...prev,
+              status: updated.status,
+              paymentMethod: updated.paymentMethod,
+              notes: updated.notes,
+              cancelReason: updated.cancelReason,
+            } as Appointment;
+          }
+          return null;
+        });
       }
     });
   };
