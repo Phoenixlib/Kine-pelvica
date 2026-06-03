@@ -601,7 +601,7 @@ function AppointmentDetailModal({
   isUpdating: boolean;
 }) {
   const [notes, setNotes] = useState(appt.notes || "");
-  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod | "NONE">(appt.paymentMethod || "NONE");
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>(appt.paymentMethod || "PENDING");
   const [status, setStatus] = useState<AppointmentStatus>(appt.status);
   const [cancelReason, setCancelReason] = useState(appt.cancelReason || "");
   const [showCancelInput, setShowCancelInput] = useState(false);
@@ -609,7 +609,7 @@ function AppointmentDetailModal({
 
   useEffect(() => {
     setNotes(appt.notes || "");
-    setPaymentMethod(appt.paymentMethod || "NONE");
+    setPaymentMethod(appt.paymentMethod || "PENDING");
     setStatus(appt.status);
     setCancelReason(appt.cancelReason || "");
     setShowCancelInput(appt.status === "CANCELLED");
@@ -625,7 +625,7 @@ function AppointmentDetailModal({
     onUpdate({
       id: appt.id,
       notes: notes || null,
-      paymentMethod: paymentMethod === "NONE" ? null : paymentMethod,
+      paymentMethod,
       status,
       cancelReason: status === "CANCELLED" ? cancelReason : null,
     });
@@ -773,11 +773,10 @@ function AppointmentDetailModal({
                 </label>
                 <select
                   value={paymentMethod}
-                  onChange={(e) => setPaymentMethod(e.target.value as PaymentMethod | "NONE")}
+                  onChange={(e) => setPaymentMethod(e.target.value as PaymentMethod)}
                   className="w-full px-3 py-2.5 bg-white border border-cream rounded-xl font-body text-xs text-teal focus:outline-none focus:border-terracotta focus:ring-1 focus:ring-terracotta transition-colors"
                 >
-                  <option value="NONE">Pendiente</option>
-                  <option value="PENDING">Pendiente (Sin Registrar)</option>
+                  <option value="PENDING">Pendiente</option>
                   <option value="CASH_PENDING">Efectivo Pendiente</option>
                   <option value="TRANSFER">Transferencia</option>
                   <option value="CASH_PAID">Efectivo Pagado</option>
