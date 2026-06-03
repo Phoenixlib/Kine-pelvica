@@ -17,7 +17,8 @@ import {
   AlertTriangle,
   CheckCircle2,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  Loader2
 } from "lucide-react";
 import type { AppointmentStatus, PaymentMethod } from "../../../../generated/prisma";
 
@@ -144,6 +145,16 @@ export default function CitasPage() {
       setSelectedAppt(null);
     }
   });
+
+  const isTransitionPending = (apptId: string, targetStatus: AppointmentStatus) => {
+    return updateMutation.isPending && 
+      updateMutation.variables?.id === apptId && 
+      updateMutation.variables?.status === targetStatus;
+  };
+
+  const isAnyTransitionPendingForAppt = (apptId: string) => {
+    return updateMutation.isPending && updateMutation.variables?.id === apptId;
+  };
 
   const handleStatusTransition = (appt: Appointment, newStatus: AppointmentStatus) => {
     if (newStatus === "CANCELLED") {
@@ -284,6 +295,13 @@ export default function CitasPage() {
                   const statusStyle = STATUS_STYLES[appt.status] || { bg: "bg-slate-50", text: "text-slate-800", border: "border-slate-200" };
                   const hasNotes = !!appt.notes && appt.notes.trim() !== "";
 
+                  const isAnyPending = isAnyTransitionPendingForAppt(appt.id);
+                  const isPendingConfirm = isTransitionPending(appt.id, "CONFIRMED");
+                  const isPendingCancel = isTransitionPending(appt.id, "CANCELLED");
+                  const isPendingAttended = isTransitionPending(appt.id, "ATTENDED");
+                  const isPendingNoShow = isTransitionPending(appt.id, "NO_SHOW");
+                  const isPendingBooked = isTransitionPending(appt.id, "BOOKED");
+
                   return (
                     <tr 
                       key={appt.id} 
@@ -333,53 +351,107 @@ export default function CitasPage() {
                           {appt.status === "BOOKED" && (
                             <>
                               <button
+                                disabled={isAnyPending}
                                 onClick={() => handleStatusTransition(appt, "CONFIRMED")}
-                                className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-blue-50 hover:bg-blue-100 border border-blue-200 text-blue-700 text-[10px] font-bold uppercase tracking-wider rounded-lg transition"
+                                className={`inline-flex items-center gap-1 px-2.5 py-1.5 border text-[10px] font-bold uppercase tracking-wider rounded-lg transition-all ${
+                                  isPendingConfirm
+                                    ? "bg-blue-600 border-blue-700 text-white opacity-95 cursor-not-allowed"
+                                    : "bg-blue-50 hover:bg-blue-100 border border-blue-200 text-blue-700 disabled:opacity-40 disabled:cursor-not-allowed"
+                                }`}
                               >
-                                <Check size={11} />
-                                Confirmar
+                                {isPendingConfirm ? (
+                                  <Loader2 size={11} className="animate-spin" />
+                                ) : (
+                                  <Check size={11} />
+                                )}
+                                {isPendingConfirm ? "Confirmando..." : "Confirmar"}
                               </button>
                               <button
+                                disabled={isAnyPending}
                                 onClick={() => handleStatusTransition(appt, "CANCELLED")}
-                                className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-red-50 hover:bg-red-100 border border-red-200 text-red-700 text-[10px] font-bold uppercase tracking-wider rounded-lg transition"
+                                className={`inline-flex items-center gap-1 px-2.5 py-1.5 border text-[10px] font-bold uppercase tracking-wider rounded-lg transition-all ${
+                                  isPendingCancel
+                                    ? "bg-red-600 border-red-700 text-white opacity-95 cursor-not-allowed"
+                                    : "bg-red-50 hover:bg-red-100 border border-red-200 text-red-700 disabled:opacity-40 disabled:cursor-not-allowed"
+                                }`}
                               >
-                                <X size={11} />
-                                Cancelar
+                                {isPendingCancel ? (
+                                  <Loader2 size={11} className="animate-spin" />
+                                ) : (
+                                  <X size={11} />
+                                )}
+                                {isPendingCancel ? "Cancelando..." : "Cancelar"}
                               </button>
                             </>
                           )}
                           {appt.status === "CONFIRMED" && (
                             <>
                               <button
+                                disabled={isAnyPending}
                                 onClick={() => handleStatusTransition(appt, "ATTENDED")}
-                                className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 text-emerald-700 text-[10px] font-bold uppercase tracking-wider rounded-lg transition"
+                                className={`inline-flex items-center gap-1 px-2.5 py-1.5 border text-[10px] font-bold uppercase tracking-wider rounded-lg transition-all ${
+                                  isPendingAttended
+                                    ? "bg-emerald-600 border-emerald-700 text-white opacity-95 cursor-not-allowed"
+                                    : "bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 text-emerald-700 disabled:opacity-40 disabled:cursor-not-allowed"
+                                }`}
                               >
-                                <CheckCircle2 size={11} />
-                                Asistió
+                                {isPendingAttended ? (
+                                  <Loader2 size={11} className="animate-spin" />
+                                ) : (
+                                  <CheckCircle2 size={11} />
+                                )}
+                                {isPendingAttended ? "Guardando..." : "Asistió"}
                               </button>
                               <button
+                                disabled={isAnyPending}
                                 onClick={() => handleStatusTransition(appt, "NO_SHOW")}
-                                className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-orange-50 hover:bg-orange-100 border border-orange-200 text-orange-700 text-[10px] font-bold uppercase tracking-wider rounded-lg transition"
+                                className={`inline-flex items-center gap-1 px-2.5 py-1.5 border text-[10px] font-bold uppercase tracking-wider rounded-lg transition-all ${
+                                  isPendingNoShow
+                                    ? "bg-orange-600 border-orange-700 text-white opacity-95 cursor-not-allowed"
+                                    : "bg-orange-50 hover:bg-orange-100 border border-orange-200 text-orange-700 disabled:opacity-40 disabled:cursor-not-allowed"
+                                }`}
                               >
-                                <AlertTriangle size={11} />
-                                No Asistió
+                                {isPendingNoShow ? (
+                                  <Loader2 size={11} className="animate-spin" />
+                                ) : (
+                                  <AlertTriangle size={11} />
+                                )}
+                                {isPendingNoShow ? "Guardando..." : "No Asistió"}
                               </button>
                               <button
+                                disabled={isAnyPending}
                                 onClick={() => handleStatusTransition(appt, "CANCELLED")}
-                                className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-red-50 hover:bg-red-100 border border-red-200 text-red-700 text-[10px] font-bold uppercase tracking-wider rounded-lg transition"
+                                className={`inline-flex items-center gap-1 px-2.5 py-1.5 border text-[10px] font-bold uppercase tracking-wider rounded-lg transition-all ${
+                                  isPendingCancel
+                                    ? "bg-red-600 border-red-700 text-white opacity-95 cursor-not-allowed"
+                                    : "bg-red-50 hover:bg-red-100 border border-red-200 text-red-700 disabled:opacity-40 disabled:cursor-not-allowed"
+                                }`}
                               >
-                                <X size={11} />
-                                Cancelar
+                                {isPendingCancel ? (
+                                  <Loader2 size={11} className="animate-spin" />
+                                ) : (
+                                  <X size={11} />
+                                )}
+                                {isPendingCancel ? "Cancelando..." : "Cancelar"}
                               </button>
                             </>
                           )}
                           {(appt.status === "ATTENDED" || appt.status === "NO_SHOW") && (
                             <button
+                              disabled={isAnyPending}
                               onClick={() => handleStatusTransition(appt, "BOOKED")}
-                              className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-600 text-[10px] font-bold uppercase tracking-wider rounded-lg transition"
+                              className={`inline-flex items-center gap-1 px-2.5 py-1.5 border text-[10px] font-bold uppercase tracking-wider rounded-lg transition-all ${
+                                isPendingBooked
+                                  ? "bg-slate-600 border-slate-700 text-white opacity-95 cursor-not-allowed"
+                                  : "bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-600 disabled:opacity-40 disabled:cursor-not-allowed"
+                              }`}
                             >
-                              <RotateCcw size={11} />
-                              Reestablecer
+                              {isPendingBooked ? (
+                                <Loader2 size={11} className="animate-spin" />
+                              ) : (
+                                <RotateCcw size={11} />
+                              )}
+                              {isPendingBooked ? "Restableciendo..." : "Reestablecer"}
                             </button>
                           )}
                         </div>
@@ -413,6 +485,13 @@ export default function CitasPage() {
             const servicePrice = appt.service ? `$${appt.service.price.toLocaleString("es-CL")}` : "—";
             const statusStyle = STATUS_STYLES[appt.status] || { bg: "bg-slate-50", text: "text-slate-800", border: "border-slate-200" };
             const hasNotes = !!appt.notes && appt.notes.trim() !== "";
+
+            const isAnyPending = isAnyTransitionPendingForAppt(appt.id);
+            const isPendingConfirm = isTransitionPending(appt.id, "CONFIRMED");
+            const isPendingCancel = isTransitionPending(appt.id, "CANCELLED");
+            const isPendingAttended = isTransitionPending(appt.id, "ATTENDED");
+            const isPendingNoShow = isTransitionPending(appt.id, "NO_SHOW");
+            const isPendingBooked = isTransitionPending(appt.id, "BOOKED");
 
             return (
               <div 
@@ -471,47 +550,101 @@ export default function CitasPage() {
                     {appt.status === "BOOKED" && (
                       <>
                         <button
+                          disabled={isAnyPending}
                           onClick={() => handleStatusTransition(appt, "CONFIRMED")}
-                          className="inline-flex items-center gap-1 px-2 py-1.5 bg-blue-50 border border-blue-200 text-blue-700 text-[10px] font-bold uppercase tracking-wider rounded-lg transition"
+                          className={`inline-flex items-center gap-1 px-2.5 py-1.5 border text-[10px] font-bold uppercase tracking-wider rounded-lg transition-all ${
+                            isPendingConfirm
+                              ? "bg-blue-600 border-blue-700 text-white opacity-95 cursor-not-allowed"
+                              : "bg-blue-50 hover:bg-blue-100 border border-blue-200 text-blue-700 disabled:opacity-40 disabled:cursor-not-allowed"
+                          }`}
                         >
-                          Confirmar
+                          {isPendingConfirm ? (
+                            <Loader2 size={11} className="animate-spin" />
+                          ) : (
+                            "Confirmar"
+                          )}
                         </button>
                         <button
+                          disabled={isAnyPending}
                           onClick={() => handleStatusTransition(appt, "CANCELLED")}
-                          className="inline-flex items-center gap-1 px-2 py-1.5 bg-red-50 border border-red-200 text-red-700 text-[10px] font-bold uppercase tracking-wider rounded-lg transition"
+                          className={`inline-flex items-center gap-1 px-2.5 py-1.5 border text-[10px] font-bold uppercase tracking-wider rounded-lg transition-all ${
+                            isPendingCancel
+                              ? "bg-red-600 border-red-700 text-white opacity-95 cursor-not-allowed"
+                              : "bg-red-50 hover:bg-red-100 border border-red-200 text-red-700 disabled:opacity-40 disabled:cursor-not-allowed"
+                          }`}
                         >
-                          Cancelar
+                          {isPendingCancel ? (
+                            <Loader2 size={11} className="animate-spin" />
+                          ) : (
+                            "Cancelar"
+                          )}
                         </button>
                       </>
                     )}
                     {appt.status === "CONFIRMED" && (
                       <>
                         <button
+                          disabled={isAnyPending}
                           onClick={() => handleStatusTransition(appt, "ATTENDED")}
-                          className="inline-flex items-center gap-1 px-2 py-1.5 bg-emerald-50 border border-emerald-200 text-emerald-700 text-[10px] font-bold uppercase tracking-wider rounded-lg transition"
+                          className={`inline-flex items-center gap-1 px-2.5 py-1.5 border text-[10px] font-bold uppercase tracking-wider rounded-lg transition-all ${
+                            isPendingAttended
+                              ? "bg-emerald-600 border-emerald-700 text-white opacity-95 cursor-not-allowed"
+                              : "bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 text-emerald-700 disabled:opacity-40 disabled:cursor-not-allowed"
+                          }`}
                         >
-                          Asistió
+                          {isPendingAttended ? (
+                            <Loader2 size={11} className="animate-spin" />
+                          ) : (
+                            "Asistió"
+                          )}
                         </button>
                         <button
+                          disabled={isAnyPending}
                           onClick={() => handleStatusTransition(appt, "NO_SHOW")}
-                          className="inline-flex items-center gap-1 px-2 py-1.5 bg-orange-50 border border-orange-200 text-orange-700 text-[10px] font-bold uppercase tracking-wider rounded-lg transition"
+                          className={`inline-flex items-center gap-1 px-2.5 py-1.5 border text-[10px] font-bold uppercase tracking-wider rounded-lg transition-all ${
+                            isPendingNoShow
+                              ? "bg-orange-600 border-orange-700 text-white opacity-95 cursor-not-allowed"
+                              : "bg-orange-50 hover:bg-orange-100 border border-orange-200 text-orange-700 disabled:opacity-40 disabled:cursor-not-allowed"
+                          }`}
                         >
-                          No Asistió
+                          {isPendingNoShow ? (
+                            <Loader2 size={11} className="animate-spin" />
+                          ) : (
+                            "No Asistió"
+                          )}
                         </button>
                         <button
+                          disabled={isAnyPending}
                           onClick={() => handleStatusTransition(appt, "CANCELLED")}
-                          className="inline-flex items-center gap-1 px-2 py-1.5 bg-red-50 border border-red-200 text-red-700 text-[10px] font-bold uppercase tracking-wider rounded-lg transition"
+                          className={`inline-flex items-center gap-1 px-2.5 py-1.5 border text-[10px] font-bold uppercase tracking-wider rounded-lg transition-all ${
+                            isPendingCancel
+                              ? "bg-red-600 border-red-700 text-white opacity-95 cursor-not-allowed"
+                              : "bg-red-50 hover:bg-red-100 border border-red-200 text-red-700 disabled:opacity-40 disabled:cursor-not-allowed"
+                          }`}
                         >
-                          Cancelar
+                          {isPendingCancel ? (
+                            <Loader2 size={11} className="animate-spin" />
+                          ) : (
+                            "Cancelar"
+                          )}
                         </button>
                       </>
                     )}
                     {(appt.status === "ATTENDED" || appt.status === "NO_SHOW") && (
                       <button
+                        disabled={isAnyPending}
                         onClick={() => handleStatusTransition(appt, "BOOKED")}
-                        className="inline-flex items-center gap-1 px-2 py-1.5 bg-slate-50 border border-slate-200 text-slate-600 text-[10px] font-bold uppercase tracking-wider rounded-lg transition"
+                        className={`inline-flex items-center gap-1 px-2.5 py-1.5 border text-[10px] font-bold uppercase tracking-wider rounded-lg transition-all ${
+                          isPendingBooked
+                            ? "bg-slate-600 border-slate-700 text-white opacity-95 cursor-not-allowed"
+                            : "bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-600 disabled:opacity-40 disabled:cursor-not-allowed"
+                        }`}
                       >
-                        Reestablecer
+                        {isPendingBooked ? (
+                          <Loader2 size={11} className="animate-spin" />
+                        ) : (
+                          "Reestablecer"
+                        )}
                       </button>
                     )}
                   </div>
