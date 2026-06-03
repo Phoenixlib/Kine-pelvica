@@ -114,7 +114,8 @@ export async function rescheduleCalComBooking(bookingUid: string, newDate: Date)
 export async function createCalComEventType(
   title: string,
   lengthInMinutes: number,
-  description?: string
+  description?: string,
+  address?: string
 ): Promise<CalComEventTypeResponse["data"] | null> {
   if (!env.CALCOM_API_KEY) {
     console.warn("CALCOM_API_KEY not set. Skipping Cal.com event type creation.");
@@ -144,6 +145,7 @@ export async function createCalComEventType(
         slug,
         lengthInMinutes,
         description: description || "",
+        locations: address ? [{ type: "address", address, public: true }] : undefined,
       }),
     });
 
@@ -168,7 +170,8 @@ export async function updateCalComEventType(
   eventTypeId: number,
   title: string,
   lengthInMinutes: number,
-  description?: string
+  description?: string,
+  address?: string
 ): Promise<CalComEventTypeResponse["data"] | null> {
   if (!env.CALCOM_API_KEY) {
     console.warn("CALCOM_API_KEY not set. Skipping Cal.com event type update.");
@@ -198,6 +201,7 @@ export async function updateCalComEventType(
         slug,
         lengthInMinutes,
         description: description || "",
+        locations: address ? [{ type: "address", address, public: true }] : undefined,
       }),
     });
 

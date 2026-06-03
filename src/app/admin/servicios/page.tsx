@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { api } from "~/trpc/react";
 import { 
   Plus, 
@@ -11,8 +11,14 @@ import {
   Clock, 
   DollarSign, 
   Settings,
-  FolderOpen
+  FolderOpen,
+  GripHorizontal,
+  ChevronDown,
+  ChevronUp
 } from "lucide-react";
+import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors } from "@dnd-kit/core";
+import { arrayMove, SortableContext, sortableKeyboardCoordinates, rectSortingStrategy, useSortable } from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 
 interface Category {
   id: string;
@@ -36,30 +42,462 @@ interface Service {
   calComSlug: string | null;
 }
 
+// Sortable Service Row/Card
+function SortableServiceCard({ srv, handleEditServiceClick, handleDeleteService }: { 
+  srv: Service; 
+  handleEditServiceClick: (s: Service) => void; 
+  handleDeleteService: (id: string) => void; 
+}) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    id: srv.id,
+    data: { type: "service", categoryId: srv.categoryId || "uncategorized" }
+  });
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    zIndex: isDragging ? 50 : 1,
+  };
+
+  return (
+    <div 
+      ref={setNodeRef} 
+      style={style} 
+      className={`bg-offwhite/50 p-4 rounded-2xl border border-cream/30 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4 transition-all ${isDragging ? "opacity-50 scale-95" : ""}`}
+    >
+      <div className="flex items-center gap-3 flex-1 min-w-0">
+        <button 
+          type="button"
+          {...attributes} 
+          {...listeners}
+          className="text-teal/40 hover:text-teal transition p-1 cursor-grab active:cursor-grabbing shrink-0"
+          title="Arrastrar para reordenar"
+        >
+          <GripHorizontal size={14} />
+        </button>
+        <div className="min-w-0">
+          <h4 className="font-subtitle font-bold text-teal text-sm truncate">{srv.name}</h4>
+          {srv.description && (
+            <p className="text-xs text-teal/70 font-body line-clamp-1 mt-0.5">{srv.description}</p>
+          )}
+        </div>
+      </div>
+
+      <div className="flex flex-wrap items-center gap-3 shrink-0">
+        <div className="flex items-center gap-1.5 text-xs text-teal/80 bg-white/80 border border-cream/20 px-2.5 py-1 rounded-xl">
+          <Clock size={12} className="text-terracotta" />
+          <span>{srv.duration} min</span>
+        </div>
+        <div className="flex items-center gap-1.5 text-xs font-bold text-teal bg-white/80 border border-cream/20 px-2.5 py-1 rounded-xl">
+          <DollarSign size={12} className="text-teal/60" />
+          <span>${srv.price.toLocaleString("es-CL")}</span>
+        </div>
+        <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[8px] font-subtitle font-bold uppercase tracking-wider ${
+          srv.isActive
+            ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
+            : "bg-redbrown/10 text-redbrown border border-redbrown/20"
+        }`}>
+          {srv.isActive ? "Activo" : "Inactivo"}
+        </span>
+
+        {srv.calComBookingUrl ? (
+          <a
+            href={srv.calComBookingUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1 px-2.5 py-1 bg-white hover:bg-cream/10 border border-cream text-teal rounded-xl text-[9px] font-subtitle uppercase tracking-widest font-bold transition"
+          >
+            <LinkIcon size={10} className="text-terracotta" /> Cal.com
+          </a>
+        ) : (
+          <span className="text-[10px] text-teal/40 font-semibold italic">Sin Cal.com</span>
+        )}
+
+        <div className="flex gap-1.5 border-l border-cream/50 pl-3">
+          <button
+            type="button"
+            onClick={() => handleEditServiceClick(srv)}
+            className="p-1.5 text-teal/60 hover:text-terracotta hover:bg-white rounded-lg transition"
+            title="Editar Servicio"
+          >
+            <Edit3 size={13} />
+          </button>
+          <button
+            type="button"
+            onClick={() => handleDeleteService(srv.id)}
+            className="p-1.5 text-redbrown/60 hover:text-redbrown hover:bg-white rounded-lg transition"
+            title="Eliminar Servicio"
+          >
+            <Trash2 size={13} />
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Sortable Category Section
+function SortableCategorySection({
+  cat,
+  services,
+  isCollapsed,
+  onToggleCollapse,
+  handleEditCategoryClick,
+  handleDeleteCategory,
+  handleEditServiceClick,
+  handleDeleteService,
+  handleNewServiceForCategory
+}: {
+  cat: Category;
+  services: Service[];
+  isCollapsed: boolean;
+  onToggleCollapse: () => void;
+  handleEditCategoryClick: (c: Category) => void;
+  handleDeleteCategory: (id: string) => void;
+  handleEditServiceClick: (s: Service) => void;
+  handleDeleteService: (id: string) => void;
+  handleNewServiceForCategory: (catId: string) => void;
+}) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    id: cat.id,
+    data: { type: "category" }
+  });
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    zIndex: isDragging ? 50 : 1,
+  };
+
+  return (
+    <div 
+      ref={setNodeRef} 
+      style={style} 
+      className={`bg-white rounded-3xl border border-cream/40 shadow-xs overflow-hidden transition-all ${isDragging ? "opacity-50 scale-98 shadow-md" : ""}`}
+    >
+      {/* Category Header */}
+      <div className="p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-cream/20 bg-[#faf6f2]/85">
+        <div className="flex items-center gap-3 flex-1 min-w-0">
+          <button 
+            type="button"
+            {...attributes} 
+            {...listeners}
+            className="text-teal/40 hover:text-teal transition p-1.5 cursor-grab active:cursor-grabbing shrink-0"
+            title="Arrastrar Categoría"
+          >
+            <GripHorizontal size={16} />
+          </button>
+          <button 
+            type="button"
+            onClick={onToggleCollapse}
+            className="p-1 hover:bg-cream/20 rounded-lg text-teal/70 shrink-0"
+          >
+            {isCollapsed ? <ChevronDown size={18} /> : <ChevronUp size={18} />}
+          </button>
+          <div className="flex items-center gap-2.5 min-w-0 flex-wrap">
+            <h3 className="font-title text-lg text-teal font-semibold truncate">{cat.name}</h3>
+            <span className="shrink-0 inline-flex items-center bg-teal/5 text-teal/80 border border-teal/10 px-2 py-0.5 rounded-full text-[10px] font-subtitle font-bold uppercase tracking-wider">
+              {services.length} {services.length === 1 ? "servicio" : "servicios"}
+            </span>
+            <span className={`shrink-0 inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[8px] font-subtitle font-bold uppercase tracking-wider ${
+              cat.isActive
+                ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
+                : "bg-redbrown/10 text-redbrown border border-redbrown/20"
+            }`}>
+              {cat.isActive ? "Activa" : "Inactiva"}
+            </span>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2 self-end sm:self-auto">
+          <button
+            type="button"
+            onClick={() => handleNewServiceForCategory(cat.id)}
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-teal text-white hover:bg-teal/90 text-[10px] font-subtitle uppercase tracking-wider font-bold rounded-xl transition shadow-xs"
+          >
+            <Plus size={12} /> Añadir Servicio
+          </button>
+          <button
+            type="button"
+            onClick={() => handleEditCategoryClick(cat)}
+            className="p-2 text-teal/60 hover:text-terracotta hover:bg-cream/10 rounded-xl transition"
+            title="Editar Categoría"
+          >
+            <Edit3 size={15} />
+          </button>
+          <button
+            type="button"
+            onClick={() => handleDeleteCategory(cat.id)}
+            className="p-2 text-redbrown/60 hover:text-redbrown hover:bg-redbrown/5 rounded-xl transition"
+            title="Eliminar Categoría"
+          >
+            <Trash2 size={15} />
+          </button>
+        </div>
+      </div>
+
+      {/* Services List */}
+      {!isCollapsed && (
+        <div className="p-5 bg-white space-y-3">
+          {services.length === 0 ? (
+            <div className="text-center py-8 text-teal/50 font-body text-xs italic">
+              No hay servicios registrados en esta categoría.
+            </div>
+          ) : (
+            <SortableContext
+              items={services.map(s => s.id)}
+              strategy={rectSortingStrategy}
+            >
+              <div className="space-y-3">
+                {services.map((srv) => (
+                  <SortableServiceCard
+                    key={srv.id}
+                    srv={srv}
+                    handleEditServiceClick={handleEditServiceClick}
+                    handleDeleteService={handleDeleteService}
+                  />
+                ))}
+              </div>
+            </SortableContext>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// Uncategorized Services section
+function UncategorizedSection({
+  services,
+  handleEditServiceClick,
+  handleDeleteService,
+  handleNewServiceForCategory
+}: {
+  services: Service[];
+  handleEditServiceClick: (s: Service) => void;
+  handleDeleteService: (id: string) => void;
+  handleNewServiceForCategory: (catId: string) => void;
+}) {
+  const [isCollapsed, setIsCollapsed] = useState(false);
+
+  return (
+    <div className="bg-white rounded-3xl border border-dashed border-cream/80 shadow-xs overflow-hidden mt-6">
+      {/* Header */}
+      <div className="p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-cream/20 bg-offwhite/50">
+        <div className="flex items-center gap-3 flex-1 min-w-0">
+          <button 
+            type="button"
+            onClick={() => setIsCollapsed(!isCollapsed)}
+            className="p-1 hover:bg-cream/20 rounded-lg text-teal/70 shrink-0"
+          >
+            {isCollapsed ? <ChevronDown size={18} /> : <ChevronUp size={18} />}
+          </button>
+          <div className="flex items-center gap-2.5 min-w-0">
+            <h3 className="font-title text-lg text-teal/70 font-semibold truncate italic">Sin Categoría</h3>
+            <span className="shrink-0 inline-flex items-center bg-teal/5 text-teal/60 border border-teal/10 px-2 py-0.5 rounded-full text-[10px] font-subtitle font-bold uppercase tracking-wider">
+              {services.length} {services.length === 1 ? "servicio" : "servicios"}
+            </span>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2 self-end sm:self-auto">
+          <button
+            type="button"
+            onClick={() => handleNewServiceForCategory("")}
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-teal text-white hover:bg-teal/90 text-[10px] font-subtitle uppercase tracking-wider font-bold rounded-xl transition shadow-xs"
+          >
+            <Plus size={12} /> Añadir Servicio
+          </button>
+        </div>
+      </div>
+
+      {/* Services List */}
+      {!isCollapsed && (
+        <div className="p-5 bg-white space-y-3">
+          {services.length === 0 ? (
+            <div className="text-center py-8 text-teal/40 font-body text-xs italic">
+              No hay servicios sin categoría.
+            </div>
+          ) : (
+            <SortableContext
+              items={services.map(s => s.id)}
+              strategy={rectSortingStrategy}
+            >
+              <div className="space-y-3">
+                {services.map((srv) => (
+                  <SortableServiceCard
+                    key={srv.id}
+                    srv={srv}
+                    handleEditServiceClick={handleEditServiceClick}
+                    handleDeleteService={handleDeleteService}
+                  />
+                ))}
+              </div>
+            </SortableContext>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function ServiciosPage() {
-  const [activeTab, setActiveTab] = useState<"services" | "categories">("services");
+  // Collapsed categories state
+  const [collapsedCategories, setCollapsedCategories] = useState<Record<string, boolean>>({});
 
   // State for Service Modal
   const [isServiceModalOpen, setIsServiceModalOpen] = useState(false);
   const [editingService, setEditingService] = useState<Service | null>(null);
   const [serviceName, setServiceName] = useState("");
-  const [servicePrice, setServicePrice] = useState(30000);
-  const [serviceDuration, setServiceDuration] = useState(60);
+  const [servicePrice, setServicePrice] = useState<number | "">("");
+  const [serviceDuration, setServiceDuration] = useState<number | "">("");
   const [serviceDescription, setServiceDescription] = useState("");
   const [serviceCategoryId, setServiceCategoryId] = useState("");
-  const [serviceOrder, setServiceOrder] = useState(0);
   const [serviceIsActive, setServiceIsActive] = useState(true);
 
   // State for Category Modal
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
   const [categoryName, setCategoryName] = useState("");
-  const [categoryOrder, setCategoryOrder] = useState(0);
   const [categoryIsActive, setCategoryIsActive] = useState(true);
+
+  // State for Custom Delete Modal
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [itemToDelete, setItemToDelete] = useState<{ id: string; type: "service" | "category" } | null>(null);
+
+  // Drag and Drop Local States
+  const [localServices, setLocalServices] = useState<Service[]>([]);
+  const [localCategories, setLocalCategories] = useState<Category[]>([]);
 
   const utils = api.useUtils();
   const { data: services, isLoading: servicesLoading } = api.service.getAllAdmin.useQuery();
   const { data: categories, isLoading: categoriesLoading } = api.service.getCategories.useQuery();
+
+  useEffect(() => {
+    if (services) {
+      setLocalServices(services as unknown as Service[]);
+    }
+  }, [services]);
+
+  useEffect(() => {
+    if (categories) {
+      setLocalCategories(categories as unknown as Category[]);
+    }
+  }, [categories]);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
+  );
+
+  const reorderServices = api.service.reorderServices.useMutation({
+    onSuccess: async () => {
+      await utils.service.getAllAdmin.invalidate();
+    }
+  });
+
+  const reorderCategories = api.service.reorderCategories.useMutation({
+    onSuccess: async () => {
+      await utils.service.getCategories.invalidate();
+    }
+  });
+
+  // Group services by category
+  const groupedServices = useMemo(() => {
+    const groups: Record<string, Service[]> = {};
+    localCategories.forEach(cat => {
+      groups[cat.id] = [];
+    });
+    groups["uncategorized"] = [];
+
+    localServices.forEach(srv => {
+      if (srv.categoryId && groups[srv.categoryId]) {
+        groups[srv.categoryId]!.push(srv);
+      } else {
+        groups["uncategorized"]!.push(srv);
+      }
+    });
+
+    // Sort within groups
+    Object.keys(groups).forEach(key => {
+      groups[key]!.sort((a, b) => a.order - b.order);
+    });
+
+    return groups;
+  }, [localServices, localCategories]);
+
+  const handleDragEnd = (event: any) => {
+    const { active, over } = event;
+    if (!over) return;
+
+    const activeId = active.id;
+    const overId = over.id;
+
+    const activeType = active.data.current?.type;
+    const overType = over.data.current?.type;
+
+    if (activeType !== overType) return;
+
+    if (activeType === "category") {
+      if (activeId !== overId) {
+        setLocalCategories((prev) => {
+          const oldIndex = prev.findIndex((c) => c.id === activeId);
+          const newIndex = prev.findIndex((c) => c.id === overId);
+          const newItems = arrayMove(prev, oldIndex, newIndex);
+
+          const updates = newItems.map((item, idx) => ({
+            id: item.id,
+            order: idx,
+          }));
+          reorderCategories.mutate(updates);
+
+          return newItems.map((item, idx) => ({
+            ...item,
+            order: idx,
+          }));
+        });
+      }
+    } else if (activeType === "service") {
+      const activeCatId = active.data.current?.categoryId;
+      const overCatId = over.data.current?.categoryId;
+
+      // Only allow sorting within the same category
+      if (activeCatId === overCatId) {
+        if (activeId !== overId) {
+          setLocalServices((prev) => {
+            const catServices = prev
+              .filter((s) => (s.categoryId || "uncategorized") === activeCatId)
+              .sort((a, b) => a.order - b.order);
+
+            const oldIndexInCat = catServices.findIndex((s) => s.id === activeId);
+            const newIndexInCat = catServices.findIndex((s) => s.id === overId);
+
+            const reorderedCatServices = arrayMove(catServices, oldIndexInCat, newIndexInCat);
+
+            const updates = reorderedCatServices.map((s, idx) => ({
+              id: s.id,
+              order: idx,
+            }));
+            reorderServices.mutate(updates);
+
+            const updatedCatServicesMap = new Map(
+              reorderedCatServices.map((s, idx) => [s.id, idx])
+            );
+
+            return prev.map((s) => {
+              const currentCatId = s.categoryId || "uncategorized";
+              if (currentCatId === activeCatId) {
+                const newOrder = updatedCatServicesMap.get(s.id);
+                return {
+                  ...s,
+                  order: newOrder !== undefined ? newOrder : s.order,
+                };
+              }
+              return s;
+            });
+          });
+        }
+      }
+    }
+  };
 
   const createService = api.service.createService.useMutation({
     onSuccess: async () => {
@@ -80,6 +518,8 @@ export default function ServiciosPage() {
   const deleteService = api.service.deleteService.useMutation({
     onSuccess: async () => {
       await utils.service.getAllAdmin.invalidate();
+      setIsDeleteModalOpen(false);
+      setItemToDelete(null);
     }
   });
 
@@ -103,24 +543,25 @@ export default function ServiciosPage() {
   const deleteCategory = api.service.deleteCategory.useMutation({
     onSuccess: async () => {
       await utils.service.getCategories.invalidate();
+      await utils.service.getAllAdmin.invalidate();
+      setIsDeleteModalOpen(false);
+      setItemToDelete(null);
     }
   });
 
   const resetServiceForm = () => {
     setEditingService(null);
     setServiceName("");
-    setServicePrice(30000);
-    setServiceDuration(60);
+    setServicePrice("");
+    setServiceDuration("");
     setServiceDescription("");
     setServiceCategoryId("");
-    setServiceOrder(0);
     setServiceIsActive(true);
   };
 
   const resetCategoryForm = () => {
     setEditingCategory(null);
     setCategoryName("");
-    setCategoryOrder(0);
     setCategoryIsActive(true);
   };
 
@@ -131,48 +572,43 @@ export default function ServiciosPage() {
     setServiceDuration(service.duration);
     setServiceDescription(service.description || "");
     setServiceCategoryId(service.categoryId || "");
-    setServiceOrder(service.order);
     setServiceIsActive(service.isActive);
     setIsServiceModalOpen(true);
   };
 
   const handleServiceSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!serviceName || servicePrice <= 0 || serviceDuration <= 0) return;
+    if (!serviceName || servicePrice === "" || serviceDuration === "" || Number(servicePrice) <= 0 || Number(serviceDuration) <= 0) return;
 
     if (editingService) {
       updateService.mutate({
         id: editingService.id,
         name: serviceName,
-        price: servicePrice,
-        duration: serviceDuration,
+        price: Number(servicePrice),
+        duration: Number(serviceDuration),
         description: serviceDescription || null,
         categoryId: serviceCategoryId || null,
-        order: serviceOrder,
         isActive: serviceIsActive,
       });
     } else {
       createService.mutate({
         name: serviceName,
-        price: servicePrice,
-        duration: serviceDuration,
+        price: Number(servicePrice),
+        duration: Number(serviceDuration),
         description: serviceDescription || null,
         categoryId: serviceCategoryId || null,
-        order: serviceOrder,
       });
     }
   };
 
   const handleDeleteService = (id: string) => {
-    if (confirm("¿Estás segura de que deseas eliminar este servicio? También se eliminará en Cal.com.")) {
-      deleteService.mutate({ id });
-    }
+    setItemToDelete({ id, type: "service" });
+    setIsDeleteModalOpen(true);
   };
 
   const handleEditCategoryClick = (category: Category) => {
     setEditingCategory(category);
     setCategoryName(category.name);
-    setCategoryOrder(category.order);
     setCategoryIsActive(category.isActive);
     setIsCategoryModalOpen(true);
   };
@@ -185,22 +621,40 @@ export default function ServiciosPage() {
       updateCategory.mutate({
         id: editingCategory.id,
         name: categoryName,
-        order: categoryOrder,
         isActive: categoryIsActive,
       });
     } else {
       createCategory.mutate({
         name: categoryName,
-        order: categoryOrder,
       });
     }
   };
 
   const handleDeleteCategory = (id: string) => {
-    if (confirm("¿Estás segura de que deseas eliminar esta categoría? Los servicios asociados quedarán sin categoría.")) {
-      deleteCategory.mutate({ id });
+    setItemToDelete({ id, type: "category" });
+    setIsDeleteModalOpen(true);
+  };
+
+  const confirmDelete = () => {
+    if (!itemToDelete) return;
+    if (itemToDelete.type === "service") {
+      deleteService.mutate({ id: itemToDelete.id });
+    } else {
+      deleteCategory.mutate({ id: itemToDelete.id });
     }
   };
+
+  const toggleCategoryCollapse = (catId: string) => {
+    setCollapsedCategories(prev => ({ ...prev, [catId]: !prev[catId] }));
+  };
+
+  const handleNewServiceForCategory = (catId: string) => {
+    resetServiceForm();
+    setServiceCategoryId(catId);
+    setIsServiceModalOpen(true);
+  };
+
+  const isLoading = servicesLoading || categoriesLoading;
 
   return (
     <div className="space-y-6">
@@ -209,354 +663,77 @@ export default function ServiciosPage() {
         <div>
           <h1 className="font-title text-3xl text-teal">Servicios y Categorías</h1>
           <p className="font-body text-sm text-teal/70 mt-1">
-            Administra tus terapias clínicas y sincronízalas automáticamente con Cal.com.
+            Administra tus terapias clínicas, ordénalas arrastrándolas y sincronízalas automáticamente con Cal.com.
           </p>
         </div>
 
         <div className="flex items-center gap-3">
-          {activeTab === "services" ? (
-            <button 
-              onClick={() => { resetServiceForm(); setIsServiceModalOpen(true); }}
-              className="flex items-center gap-2 px-5 py-2.5 bg-teal text-white hover:bg-teal/90 text-xs font-subtitle uppercase tracking-widest font-bold rounded-xl transition shadow-md"
-            >
-              <Plus size={14} /> Nuevo Servicio
-            </button>
-          ) : (
-            <button 
-              onClick={() => { resetCategoryForm(); setIsCategoryModalOpen(true); }}
-              className="flex items-center gap-2 px-5 py-2.5 bg-teal text-white hover:bg-teal/90 text-xs font-subtitle uppercase tracking-widest font-bold rounded-xl transition shadow-md"
-            >
-              <Plus size={14} /> Nueva Categoría
-            </button>
-          )}
+          <button 
+            onClick={() => { resetCategoryForm(); setIsCategoryModalOpen(true); }}
+            className="flex items-center gap-2 px-5 py-2.5 bg-white border border-cream hover:bg-offwhite text-xs font-subtitle uppercase tracking-widest font-bold rounded-xl transition text-teal shadow-xs"
+          >
+            <Plus size={14} /> Nueva Categoría
+          </button>
+          <button 
+            onClick={() => { resetServiceForm(); setIsServiceModalOpen(true); }}
+            className="flex items-center gap-2 px-5 py-2.5 bg-teal text-white hover:bg-teal/90 text-xs font-subtitle uppercase tracking-widest font-bold rounded-xl transition shadow-md"
+          >
+            <Plus size={14} /> Nuevo Servicio
+          </button>
         </div>
       </div>
 
-      {/* Tabs Selector */}
-      <div className="flex border-b border-cream/30 gap-6">
-        <button
-          onClick={() => setActiveTab("services")}
-          className={`pb-3 font-subtitle text-xs uppercase tracking-widest font-bold border-b-2 transition ${
-            activeTab === "services"
-              ? "border-terracotta text-teal"
-              : "border-transparent text-teal/40 hover:text-teal/75"
-          }`}
-        >
-          Servicios ({services?.length || 0})
-        </button>
-        <button
-          onClick={() => setActiveTab("categories")}
-          className={`pb-3 font-subtitle text-xs uppercase tracking-widest font-bold border-b-2 transition ${
-            activeTab === "categories"
-              ? "border-terracotta text-teal"
-              : "border-transparent text-teal/40 hover:text-teal/75"
-          }`}
-        >
-          Categorías ({categories?.length || 0})
-        </button>
-      </div>
-
-      {activeTab === "services" ? (
-        <>
-          {/* Services Desktop View */}
-          <div className="hidden md:block bg-white rounded-3xl border border-cream/30 shadow-xs overflow-hidden">
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs font-body text-teal">
-                <thead className="bg-[#f7f3ef] font-subtitle uppercase tracking-widest text-[9px] font-bold text-teal/65 border-b border-cream/30">
-                  <tr>
-                    <th className="px-6 py-4">Servicio</th>
-                    <th className="px-6 py-4">Categoría</th>
-                    <th className="px-6 py-4">Duración</th>
-                    <th className="px-6 py-4">Precio</th>
-                    <th className="px-6 py-4">Estado</th>
-                    <th className="px-6 py-4">Link Cal.com</th>
-                    <th className="px-6 py-4 text-right">Acciones</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-cream/10">
-                  {servicesLoading ? (
-                    <tr>
-                      <td colSpan={7} className="px-6 py-12 text-center text-teal/40 font-medium">
-                        <div className="w-6 h-6 border-2 border-cream border-t-terracotta rounded-full animate-spin mx-auto mb-2"></div>
-                        Cargando servicios...
-                      </td>
-                    </tr>
-                  ) : services?.length === 0 ? (
-                    <tr>
-                      <td colSpan={7} className="px-6 py-12 text-center text-teal/50 font-medium">
-                        No hay servicios registrados. Crea uno nuevo para comenzar.
-                      </td>
-                    </tr>
-                  ) : (
-                    (services as unknown as Service[])?.map((srv) => (
-                      <tr key={srv.id} className="hover:bg-offwhite/30 transition-colors">
-                        <td className="px-6 py-4 font-subtitle font-bold text-teal">
-                          {srv.name}
-                          {srv.description && (
-                            <span className="block text-[10px] text-teal/50 font-body font-normal mt-0.5 line-clamp-1 max-w-xs">
-                              {srv.description}
-                            </span>
-                          )}
-                        </td>
-                        <td className="px-6 py-4">
-                          <span className="font-semibold text-teal/80">
-                            {srv.category?.name || "Sin Categoría"}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4 font-semibold text-teal/80">
-                          {srv.duration} mins
-                        </td>
-                        <td className="px-6 py-4 font-semibold text-teal/80">
-                          ${srv.price.toLocaleString("es-CL")}
-                        </td>
-                        <td className="px-6 py-4">
-                          <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[9px] font-subtitle font-bold uppercase tracking-wider ${
-                            srv.isActive
-                              ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
-                              : "bg-redbrown/10 text-redbrown border border-redbrown/20"
-                          }`}>
-                            {srv.isActive ? "Activo" : "Inactivo"}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4">
-                          {srv.calComBookingUrl ? (
-                            <a
-                              href={srv.calComBookingUrl}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="inline-flex items-center gap-1 px-3 py-1.5 bg-offwhite hover:bg-cream/10 border border-cream text-teal rounded-xl text-[10px] font-subtitle uppercase tracking-widest font-bold transition"
-                            >
-                              <LinkIcon size={10} className="text-terracotta" /> Abrir Link
-                            </a>
-                          ) : (
-                            <span className="text-[10px] text-teal/40 font-semibold italic">No Sincronizado</span>
-                          )}
-                        </td>
-                        <td className="px-6 py-4 text-right">
-                          <div className="flex items-center justify-end gap-2">
-                            <button
-                              onClick={() => handleEditServiceClick(srv)}
-                              className="p-2 text-teal/60 hover:text-terracotta hover:bg-offwhite rounded-xl transition"
-                              title="Editar Servicio"
-                            >
-                              <Edit3 size={15} />
-                            </button>
-                            <button
-                              onClick={() => handleDeleteService(srv.id)}
-                              className="p-2 text-redbrown/60 hover:text-redbrown hover:bg-redbrown/5 rounded-xl transition"
-                              title="Eliminar Servicio"
-                            >
-                              <Trash2 size={15} />
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </div>
-
-          {/* Services Mobile View */}
-          <div className="md:hidden space-y-4">
-            {servicesLoading ? (
-              <div className="bg-white p-8 rounded-3xl border border-cream/30 text-center text-teal/40 font-medium">
-                <div className="w-6 h-6 border-2 border-cream border-t-terracotta rounded-full animate-spin mx-auto mb-2"></div>
-                Cargando servicios...
-              </div>
-            ) : services?.length === 0 ? (
-              <div className="bg-white p-8 rounded-3xl border border-cream/30 text-center text-teal/50 font-medium">
-                No hay servicios registrados.
-              </div>
-            ) : (
-              (services as unknown as Service[])?.map((srv) => (
-                <div key={srv.id} className="bg-white p-5 rounded-3xl border border-cream/30 shadow-xs space-y-3">
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <h3 className="font-subtitle font-bold text-teal text-sm leading-tight">{srv.name}</h3>
-                      <span className="text-[10px] text-teal/50 font-semibold uppercase mt-0.5 block">{srv.category?.name || "Sin Categoría"}</span>
-                    </div>
-
-                    <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[8px] font-subtitle font-bold uppercase tracking-wider ${
-                      srv.isActive
-                        ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
-                        : "bg-redbrown/10 text-redbrown border border-redbrown/20"
-                    }`}>
-                      {srv.isActive ? "Activo" : "Inactivo"}
-                    </span>
-                  </div>
-
-                  {srv.description && (
-                    <p className="text-xs text-teal/70 font-body line-clamp-2">{srv.description}</p>
-                  )}
-
-                  <div className="grid grid-cols-2 gap-2 bg-offwhite/50 border border-cream/10 rounded-2xl p-3 text-xs font-body text-teal">
-                    <div className="flex items-center gap-1.5">
-                      <Clock size={13} className="text-terracotta" />
-                      <span>{srv.duration} minutos</span>
-                    </div>
-                    <div className="flex items-center gap-1.5 justify-end">
-                      <DollarSign size={13} className="text-teal/60" />
-                      <span className="font-bold">${srv.price.toLocaleString("es-CL")}</span>
-                    </div>
-                  </div>
-
-                  <div className="flex justify-between items-center pt-1">
-                    {srv.calComBookingUrl ? (
-                      <a
-                        href={srv.calComBookingUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-flex items-center gap-1 px-3 py-2 bg-offwhite hover:bg-cream/10 border border-cream text-teal rounded-xl text-[9px] font-subtitle uppercase tracking-widest font-bold transition"
-                      >
-                        <LinkIcon size={10} className="text-terracotta" /> Booking Link
-                      </a>
-                    ) : (
-                      <span className="text-[10px] text-teal/40 font-semibold italic">Sin Sincronizar</span>
-                    )}
-
-                    <div className="flex gap-2">
-                      <button
-                        onClick={() => handleEditServiceClick(srv)}
-                        className="p-2 text-teal/60 bg-offwhite hover:bg-cream/20 rounded-xl transition border border-cream/50"
-                      >
-                        <Edit3 size={13} />
-                      </button>
-                      <button
-                        onClick={() => handleDeleteService(srv.id)}
-                        className="p-2 text-redbrown/65 bg-redbrown/5 hover:bg-redbrown/10 rounded-xl transition border border-redbrown/10"
-                      >
-                        <Trash2 size={13} />
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              ))
-            )}
-          </div>
-        </>
+      {isLoading ? (
+        <div className="bg-white p-12 rounded-3xl border border-cream/30 text-center text-teal/40 font-medium shadow-xs">
+          <div className="w-8 h-8 border-2 border-cream border-t-terracotta rounded-full animate-spin mx-auto mb-3"></div>
+          Cargando estructura de servicios y categorías...
+        </div>
+      ) : localCategories.length === 0 && (groupedServices["uncategorized"]?.length || 0) === 0 ? (
+        <div className="bg-white p-12 rounded-3xl border border-cream/30 text-center text-teal/50 font-medium shadow-xs">
+          No hay servicios ni categorías registrados. Crea una nueva categoría o servicio para comenzar.
+        </div>
       ) : (
-        <>
-          {/* Categories Desktop View */}
-          <div className="hidden md:block bg-white rounded-3xl border border-cream/30 shadow-xs overflow-hidden">
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs font-body text-teal">
-                <thead className="bg-[#f7f3ef] font-subtitle uppercase tracking-widest text-[9px] font-bold text-teal/65 border-b border-cream/30">
-                  <tr>
-                    <th className="px-6 py-4">Nombre de Categoría</th>
-                    <th className="px-6 py-4">Orden de Visualización</th>
-                    <th className="px-6 py-4">Estado</th>
-                    <th className="px-6 py-4 text-right">Acciones</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-cream/10">
-                  {categoriesLoading ? (
-                    <tr>
-                      <td colSpan={4} className="px-6 py-12 text-center text-teal/40 font-medium">
-                        <div className="w-6 h-6 border-2 border-cream border-t-terracotta rounded-full animate-spin mx-auto mb-2"></div>
-                        Cargando categorías...
-                      </td>
-                    </tr>
-                  ) : categories?.length === 0 ? (
-                    <tr>
-                      <td colSpan={4} className="px-6 py-12 text-center text-teal/50 font-medium">
-                        No hay categorías registradas. Crea una nueva para agrupar tus terapias.
-                      </td>
-                    </tr>
-                  ) : (
-                    (categories as unknown as Category[])?.map((cat) => (
-                      <tr key={cat.id} className="hover:bg-offwhite/30 transition-colors">
-                        <td className="px-6 py-4 font-subtitle font-bold text-teal">
-                          {cat.name}
-                        </td>
-                        <td className="px-6 py-4 font-semibold text-teal/80">
-                          {cat.order}
-                        </td>
-                        <td className="px-6 py-4">
-                          <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[9px] font-subtitle font-bold uppercase tracking-wider ${
-                            cat.isActive
-                              ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
-                              : "bg-redbrown/10 text-redbrown border border-redbrown/20"
-                          }`}>
-                            {cat.isActive ? "Activa" : "Inactiva"}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4 text-right">
-                          <div className="flex items-center justify-end gap-2">
-                            <button
-                              onClick={() => handleEditCategoryClick(cat)}
-                              className="p-2 text-teal/60 hover:text-terracotta hover:bg-offwhite rounded-xl transition"
-                              title="Editar Categoría"
-                            >
-                              <Edit3 size={15} />
-                            </button>
-                            <button
-                              onClick={() => handleDeleteCategory(cat.id)}
-                              className="p-2 text-redbrown/60 hover:text-redbrown hover:bg-redbrown/5 rounded-xl transition"
-                              title="Eliminar Categoría"
-                            >
-                              <Trash2 size={15} />
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </div>
-
-          {/* Categories Mobile View */}
-          <div className="md:hidden space-y-4">
-            {categoriesLoading ? (
-              <div className="bg-white p-8 rounded-3xl border border-cream/30 text-center text-teal/40 font-medium">
-                <div className="w-6 h-6 border-2 border-cream border-t-terracotta rounded-full animate-spin mx-auto mb-2"></div>
-                Cargando categorías...
-              </div>
-            ) : categories?.length === 0 ? (
-              <div className="bg-white p-8 rounded-3xl border border-cream/30 text-center text-teal/50 font-medium">
-                No hay categorías registradas.
-              </div>
-            ) : (
-              (categories as unknown as Category[])?.map((cat) => (
-                <div key={cat.id} className="bg-white p-5 rounded-3xl border border-cream/30 shadow-xs space-y-3">
-                  <div className="flex justify-between items-center">
-                    <h3 className="font-subtitle font-bold text-teal text-sm">{cat.name}</h3>
-
-                    <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[8px] font-subtitle font-bold uppercase tracking-wider ${
-                      cat.isActive
-                        ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
-                        : "bg-redbrown/10 text-redbrown border border-redbrown/20"
-                    }`}>
-                      {cat.isActive ? "Activa" : "Inactiva"}
-                    </span>
-                  </div>
-
-                  <div className="flex justify-between items-center pt-1 border-t border-cream/10 mt-2">
-                    <span className="text-[11px] text-teal/65 font-body">Orden: <strong>{cat.order}</strong></span>
-                    
-                    <div className="flex gap-2">
-                      <button
-                        onClick={() => handleEditCategoryClick(cat)}
-                        className="p-2 text-teal/60 bg-offwhite hover:bg-cream/20 rounded-xl transition border border-cream/50"
-                      >
-                        <Edit3 size={13} />
-                      </button>
-                      <button
-                        onClick={() => handleDeleteCategory(cat.id)}
-                        className="p-2 text-redbrown/65 bg-redbrown/5 hover:bg-redbrown/10 rounded-xl transition border border-redbrown/10"
-                      >
-                        <Trash2 size={13} />
-                      </button>
-                    </div>
-                  </div>
+        <DndContext 
+          sensors={sensors}
+          collisionDetection={closestCenter}
+          onDragEnd={handleDragEnd}
+        >
+          <div className="space-y-6">
+            {localCategories.length > 0 && (
+              <SortableContext 
+                items={localCategories.map(c => c.id)}
+                strategy={rectSortingStrategy}
+              >
+                <div className="space-y-6">
+                  {localCategories.map((cat) => (
+                    <SortableCategorySection
+                      key={cat.id}
+                      cat={cat}
+                      services={groupedServices[cat.id] || []}
+                      isCollapsed={!!collapsedCategories[cat.id]}
+                      onToggleCollapse={() => toggleCategoryCollapse(cat.id)}
+                      handleEditCategoryClick={handleEditCategoryClick}
+                      handleDeleteCategory={handleDeleteCategory}
+                      handleEditServiceClick={handleEditServiceClick}
+                      handleDeleteService={handleDeleteService}
+                      handleNewServiceForCategory={handleNewServiceForCategory}
+                    />
+                  ))}
                 </div>
-              ))
+              </SortableContext>
+            )}
+
+            {/* Uncategorized Services section */}
+            {groupedServices["uncategorized"] && groupedServices["uncategorized"].length > 0 && (
+              <UncategorizedSection
+                services={groupedServices["uncategorized"]}
+                handleEditServiceClick={handleEditServiceClick}
+                handleDeleteService={handleDeleteService}
+                handleNewServiceForCategory={handleNewServiceForCategory}
+              />
             )}
           </div>
-        </>
+        </DndContext>
       )}
 
       {/* Service Modal */}
@@ -625,7 +802,7 @@ export default function ServiciosPage() {
                     required
                     min={100}
                     value={servicePrice}
-                    onChange={(e) => setServicePrice(Number(e.target.value))}
+                    onChange={(e) => setServicePrice(e.target.value === "" ? "" : Number(e.target.value))}
                     className="w-full px-4 py-3 bg-white border border-cream rounded-xl font-body text-sm text-teal focus:outline-none"
                   />
                 </div>
@@ -638,24 +815,10 @@ export default function ServiciosPage() {
                     required
                     min={5}
                     value={serviceDuration}
-                    onChange={(e) => setServiceDuration(Number(e.target.value))}
+                    onChange={(e) => setServiceDuration(e.target.value === "" ? "" : Number(e.target.value))}
                     className="w-full px-4 py-3 bg-white border border-cream rounded-xl font-body text-sm text-teal focus:outline-none"
                   />
                 </div>
-              </div>
-
-              {/* Order */}
-              <div className="space-y-1.5">
-                <label className="font-subtitle text-[10px] tracking-wider uppercase font-bold text-teal block">
-                  Orden de Visualización
-                </label>
-                <input
-                  type="number"
-                  required
-                  value={serviceOrder}
-                  onChange={(e) => setServiceOrder(Number(e.target.value))}
-                  className="w-full px-4 py-3 bg-white border border-cream rounded-xl font-body text-sm text-teal focus:outline-none"
-                />
               </div>
 
               {/* Active Toggle (Only show if editing) */}
@@ -747,20 +910,6 @@ export default function ServiciosPage() {
                 />
               </div>
 
-              {/* Order */}
-              <div className="space-y-1.5">
-                <label className="font-subtitle text-[10px] tracking-wider uppercase font-bold text-teal block">
-                  Orden de Visualización
-                </label>
-                <input
-                  type="number"
-                  required
-                  value={categoryOrder}
-                  onChange={(e) => setCategoryOrder(Number(e.target.value))}
-                  className="w-full px-4 py-3 bg-white border border-cream rounded-xl font-body text-sm text-teal focus:outline-none"
-                />
-              </div>
-
               {/* Active Toggle (Only show if editing) */}
               {editingCategory && (
                 <div className="flex items-center justify-between p-3 bg-white border border-cream/50 rounded-xl">
@@ -794,6 +943,53 @@ export default function ServiciosPage() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {isDeleteModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-teal/40 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-white rounded-3xl w-full max-w-sm overflow-hidden shadow-2xl animate-in zoom-in-95 duration-200">
+            <div className="p-6 text-center space-y-4">
+              <div className="w-12 h-12 rounded-full bg-redbrown/10 text-redbrown flex items-center justify-center mx-auto">
+                <Trash2 size={24} />
+              </div>
+              <div>
+                <h3 className="font-title text-xl text-teal">
+                  {itemToDelete?.type === "service" ? "¿Eliminar servicio?" : "¿Eliminar categoría?"}
+                </h3>
+                <p className="font-body text-sm text-teal/70 mt-2">
+                  {itemToDelete?.type === "service" 
+                    ? "Esta acción borrará de forma permanente este servicio de la base de datos y de Cal.com. No se puede deshacer."
+                    : "Esta acción borrará de forma permanente esta categoría. Los servicios asociados quedarán sin categoría. No se puede deshacer."
+                  }
+                </p>
+              </div>
+            </div>
+            <div className="p-4 bg-offwhite/50 border-t border-cream flex gap-3">
+              <button
+                onClick={() => {
+                  setIsDeleteModalOpen(false);
+                  setItemToDelete(null);
+                }}
+                disabled={deleteService.isPending || deleteCategory.isPending}
+                className="flex-1 px-4 py-2.5 border border-cream text-teal rounded-xl font-subtitle text-[10px] uppercase tracking-wider font-bold hover:bg-cream/50 transition disabled:opacity-50"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={confirmDelete}
+                disabled={deleteService.isPending || deleteCategory.isPending}
+                className="flex-1 px-4 py-2.5 bg-redbrown text-white rounded-xl font-subtitle text-[10px] uppercase tracking-wider font-bold hover:bg-redbrown/90 transition disabled:opacity-50 flex justify-center items-center gap-2"
+              >
+                {deleteService.isPending || deleteCategory.isPending ? (
+                  <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+                ) : (
+                  "Eliminar"
+                )}
+              </button>
+            </div>
           </div>
         </div>
       )}

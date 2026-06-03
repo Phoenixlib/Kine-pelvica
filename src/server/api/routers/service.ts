@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
 import { createCalComEventType, updateCalComEventType, deleteCalComEventType } from "~/lib/calcom";
+import { revalidatePath } from "next/cache";
 
 export const serviceRouter = createTRPCRouter({
   getAll: protectedProcedure.query(async ({ ctx }) => {
@@ -53,7 +54,7 @@ export const serviceRouter = createTRPCRouter({
       z.object({
         id: z.string(),
         name: z.string().min(1),
-        order: z.number().int(),
+        order: z.number().int().optional(),
         isActive: z.boolean(),
       })
     )
@@ -93,11 +94,17 @@ export const serviceRouter = createTRPCRouter({
       let calComBookingUrl: string | null = null;
       let calComSlug: string | null = null;
 
+      const addressConfig = await ctx.db.siteConfig.findUnique({
+        where: { key: "address" }
+      });
+      const locationAddress = addressConfig?.value || undefined;
+
       try {
         const calEvent = await createCalComEventType(
           input.name,
           input.duration,
-          input.description || undefined
+          input.description || undefined,
+          locationAddress
         );
         if (calEvent) {
           calComEventTypeId = calEvent.id;
@@ -133,7 +140,7 @@ export const serviceRouter = createTRPCRouter({
         duration: z.number().int().positive(),
         description: z.string().optional().nullable(),
         categoryId: z.string().optional().nullable(),
-        order: z.number().int(),
+        order: z.number().int().optional(),
         isActive: z.boolean(),
       })
     )
@@ -150,6 +157,11 @@ export const serviceRouter = createTRPCRouter({
       let calComBookingUrl = existing.calComBookingUrl;
       let calComSlug = existing.calComSlug;
 
+      const addressConfig = await ctx.db.siteConfig.findUnique({
+        where: { key: "address" }
+      });
+      const locationAddress = addressConfig?.value || undefined;
+
       // Sync event type details with Cal.com
       if (calComEventTypeId) {
         try {
@@ -157,7 +169,8 @@ export const serviceRouter = createTRPCRouter({
             calComEventTypeId,
             input.name,
             input.duration,
-            input.description || undefined
+            input.description || undefined,
+            locationAddress
           );
           if (calEvent) {
             calComBookingUrl = calEvent.bookingUrl || `https://cal.com/camila-ortiz/${calEvent.slug}`;
@@ -172,7 +185,8 @@ export const serviceRouter = createTRPCRouter({
           const calEvent = await createCalComEventType(
             input.name,
             input.duration,
-            input.description || undefined
+            input.description || undefined,
+            locationAddress
           );
           if (calEvent) {
             calComEventTypeId = calEvent.id;
@@ -216,8 +230,40 @@ export const serviceRouter = createTRPCRouter({
         }
       }
 
-      return ctx.db.service.delete({
+      const result = await ctx.db.service.delete({
         where: { id: input.id },
       });
+      revalidatePath("/");
+      return result;
+    }),
+
+  reorderServices: protectedProcedure
+    .input(z.array(z.object({ id: z.string(), order: z.number().int() })))
+    .mutation(async ({ ctx, input }) => {
+      await ctx.db.$transaction(
+        input.map((item) =>
+          ctx.db.service.update({
+            where: { id: item.id },
+            data: { order: item.order },
+          })
+        )
+      );
+      revalidatePath("/");
+      return { success: true };
+    }),
+
+  reorderCategories: protectedProcedure
+    .input(z.array(z.object({ id: z.string(), order: z.number().int() })))
+    .mutation(async ({ ctx, input }) => {
+      await ctx.db.$transaction(
+        input.map((item) =>
+          ctx.db.serviceCategory.update({
+            where: { id: item.id },
+            data: { order: item.order },
+          })
+        )
+      );
+      revalidatePath("/");
+      return { success: true };
     }),
 });
