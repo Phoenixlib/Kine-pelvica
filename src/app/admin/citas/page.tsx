@@ -371,7 +371,7 @@ export default function CitasPage() {
                               </button>
                             </>
                           )}
-                          {(appt.status === "ATTENDED" || appt.status === "NO_SHOW" || appt.status === "CANCELLED") && (
+                          {(appt.status === "ATTENDED" || appt.status === "NO_SHOW") && (
                             <button
                               onClick={() => handleStatusTransition(appt, "BOOKED")}
                               className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-600 text-[10px] font-bold uppercase tracking-wider rounded-lg transition"
@@ -504,7 +504,7 @@ export default function CitasPage() {
                         </button>
                       </>
                     )}
-                    {(appt.status === "ATTENDED" || appt.status === "NO_SHOW" || appt.status === "CANCELLED") && (
+                    {(appt.status === "ATTENDED" || appt.status === "NO_SHOW") && (
                       <button
                         onClick={() => handleStatusTransition(appt, "BOOKED")}
                         className="inline-flex items-center gap-1 px-2 py-1.5 bg-slate-50 border border-slate-200 text-slate-600 text-[10px] font-bold uppercase tracking-wider rounded-lg transition"
@@ -753,7 +753,8 @@ function AppointmentDetailModal({
                 <select
                   value={status}
                   onChange={(e) => handleStatusChange(e.target.value as AppointmentStatus)}
-                  className="w-full px-3 py-2.5 bg-white border border-cream rounded-xl font-body text-xs text-teal focus:outline-none focus:border-terracotta focus:ring-1 focus:ring-terracotta transition-colors"
+                  disabled={appt.status === "CANCELLED"}
+                  className="w-full px-3 py-2.5 bg-white border border-cream rounded-xl font-body text-xs text-teal focus:outline-none focus:border-terracotta focus:ring-1 focus:ring-terracotta transition-colors disabled:bg-slate-50 disabled:text-teal/40 disabled:cursor-not-allowed"
                 >
                   <option value="BOOKED">Reservada</option>
                   <option value="CONFIRMED">Confirmada</option>
