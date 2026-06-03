@@ -6,6 +6,7 @@ import { Testimonials } from "~/components/Testimonials";
 import { Reviews } from "~/components/Reviews";
 import { Gallery } from "~/components/Gallery";
 import { Blog } from "~/components/Blog";
+import { Location } from "~/components/Location";
 import { Footer } from "~/components/Footer";
 import { sanityClient } from "~/lib/sanity";
 import { db } from "~/server/db";
@@ -48,7 +49,7 @@ async function getAboutConfig() {
   try {
     const configs = await db.siteConfig.findMany({
       where: {
-        key: { in: ["about_title", "about_description", "about_image"] },
+        key: { in: ["about_title", "about_description", "about_image", "address"] },
       },
     });
 
@@ -56,6 +57,7 @@ async function getAboutConfig() {
       title: configs.find((c) => c.key === "about_title")?.value,
       description: configs.find((c) => c.key === "about_description")?.value,
       imageUrl: configs.find((c) => c.key === "about_image")?.value,
+      address: configs.find((c) => c.key === "address")?.value,
     };
   } catch (error) {
     console.error("Error fetching about configurations from Prisma:", error);
@@ -148,6 +150,9 @@ export default async function Home() {
         
         {/* Section 7: Blog / Artículos (bg-teal / Verde) */}
         <Blog initialPosts={postsData} />
+        
+        {/* Section 8: Location / Cómo llegar (bg-offwhite) */}
+        <Location address={aboutData.address} />
       </main>
       
       <Footer />

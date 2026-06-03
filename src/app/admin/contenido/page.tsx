@@ -8,13 +8,15 @@ import {
   Image as ImageIcon, 
   UploadCloud, 
   Check, 
-  AlertCircle 
+  AlertCircle,
+  MapPin
 } from "lucide-react";
 
 export default function ContenidoPage() {
   const [aboutTitle, setAboutTitle] = useState("");
   const [aboutDescription, setAboutDescription] = useState("");
   const [aboutImageUrl, setAboutImageUrl] = useState("");
+  const [address, setAddress] = useState("");
 
   const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "success" | "error">("idle");
   const [saveError, setSaveError] = useState("");
@@ -23,7 +25,7 @@ export default function ContenidoPage() {
 
   // Query config keys from database
   const { data: configData, isLoading: configLoading, refetch } = api.siteConfig.get.useQuery({
-    keys: ["about_title", "about_description", "about_image"],
+    keys: ["about_title", "about_description", "about_image", "address"],
   });
 
   const setConfigMany = api.siteConfig.setMany.useMutation({
@@ -43,6 +45,7 @@ export default function ContenidoPage() {
       setAboutTitle(configData.about_title || "");
       setAboutDescription(configData.about_description || "");
       setAboutImageUrl(configData.about_image || "");
+      setAddress(configData.address || "");
     }
   }, [configData]);
 
@@ -72,6 +75,7 @@ export default function ContenidoPage() {
         { key: "about_title", value: aboutTitle },
         { key: "about_description", value: aboutDescription },
         { key: "about_image", value: aboutImageUrl },
+        { key: "address", value: address },
       ]
     });
   };
@@ -171,6 +175,47 @@ export default function ContenidoPage() {
                     className="w-full px-4 py-3 bg-white border border-cream rounded-xl font-body text-sm text-teal focus:outline-none resize-none"
                   />
                 </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Section: Cómo Llegar */}
+          <div className="bg-white rounded-3xl border border-cream/30 shadow-xs p-6 md:p-8 space-y-6">
+            <div className="flex items-center gap-2 border-b border-cream/20 pb-4">
+              <MapPin className="text-terracotta" size={20} />
+              <h2 className="font-title text-xl text-teal">Sección "Cómo llegar"</h2>
+            </div>
+
+            <div className="space-y-5">
+              <div className="space-y-1.5">
+                <label className="font-subtitle text-[10px] tracking-wider uppercase font-bold text-teal block">
+                  Dirección Física *
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={address}
+                  onChange={(e) => setAddress(e.target.value)}
+                  placeholder="Ej: Av. Providencia 1234, Providencia, Chile"
+                  className="w-full px-4 py-3 bg-white border border-cream rounded-xl font-body text-sm text-teal focus:outline-none"
+                />
+              </div>
+
+              <div className="bg-offwhite p-4 rounded-xl border border-cream/50 space-y-3">
+                <p className="text-xs font-semibold text-teal/70">Vista previa del mapa generado automáticamente:</p>
+                {address ? (
+                  <iframe
+                    src={`https://www.google.com/maps?q=${encodeURIComponent(address)}&output=embed`}
+                    className="w-full h-[300px] border-0 rounded-lg shadow-sm"
+                    allowFullScreen={false}
+                    loading="lazy"
+                    referrerPolicy="no-referrer-when-downgrade"
+                  ></iframe>
+                ) : (
+                  <div className="h-[300px] flex items-center justify-center bg-cream/20 rounded-lg text-teal/40 text-sm font-medium border border-cream/50 border-dashed">
+                    Ingresa una dirección para ver el mapa
+                  </div>
+                )}
               </div>
             </div>
           </div>
