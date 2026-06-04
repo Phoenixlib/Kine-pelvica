@@ -647,18 +647,19 @@ export default function PacientesPage() {
       {/* Clinical File & History Modal */}
       {isClinicalModalOpen && selectedPatient && (() => {
         // Calcular estadísticas
-        let booked = 0, confirmed = 0, attended = 0, noShow = 0, cancelled = 0, cashPayments = 0;
+        let booked = 0, confirmed = 0, attended = 0, noShow = 0, cancelled = 0, noShowCashCount = 0;
         
         selectedPatient.appointments?.forEach(appt => {
           if (appt.status === "BOOKED") booked++;
           else if (appt.status === "CONFIRMED") confirmed++;
           else if (appt.status === "ATTENDED") attended++;
-          else if (appt.status === "NO_SHOW") noShow++;
-          else if (appt.status === "CANCELLED") cancelled++;
-
-          if (appt.paymentMethod === "CASH_PAID" || appt.paymentMethod === "CASH_PENDING") {
-            cashPayments++;
+          else if (appt.status === "NO_SHOW") {
+            noShow++;
+            if (appt.paymentMethod === "CASH_PAID" || appt.paymentMethod === "CASH_PENDING") {
+              noShowCashCount++;
+            }
           }
+          else if (appt.status === "CANCELLED") cancelled++;
         });
 
         return (
@@ -688,9 +689,9 @@ export default function PacientesPage() {
                       <div className="flex items-center gap-1.5 px-2 py-1 bg-redbrown/10 text-redbrown rounded-lg text-[10px] font-subtitle uppercase tracking-widest font-bold">
                         Canceladas <span className="bg-redbrown/20 px-1.5 py-0.5 rounded-md text-redbrown">{cancelled}</span>
                       </div>
-                      {cashPayments > 0 && (
-                        <div className="flex items-center gap-1.5 px-2 py-1 bg-teal/10 text-teal rounded-lg text-[10px] font-subtitle uppercase tracking-widest font-bold">
-                          Efectivo <span className="bg-teal/20 px-1.5 py-0.5 rounded-md text-teal">{cashPayments}</span>
+                      {noShowCashCount > 0 && (
+                        <div className="flex items-center gap-1.5 px-2 py-1 bg-red-100 text-red-800 rounded-lg text-[10px] font-subtitle uppercase tracking-widest font-bold border border-red-200">
+                          ⚠️ Riesgo: Faltó con pago en efectivo <span className="bg-red-200 px-1.5 py-0.5 rounded-md text-red-900">{noShowCashCount}</span>
                         </div>
                       )}
                     </div>
