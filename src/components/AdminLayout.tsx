@@ -51,7 +51,7 @@ export function AdminLayout({ children, user }: AdminLayoutProps) {
   return (
     <div className="min-h-screen bg-offwhite text-teal flex">
       {/* Sidebar - Desktop */}
-      <aside className="hidden md:flex flex-col w-64 border-r border-cream/40 bg-white shrink-0">
+      <aside className="hidden md:flex flex-col w-64 border-r border-cream/40 bg-white shrink-0 h-screen sticky top-0">
         {/* Brand header */}
         <div className="h-24 flex items-center justify-center px-6 border-b border-cream/40 bg-[#0f3f3e]">
           <Link href="/" className="flex items-center justify-center w-full group py-2">
