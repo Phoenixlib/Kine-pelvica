@@ -1,548 +1,526 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { api } from "~/trpc/react";
-import { 
-  format, 
-  startOfWeek, 
-  addDays, 
-  isSameDay, 
+import {
+  format,
+  addDays,
+  startOfWeek,
+  endOfWeek,
+  eachDayOfInterval,
+  isSameDay,
+  addWeeks,
+  subWeeks,
+  parseISO,
+  isBefore,
+  startOfDay,
+  setHours,
+  setMinutes,
+  addMonths,
+  subMonths,
 } from "date-fns";
-import { 
-  ChevronLeft, 
-  ChevronRight, 
-  Plus, 
-  Download, 
-  Clock, 
-  X, 
-  Calendar as CalendarIcon,
-  CheckCircle
-} from "lucide-react";
+import { es } from "date-fns/locale";
+import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Plus, RefreshCw, Maximize2, MoreVertical, X } from "lucide-react";
+import { STATUS_STYLES, AppointmentDetailModal } from "~/components/admin/AppointmentDetailModal";
+import NuevaCitaKineModal from "~/components/admin/NuevaCitaKineModal";
+import type { Appointment } from "~/components/admin/AppointmentDetailModal";
 
-interface Patient {
-  id: string;
-  firstName: string;
-  lastName: string;
-  email: string | null;
-  phone: string;
-}
-
-interface Service {
-  id: string;
-  name: string;
-  price: number;
-  duration: number;
-}
-
-interface Appointment {
-  id: string;
-  patientId: string;
-  title: string;
-  serviceId: string | null;
-  date: Date | string;
-  durationMinutes: number;
-  status: "BOOKED" | "CONFIRMED" | "ATTENDED" | "NO_SHOW" | "CANCELLED";
-  paymentMethod: "PENDING" | "CASH_PENDING" | "TRANSFER" | "CASH_PAID" | null;
-  notes: string | null;
-}
+const HOURS = Array.from({ length: 13 }, (_, i) => i + 8); // 08:00 to 20:00
 
 export default function AgendaPage() {
   const [currentDate, setCurrentDate] = useState(new Date());
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(false);
   
-  // Form fields
-  const [patientId, setPatientId] = useState("");
-  const [title, setTitle] = useState("Cita de Kinesiología");
-  const [serviceId, setServiceId] = useState("");
-  const [apptDate, setApptDate] = useState("");
-  const [apptTime, setApptTime] = useState("09:00");
-  const [durationMinutes, setDurationMinutes] = useState(60);
-  const [apptStatus, setApptStatus] = useState<Appointment["status"]>("BOOKED");
-  const [paymentMethod, setPaymentMethod] = useState<"PENDING" | "CASH_PENDING" | "TRANSFER" | "CASH_PAID">("PENDING");
-  const [notes, setNotes] = useState("");
-  const [isSuccessMessageOpen, setIsSuccessMessageOpen] = useState(false);
+  // Modals state
+  const [selectedAppt, setSelectedAppt] = useState<Appointment | null>(null);
+  const [showNewCitaModal, setShowNewCitaModal] = useState(false);
+  const [initialNewCitaDate, setInitialNewCitaDate] = useState<string | null>(null);
+  
+  // Context Menu State
+  const [contextMenu, setContextMenu] = useState<{ x: number, y: number, dateStr: string } | null>(null);
 
   const utils = api.useUtils();
-  const weekStart = startOfWeek(currentDate, { weekStartsOn: 1 });
-  const weekDays = Array.from({ length: 7 }).map((_, i) => addDays(weekStart, i));
-  const weekEnd = addDays(weekStart, 7);
-  const hours = Array.from({ length: 11 }).map((_, i) => i + 8); // 8 AM to 6 PM
 
-  const { data: apptData, isLoading: apptsLoading } = api.appointment.getAll.useQuery({
-    startDate: weekStart,
-    endDate: weekEnd,
-    limit: 200,
+  // Queries
+  const startDate = startOfWeek(currentDate, { weekStartsOn: 1 });
+  const endDate = endOfWeek(currentDate, { weekStartsOn: 1 });
+
+  const { data: appointmentsData, isLoading, refetch, isRefetching } = api.appointment.getAll.useQuery({
+    startDate,
+    endDate,
+    limit: 100,
   });
-  const appointments = apptData?.appointments;
-  const { data: patients, isLoading: patientsLoading } = api.patient.getLookupList.useQuery();
-  const { data: services } = api.service.getAll.useQuery();
+  
+  const appointments = appointmentsData?.appointments || [];
 
-  const createAppointment = api.appointment.create.useMutation({
-    onSuccess: async () => {
-      await utils.appointment.getAll.invalidate();
-      await utils.stats.getDashboardStats.invalidate();
-      setIsModalOpen(false);
-      setIsSuccessMessageOpen(true);
-      setTimeout(() => setIsSuccessMessageOpen(false), 3000);
-      
-      // Reset form
-      setPatientId("");
-      setServiceId("");
-      setTitle("Cita de Kinesiología");
-      setNotes("");
-    }
+  const { data: blockedSlots = [] } = api.blockedSlot.getAll.useQuery({
+    startDate,
+    endDate,
   });
 
-  const prevWeek = () => setCurrentDate(addDays(currentDate, -7));
-  const nextWeek = () => setCurrentDate(addDays(currentDate, 7));
-  const setToday = () => setCurrentDate(new Date());
+  // Mutations
+  const updateMutation = api.appointment.update.useMutation({
+    onSuccess: () => utils.appointment.getAll.invalidate(),
+  });
 
-  const getPatientName = (id: string) => {
-    const p = patients?.find(pat => pat.id === id);
-    return p ? `${p.firstName} ${p.lastName}` : 'Paciente Desconocido';
+  const deleteMutation = api.appointment.delete.useMutation({
+    onSuccess: () => {
+      setSelectedAppt(null);
+      utils.appointment.getAll.invalidate();
+    },
+  });
+
+  const createBlockMutation = api.blockedSlot.create.useMutation({
+    onSuccess: () => utils.blockedSlot.getAll.invalidate(),
+  });
+
+  const deleteBlockMutation = api.blockedSlot.delete.useMutation({
+    onSuccess: () => utils.blockedSlot.getAll.invalidate(),
+  });
+
+  // Date Picker State
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [pickerDate, setPickerDate] = useState(new Date());
+
+  // Handlers
+  const handlePrevWeek = () => setCurrentDate((prev) => subWeeks(prev, 1));
+  const handleNextWeek = () => setCurrentDate((prev) => addWeeks(prev, 1));
+  const handleToday = () => {
+    const now = new Date();
+    setCurrentDate(now);
+    setPickerDate(now);
   };
 
-  const handleExport = () => {
-    const headers = ["Fecha", "Hora", "Paciente", "Servicio", "Duracion", "Estado", "Medio Pago"];
-    const rows = ((appointments as unknown as Appointment[]) || []).map(appt => {
-      const d = new Date(appt.date);
-      return [
-        d.toLocaleDateString("es-CL"),
-        d.toLocaleTimeString("es-CL", { hour: "2-digit", minute: "2-digit" }),
-        getPatientName(appt.patientId),
-        appt.title,
-        `${appt.durationMinutes} min`,
-        appt.status,
-        appt.paymentMethod || "Pendiente"
-      ];
-    });
-
-    const csvContent = "data:text/csv;charset=utf-8," 
-      + [headers.join(","), ...rows.map(e => e.join(","))].join("\n");
-    
-    const encodedUri = encodeURI(csvContent);
-    const link = document.createElement("a");
-    link.setAttribute("href", encodedUri);
-    link.setAttribute("download", `agenda-${format(currentDate, "yyyy-MM-dd")}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  };
-
-  const handleFormSubmit = (e: React.FormEvent) => {
+  const handleCellClick = (e: React.MouseEvent, date: Date, hour: number) => {
     e.preventDefault();
-    if (!patientId || !apptDate || !apptTime) {
-      alert("Por favor completa los campos requeridos");
-      return;
-    }
-
-    const fullDate = new Date(`${apptDate}T${apptTime}:00`);
-
-    createAppointment.mutate({
-      patientId,
-      title,
-      serviceId: serviceId || null,
-      date: fullDate,
-      durationMinutes: Number(durationMinutes),
-      status: apptStatus,
-      paymentMethod,
-      notes,
+    e.stopPropagation(); // Prevenir que el event listener del window lo cierre instantáneamente
+    const cellDate = setHours(setMinutes(startOfDay(date), 0), hour);
+    
+    setContextMenu({
+      x: e.clientX,
+      y: e.clientY,
+      dateStr: format(cellDate, "yyyy-MM-dd'T'HH:mm:ss"),
     });
   };
 
-  const handleServiceChange = (id: string) => {
-    setServiceId(id);
-    const selectedService = services?.find(s => s.id === id);
-    if (selectedService) {
-      setTitle(selectedService.name);
-      setDurationMinutes(selectedService.duration || 60);
+  const closeContextMenu = () => setContextMenu(null);
+
+  // Close context menu on outside click or scroll
+  useEffect(() => {
+    const handleClick = () => setContextMenu(null);
+    window.addEventListener("click", handleClick);
+    window.addEventListener("scroll", handleClick);
+    return () => {
+      window.removeEventListener("click", handleClick);
+      window.removeEventListener("scroll", handleClick);
+    };
+  }, []);
+
+  const handleActionCreateCita = () => {
+    if (contextMenu) {
+      setInitialNewCitaDate(contextMenu.dateStr);
+      setShowNewCitaModal(true);
+    }
+    closeContextMenu();
+  };
+
+  const handleActionBlockSlot = () => {
+    if (contextMenu) {
+      const startAt = new Date(contextMenu.dateStr);
+      const endAt = new Date(startAt);
+      endAt.setHours(endAt.getHours() + 1); // Bloqueo de 1 hr por defecto
+      createBlockMutation.mutate({ startAt, endAt, reason: "Bloqueo manual" });
+    }
+    closeContextMenu();
+  };
+
+  const handleDeleteBlock = (e: React.MouseEvent, blockId: string) => {
+    e.stopPropagation();
+    if (confirm("¿Eliminar este bloqueo? Se sincronizará con Cal.com.")) {
+      deleteBlockMutation.mutate({ id: blockId });
     }
   };
 
-  const getStatusColor = (status: Appointment["status"]) => {
-    switch (status) {
-      case "ATTENDED":
-        return {
-          bg: "#ecfdf5",
-          border: "#a7f3d0",
-          text: "#064e3b"
-        };
-      case "CONFIRMED":
-        return {
-          bg: "#eff6ff",
-          border: "#bfdbfe",
-          text: "#1e3a8a"
-        };
-      case "BOOKED":
-        return {
-          bg: "#fffbeb",
-          border: "#fde68a",
-          text: "#78350f"
-        };
-      case "NO_SHOW":
-        return {
-          bg: "#fff7ed",
-          border: "#ffedd5",
-          text: "#c2410c"
-        };
-      case "CANCELLED":
-        return {
-          bg: "#fef2f2",
-          border: "#fecaca",
-          text: "#7f1d1d"
-        };
-      default:
-        return {
-          bg: "#f3f4f6",
-          border: "#e5e7eb",
-          text: "#1f2937"
-        };
+  const weekDays = useMemo(() => eachDayOfInterval({ start: startDate, end: endDate }), [startDate, endDate]);
+
+  const toggleFullscreen = () => {
+    const container = document.getElementById("agenda-container");
+    if (!container) return;
+
+    if (!document.fullscreenElement) {
+      container.requestFullscreen().catch(err => console.error(err));
+    } else {
+      document.exitFullscreen().catch(err => console.error(err));
     }
   };
 
-  const loading = apptsLoading || patientsLoading;
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      setIsFullscreen(!!document.fullscreenElement);
+    };
+    document.addEventListener("fullscreenchange", handleFullscreenChange);
+    return () => {
+      document.removeEventListener("fullscreenchange", handleFullscreenChange);
+    };
+  }, []);
+
+  // Close date picker on outside click
+  useEffect(() => {
+    const handleClick = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      if (!target.closest('.date-picker-container')) {
+        setShowDatePicker(false);
+      }
+    };
+    if (showDatePicker) {
+      window.addEventListener("click", handleClick);
+    }
+    return () => window.removeEventListener("click", handleClick);
+  }, [showDatePicker]);
+
+  // Mini Calendar Render Helper
+  const renderMiniCalendar = () => {
+    const monthStart = startOfDay(new Date(pickerDate.getFullYear(), pickerDate.getMonth(), 1));
+    const monthEnd = new Date(pickerDate.getFullYear(), pickerDate.getMonth() + 1, 0);
+    const startDateCal = startOfWeek(monthStart, { weekStartsOn: 1 });
+    const endDateCal = endOfWeek(monthEnd, { weekStartsOn: 1 });
+    const days = eachDayOfInterval({ start: startDateCal, end: endDateCal });
+
+    const currentYear = new Date().getFullYear();
+    const yearsList = Array.from({ length: 11 }, (_, i) => currentYear - 5 + i);
+
+    return (
+      <div className="bg-white rounded-2xl border border-cream/50 shadow-xl p-4 w-[300px]">
+        <div className="flex justify-between items-center mb-4">
+          <div className="flex gap-1">
+            <button type="button" onClick={(e) => { e.stopPropagation(); setPickerDate(subMonths(pickerDate, 12)); }} className="p-1 hover:bg-cream/20 rounded-md text-teal" title="Año anterior"><ChevronsLeft size={16}/></button>
+            <button type="button" onClick={(e) => { e.stopPropagation(); setPickerDate(subMonths(pickerDate, 1)); }} className="p-1 hover:bg-cream/20 rounded-md text-teal" title="Mes anterior"><ChevronLeft size={16}/></button>
+          </div>
+          
+          <div className="flex items-center gap-1.5">
+             <span className="text-xs font-bold uppercase text-teal tracking-wider">
+               {format(pickerDate, "MMMM", { locale: es })}
+             </span>
+             <div className="relative">
+               <select
+                  value={pickerDate.getFullYear()} 
+                  onClick={(e) => e.stopPropagation()}
+                  onChange={(e) => {
+                    const newYear = parseInt(e.target.value);
+                    const newDate = new Date(pickerDate);
+                    newDate.setFullYear(newYear);
+                    setPickerDate(newDate);
+                  }}
+                  className="text-xs font-bold uppercase text-teal bg-cream/20 hover:bg-cream/40 px-2 py-1 rounded-md outline-none cursor-pointer transition-colors appearance-none pr-5"
+               >
+                  {yearsList.map(year => (
+                    <option key={year} value={year}>{year}</option>
+                  ))}
+               </select>
+               <div className="absolute right-1 top-1/2 -translate-y-1/2 pointer-events-none text-teal/50">
+                 <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+               </div>
+             </div>
+          </div>
+
+          <div className="flex gap-1">
+            <button type="button" onClick={(e) => { e.stopPropagation(); setPickerDate(addMonths(pickerDate, 1)); }} className="p-1 hover:bg-cream/20 rounded-md text-teal" title="Mes siguiente"><ChevronRight size={16}/></button>
+            <button type="button" onClick={(e) => { e.stopPropagation(); setPickerDate(addMonths(pickerDate, 12)); }} className="p-1 hover:bg-cream/20 rounded-md text-teal" title="Año siguiente"><ChevronsRight size={16}/></button>
+          </div>
+        </div>
+        <div className="grid grid-cols-7 gap-1 text-center text-[10px] text-teal/50 font-bold mb-2">
+          {["Lu", "Ma", "Mi", "Ju", "Vi", "Sa", "Do"].map(d => <div key={d}>{d}</div>)}
+        </div>
+        <div className="grid grid-cols-7 gap-1">
+          {days.map((day, i) => {
+            const isCurrentMonth = day.getMonth() === pickerDate.getMonth();
+            const isSelected = isSameDay(day, currentDate);
+            const isToday = isSameDay(day, new Date());
+            return (
+              <button
+                key={i}
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setCurrentDate(day);
+                  setShowDatePicker(false);
+                }}
+                className={`h-7 w-7 flex items-center justify-center rounded-full text-xs font-medium transition-colors ${
+                  !isCurrentMonth ? "text-teal/20" :
+                  isSelected ? "bg-teal text-white shadow-md" :
+                  isToday ? "bg-cream/30 text-teal font-bold" :
+                  "text-teal hover:bg-cream/20"
+                }`}
+              >
+                {format(day, "d")}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+    );
+  };
 
   return (
-    <div className="space-y-6">
-      {/* Top action bar */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="font-title text-3xl text-teal">Agenda / Calendario</h1>
-          <p className="font-body text-sm text-teal/70 mt-1">
-            Visualiza y gestiona las citas semanales de la consulta.
-          </p>
-        </div>
-
-        <div className="flex flex-wrap items-center gap-3">
-          <a
-            href={process.env.NEXT_PUBLIC_CALCOM_ADMIN_URL || "https://app.cal.com/availability"}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center gap-2 px-4 py-2.5 bg-white border border-cream hover:bg-offwhite text-xs font-subtitle uppercase tracking-widest font-bold rounded-xl transition shadow-xs text-teal"
-          >
-            <Clock size={14} className="text-teal" /> Gestionar Disponibilidad
-          </a>
-
-          <button 
-            onClick={handleExport} 
-            className="flex items-center gap-2 px-4 py-2.5 bg-white border border-cream hover:bg-offwhite text-xs font-subtitle uppercase tracking-widest font-bold rounded-xl transition shadow-xs"
-          >
-            <Download size={14} className="text-terracotta" /> Exportar CSV
-          </button>
-          
-          <button 
-            onClick={() => setIsModalOpen(true)}
-            className="flex items-center gap-2 px-5 py-2.5 bg-teal text-white hover:bg-teal/90 text-xs font-subtitle uppercase tracking-widest font-bold rounded-xl transition shadow-md"
-          >
-            <Plus size={14} /> Nueva Cita
-          </button>
-        </div>
-      </div>
-
-      {/* Success notification banner */}
-      {isSuccessMessageOpen && (
-        <div className="bg-[#f7f3ef] border border-terracotta/30 text-teal px-6 py-4 rounded-2xl flex items-center gap-3 shadow-xs animate-in fade-in duration-300">
-          <CheckCircle size={18} className="text-[#c48a6a]" />
-          <p className="font-body text-sm font-medium">¡Cita agendada exitosamente!</p>
-        </div>
-      )}
-
-      {/* Calendar Grid Container */}
-      <div className="bg-white rounded-3xl border border-cream/30 shadow-xs flex flex-col h-[calc(100vh-14rem)] overflow-hidden">
-        {/* Navigation controls */}
-        <div className="p-4 border-b border-cream/30 bg-offwhite/50 flex items-center justify-between gap-4">
+    <div className="flex h-full gap-6 p-2 lg:p-6 bg-offwhite/50">
+      {/* Main Agenda Area */}
+      <div 
+        id="agenda-container"
+        className={`flex-1 flex flex-col bg-white border border-cream/50 overflow-hidden transition-all ${
+          isFullscreen 
+            ? "fixed inset-0 z-50 w-screen h-screen p-6 bg-white" 
+            : "rounded-3xl shadow-sm h-[calc(100vh-80px)] lg:h-auto"
+        }`}
+      >
+        {/* Agenda Header */}
+        <div className="flex flex-col sm:flex-row items-center justify-between p-4 sm:p-6 border-b border-cream/50 gap-4">
           <div className="flex items-center gap-3">
-            <div className="flex rounded-xl shadow-xs border border-cream overflow-hidden">
-              <button 
-                onClick={prevWeek} 
-                className="p-2.5 bg-white hover:bg-offwhite text-teal/70 transition"
-              >
-                <ChevronLeft size={16} />
-              </button>
-              <button 
-                onClick={setToday}
-                className="px-4 py-2 bg-white hover:bg-offwhite font-subtitle text-[10px] uppercase tracking-widest font-bold border-x border-cream text-teal"
-              >
-                Hoy
-              </button>
-              <button 
-                onClick={nextWeek} 
-                className="p-2.5 bg-white hover:bg-offwhite text-teal/70 transition"
-              >
-                <ChevronRight size={16} />
-              </button>
-            </div>
+            <button onClick={handlePrevWeek} className="p-2 hover:bg-cream/30 rounded-full text-teal transition-colors"><ChevronLeft size={20} /></button>
             
-            <h2 className="text-sm font-subtitle font-bold uppercase tracking-wider text-teal">
-              {format(weekStart, 'MMMM yyyy')}
-            </h2>
+            {/* Popover Date Picker Trigger */}
+            <div className="relative date-picker-container">
+              <button 
+                type="button"
+                onClick={(e) => { e.stopPropagation(); setShowDatePicker(!showDatePicker); setPickerDate(currentDate); }}
+                className="text-base sm:text-lg font-title text-teal capitalize min-w-48 text-center font-bold hover:bg-cream/20 px-4 py-1.5 rounded-xl transition-colors cursor-pointer flex items-center justify-center gap-2"
+              >
+                {format(startDate, "MMMM yyyy", { locale: es })}
+                <span className="text-xs opacity-50">▼</span>
+              </button>
+
+              {/* Popover */}
+              {showDatePicker && (
+                <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 z-50">
+                   {renderMiniCalendar()}
+                </div>
+              )}
+            </div>
+
+            <button onClick={handleNextWeek} className="p-2 hover:bg-cream/30 rounded-full text-teal transition-colors"><ChevronRight size={20} /></button>
+            <button onClick={handleToday} className="px-4 py-1.5 bg-cream/20 hover:bg-cream/40 text-teal text-[10px] font-bold uppercase tracking-widest rounded-full transition-colors ml-2 hidden sm:block">
+              Hoy
+            </button>
+          </div>
+          
+          <div className="flex items-center gap-2">
+             <button onClick={() => refetch()} className="p-2 hover:bg-cream/30 rounded-xl text-teal/70 transition-colors" title="Actualizar">
+              <RefreshCw size={18} className={isRefetching ? "animate-spin text-terracotta" : ""} />
+            </button>
+            <button 
+              onClick={toggleFullscreen} 
+              className={`p-2 rounded-xl transition-colors flex items-center gap-1.5 ${
+                isFullscreen 
+                  ? "bg-red-500 text-white hover:bg-red-600" 
+                  : "hover:bg-cream/30 text-teal/70"
+              }`} 
+              title={isFullscreen ? "Volver (Salir de pantalla completa)" : "Pantalla Completa"}
+            >
+              {isFullscreen ? (
+                <>
+                  <X size={18} />
+                  <span className="text-xs font-bold uppercase tracking-wider">Volver</span>
+                </>
+              ) : (
+                <Maximize2 size={18} />
+              )}
+            </button>
+            <button
+              onClick={() => {
+                setInitialNewCitaDate(null);
+                setShowNewCitaModal(true);
+              }}
+              className="flex items-center justify-center bg-terracotta hover:bg-[#b05b4a] transition-colors text-white px-3 py-2 sm:px-4 sm:py-2 rounded-xl text-xs font-bold uppercase tracking-widest gap-2 shadow-sm"
+            >
+              <Plus size={18} />
+              <span className="hidden sm:inline">Nueva Cita</span>
+            </button>
           </div>
         </div>
 
-        {/* Content area */}
-        {loading ? (
-          <div className="flex-1 flex items-center justify-center">
-            <div className="w-8 h-8 border-4 border-cream border-t-terracotta rounded-full animate-spin"></div>
-          </div>
-        ) : (
-          <div className="flex-1 overflow-auto flex">
-            {/* Time Sidebar */}
-            <div className="w-16 flex-none border-r border-cream/30 pt-12 bg-offwhite/10">
-              {hours.map(hour => (
-                <div key={hour} className="h-20 border-b border-cream/10 text-right pr-3 flex items-center justify-end">
-                  <span className="text-[10px] font-subtitle font-bold text-teal/40">
-                    {hour > 12 ? `${hour - 12} PM` : `${hour} AM`}
-                  </span>
+        {/* Compact Grid View */}
+        <div className="flex-1 overflow-auto relative">
+          <div className="min-w-[800px] h-full flex flex-col">
+            {/* Days Header */}
+            <div className="flex border-b border-cream/50 sticky top-0 bg-white/95 backdrop-blur-sm z-30">
+              <div className="w-16 shrink-0 border-r border-cream/30 bg-offwhite/30" />
+              {weekDays.map((day, idx) => (
+                <div key={idx} className={`flex-1 min-w-0 p-3 text-center border-r border-cream/30 ${isSameDay(day, new Date()) ? 'bg-cream/10' : ''}`}>
+                  <p className="text-[10px] font-bold uppercase text-teal/60 tracking-wider">
+                    {format(day, "EEEE", { locale: es })}
+                  </p>
+                  <p className={`text-xl font-title mt-0.5 ${isSameDay(day, new Date()) ? 'text-terracotta' : 'text-teal'}`}>
+                    {format(day, "d")}
+                  </p>
                 </div>
               ))}
             </div>
 
-            {/* Days Grid */}
-            <div className="flex-1 grid grid-cols-7 min-w-[900px]">
-              {weekDays.map(day => (
-                <div key={day.toISOString()} className="flex flex-col border-r border-cream/30">
-                  {/* Day Header */}
-                  <div className="h-12 border-b border-cream/30 flex flex-col items-center justify-center bg-offwhite/30">
-                    <span className="text-[9px] font-subtitle font-bold uppercase tracking-widest text-teal/45">{format(day, 'EEE')}</span>
-                    <span className={`text-xs font-subtitle font-bold mt-0.5 w-6 h-6 flex items-center justify-center rounded-full ${isSameDay(day, new Date()) ? 'bg-[#c48a6a] text-white shadow-xs' : 'text-teal'}`}>
-                      {format(day, 'd')}
+            {/* Grid Body */}
+            <div className="flex relative bg-offwhite/10" style={{ height: `${HOURS.length * 56}px` }}>
+              {/* Time Labels (Y-axis) */}
+              <div className="w-16 shrink-0 border-r border-cream/30 bg-white sticky left-0 z-20">
+                {HOURS.map((hour) => (
+                  <div key={hour} className="h-[56px] flex items-start justify-end pr-2 pt-1 border-b border-cream/30 box-border">
+                    <span className="text-[10px] font-bold text-teal/40">
+                      {hour.toString().padStart(2, "0")}:00
                     </span>
                   </div>
-                  
-                  {/* Day Slots */}
-                  <div className="flex-1 relative pb-20 bg-offwhite/5">
-                    {hours.map(hour => (
-                      <div key={hour} className="h-20 border-b border-cream/10"></div>
-                    ))}
+                ))}
+              </div>
 
-                    {/* Render Appointments */}
-                    {(appointments as unknown as Appointment[])
-                      ?.filter(a => isSameDay(new Date(a.date), day))
-                      .map(appt => {
-                        const d = new Date(appt.date);
-                        const startHour = d.getHours() + d.getMinutes() / 60;
-                        if (startHour < 8 || startHour > 18) return null;
+              {/* Day Columns */}
+              <div className="flex-1 flex relative">
+                {/* Horizontal Grid Lines */}
+                <div className="absolute inset-0 pointer-events-none z-0 flex flex-col">
+                   {HOURS.map(h => (
+                     <div key={h} className="h-[56px] border-b border-cream/30 box-border w-full" />
+                   ))}
+                </div>
+
+                {/* Vertical columns for interaction */}
+                {weekDays.map((day, dIdx) => (
+                  <div key={dIdx} className="flex-1 relative border-r border-cream/30 box-border z-10">
+                    {/* Empty cell interaction areas */}
+                    {HOURS.map(hour => {
+                      return (
+                         <div 
+                           key={hour} 
+                           className={`absolute w-full h-[56px] cursor-pointer hover:bg-teal/5 transition-colors`}
+                           style={{ top: `${(hour - 8) * 56}px` }}
+                           onClick={(e) => handleCellClick(e, day, hour)}
+                         />
+                      );
+                    })}
+
+                    {/* Blocked Slots Overlay */}
+                    {blockedSlots
+                      .filter((bs) => isSameDay(new Date(bs.startAt), day))
+                      .map((block) => {
+                        const startObj = new Date(block.startAt);
+                        const endObj = new Date(block.endAt);
                         
-                        const top = (startHour - 8) * 80;
-                        const height = (appt.durationMinutes / 60) * 80;
-                        const colors = getStatusColor(appt.status);
+                        const startDecimal = startObj.getHours() + startObj.getMinutes() / 60;
+                        const durationHrs = (endObj.getTime() - startObj.getTime()) / (1000 * 60 * 60);
+
+                        if (startDecimal < 8 || startDecimal > 20) return null;
+
+                        const top = (startDecimal - 8) * 56;
+                        const height = durationHrs * 56;
 
                         return (
-                          <div 
-                            key={appt.id}
-                            className="absolute left-1 right-1 rounded-2xl p-2.5 text-[11px] overflow-hidden shadow-xs border flex flex-col justify-between hover:shadow-md transition-shadow cursor-pointer"
-                            style={{
-                              top: `${top}px`,
-                              height: `${height}px`,
-                              backgroundColor: colors.bg,
-                              borderColor: colors.border,
-                              color: colors.text
-                            }}
+                          <div
+                            key={block.id}
+                            className="absolute left-1 right-1 bg-slate-200/80 border border-slate-300 rounded-lg p-1 overflow-hidden z-20 flex items-center justify-between shadow-sm cursor-not-allowed"
+                            style={{ top: `${top}px`, height: `${Math.max(height, 20)}px` }}
+                            onClick={(e) => e.stopPropagation()}
                           >
-                            <div>
-                              <div className="font-subtitle font-bold uppercase tracking-wide truncate">{appt.title}</div>
-                              <div className="font-body opacity-85 mt-0.5 truncate font-medium">{getPatientName(appt.patientId)}</div>
-                            </div>
-                            <div className="font-subtitle text-[9px] font-bold opacity-75 mt-1 flex items-center gap-1">
-                              <Clock size={10} /> {format(d, 'h:mm a')}
-                            </div>
+                            <span className="text-[9px] font-bold text-slate-600 uppercase tracking-widest leading-tight">
+                              Bloqueado
+                            </span>
+                            <button
+                              onClick={(e) => handleDeleteBlock(e, block.id)}
+                              className="text-slate-400 hover:text-red-500 transition-colors p-0.5"
+                            >
+                              <X size={12} />
+                            </button>
                           </div>
-                        )
+                        );
+                    })}
+
+                    {/* Appointments Overlay */}
+                    {appointments
+                      .filter((appt) => isSameDay(new Date(appt.date), day))
+                      .map((appt) => {
+                        const startObj = new Date(appt.date);
+                        const startDecimal = startObj.getHours() + startObj.getMinutes() / 60;
+                        const durationHrs = appt.durationMinutes / 60;
+
+                        if (startDecimal < 8 || startDecimal > 20) return null;
+
+                        const top = (startDecimal - 8) * 56;
+                        const height = durationHrs * 56;
+                        const styleConfig = STATUS_STYLES[appt.status];
+
+                        return (
+                          <div
+                            key={appt.id}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setSelectedAppt(appt as any);
+                            }}
+                            className={`absolute left-1 right-1 rounded-xl p-2 cursor-pointer shadow-sm hover:shadow-md transition-all border-l-4 z-20 overflow-hidden flex flex-col ${styleConfig.bg} ${styleConfig.text} !border-l-current`}
+                            style={{ top: `${top}px`, height: `${height}px` }}
+                          >
+                            <p className={`text-[10px] font-bold truncate leading-tight`}>
+                              {appt.patient.firstName} {appt.patient.lastName}
+                            </p>
+                            <p className={`text-[9px] truncate mt-0.5 opacity-80 ${styleConfig.text}`}>
+                              {appt.service?.name || appt.title}
+                            </p>
+                            {height >= 50 && (
+                               <p className={`text-[9px] font-semibold mt-auto truncate opacity-70 ${styleConfig.text}`}>
+                                 {format(startObj, "HH:mm")} - {format(new Date(startObj.getTime() + appt.durationMinutes * 60000), "HH:mm")}
+                               </p>
+                            )}
+                          </div>
+                        );
                       })}
                   </div>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
-          </div>
-        )}
-      </div>
-
-      {/* New Appointment Modal */}
-      {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#0f3f3e]/40 backdrop-blur-xs animate-in fade-in duration-300">
-          <div className="relative bg-offwhite w-full max-w-lg rounded-3xl shadow-2xl border-t-[8px] border-terracotta overflow-hidden max-h-[90vh] flex flex-col">
-            
-            {/* Modal Header */}
-            <div className="p-6 border-b border-cream/30 bg-white flex items-center justify-between flex-shrink-0">
-              <div className="flex items-center gap-2">
-                <CalendarIcon className="text-terracotta" size={20} />
-                <h3 className="font-title text-xl text-teal">Agendar Nueva Cita</h3>
-              </div>
-              <button 
-                onClick={() => setIsModalOpen(false)}
-                className="p-1.5 hover:bg-offwhite rounded-xl text-teal/50"
-              >
-                <X size={18} />
-              </button>
-            </div>
-
-            {/* Modal Form */}
-            <form onSubmit={handleFormSubmit} className="flex-1 overflow-y-auto p-6 space-y-5">
-              {/* Select Patient */}
-              <div className="space-y-1.5">
-                <label className="font-subtitle text-[10px] tracking-wider uppercase font-bold text-teal block">
-                  Paciente *
-                </label>
-                <select
-                  required
-                  value={patientId}
-                  onChange={(e) => setPatientId(e.target.value)}
-                  className="w-full px-4 py-3 bg-white border border-cream rounded-xl font-body text-sm text-teal focus:outline-none"
-                >
-                  <option value="">Selecciona un paciente...</option>
-                  {patients?.map(p => (
-                    <option key={p.id} value={p.id}>{p.firstName} {p.lastName}</option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Select Service */}
-              <div className="space-y-1.5">
-                <label className="font-subtitle text-[10px] tracking-wider uppercase font-bold text-teal block">
-                  Asociar Terapia / Servicio
-                </label>
-                <select
-                  value={serviceId}
-                  onChange={(e) => handleServiceChange(e.target.value)}
-                  className="w-full px-4 py-3 bg-white border border-cream rounded-xl font-body text-sm text-teal focus:outline-none"
-                >
-                  <option value="">Ninguno (Servicio Libre)</option>
-                  {services?.map((service) => (
-                    <option key={service.id} value={service.id}>
-                      {service.name} (${service.price.toLocaleString("es-CL")})
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Title / Service */}
-              <div className="space-y-1.5">
-                <label className="font-subtitle text-[10px] tracking-wider uppercase font-bold text-teal block">
-                  Título de la Cita / Comentario *
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={title}
-                  onChange={(e) => setTitle(e.target.value)}
-                  placeholder="Ej: Evaluación de Suelo Pélvico"
-                  className="w-full px-4 py-3 bg-white border border-cream rounded-xl font-body text-sm text-teal focus:outline-none"
-                />
-              </div>
-
-              {/* Date and Time */}
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-1.5">
-                  <label className="font-subtitle text-[10px] tracking-wider uppercase font-bold text-teal block">
-                    Fecha *
-                  </label>
-                  <input
-                    type="date"
-                    required
-                    value={apptDate}
-                    onChange={(e) => setApptDate(e.target.value)}
-                    className="w-full px-4 py-3 bg-white border border-cream rounded-xl font-body text-sm text-teal focus:outline-none"
-                  />
-                </div>
-                
-                <div className="space-y-1.5">
-                  <label className="font-subtitle text-[10px] tracking-wider uppercase font-bold text-teal block">
-                    Hora *
-                  </label>
-                  <input
-                    type="time"
-                    required
-                    value={apptTime}
-                    onChange={(e) => setApptTime(e.target.value)}
-                    className="w-full px-4 py-3 bg-white border border-cream rounded-xl font-body text-sm text-teal focus:outline-none"
-                  />
-                </div>
-              </div>
-
-              {/* Duration */}
-              <div className="space-y-1.5">
-                <label className="font-subtitle text-[10px] tracking-wider uppercase font-bold text-teal block">
-                  Duración (minutos)
-                </label>
-                <input
-                  type="number"
-                  required
-                  value={durationMinutes}
-                  onChange={(e) => setDurationMinutes(Number(e.target.value))}
-                  className="w-full px-4 py-3 bg-white border border-cream rounded-xl font-body text-sm text-teal focus:outline-none"
-                />
-              </div>
-
-              {/* Status */}
-              <div className="space-y-1.5">
-                <label className="font-subtitle text-[10px] tracking-wider uppercase font-bold text-teal block">
-                  Estado Inicial de la Cita
-                </label>
-                <select
-                  value={apptStatus}
-                  onChange={(e) => setApptStatus(e.target.value as any)}
-                  className="w-full px-4 py-3 bg-white border border-cream rounded-xl font-body text-sm text-teal focus:outline-none"
-                >
-                  <option value="BOOKED">Reservada</option>
-                  <option value="CONFIRMED">Confirmada</option>
-                  <option value="ATTENDED">Asistió</option>
-                  <option value="NO_SHOW">No Asistió</option>
-                  <option value="CANCELLED">Cancelada</option>
-                </select>
-              </div>
-
-              {/* Payment Method */}
-              <div className="space-y-1.5">
-                <label className="font-subtitle text-[10px] tracking-wider uppercase font-bold text-teal block">
-                  Medio de Pago
-                </label>
-                <select
-                  value={paymentMethod}
-                  onChange={(e) => setPaymentMethod(e.target.value as any)}
-                  className="w-full px-4 py-3 bg-white border border-cream rounded-xl font-body text-sm text-teal focus:outline-none"
-                >
-                  <option value="PENDING">Pendiente</option>
-                  <option value="CASH_PENDING">Efectivo Pendiente</option>
-                  <option value="TRANSFER">Transferencia</option>
-                  <option value="CASH_PAID">Efectivo Pagado</option>
-                </select>
-              </div>
-
-              {/* Notes */}
-              <div className="space-y-1.5">
-                <label className="font-subtitle text-[10px] tracking-wider uppercase font-bold text-teal block">
-                  Notas de la Cita
-                </label>
-                <textarea
-                  value={notes}
-                  onChange={(e) => setNotes(e.target.value)}
-                  placeholder="Comentarios adicionales sobre el agendamiento..."
-                  rows={3}
-                  className="w-full px-4 py-3 bg-white border border-cream rounded-xl font-body text-sm text-teal focus:outline-none resize-none"
-                />
-              </div>
-
-              {/* Actions */}
-              <div className="pt-4 flex gap-3 flex-shrink-0">
-                <button
-                  type="button"
-                  onClick={() => setIsModalOpen(false)}
-                  className="flex-1 py-3.5 border border-cream rounded-xl font-subtitle font-bold text-[10px] tracking-widest uppercase hover:bg-cream/10 text-teal transition-all"
-                >
-                  Cancelar
-                </button>
-                <button
-                  type="submit"
-                  disabled={createAppointment.isPending}
-                  className="flex-1 py-3.5 bg-teal hover:bg-teal/90 text-white rounded-xl font-subtitle font-bold text-[10px] tracking-widest uppercase transition-all shadow-md disabled:opacity-50"
-                >
-                  {createAppointment.isPending ? "Guardando..." : "Crear Cita"}
-                </button>
-              </div>
-            </form>
           </div>
         </div>
+        
+        {/* Context Menu */}
+        {contextMenu && (
+          <div 
+            className="fixed z-50 bg-white rounded-xl shadow-xl border border-cream/50 py-1 w-48 animate-in fade-in zoom-in-95 duration-150"
+            style={{ top: contextMenu.y, left: contextMenu.x }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="px-3 py-2 border-b border-cream/30 mb-1">
+              <span className="text-[10px] font-bold text-teal/50 uppercase tracking-widest block">
+                {format(new Date(contextMenu.dateStr), "d MMM, HH:mm", { locale: es })}
+              </span>
+            </div>
+            <button
+              onClick={handleActionCreateCita}
+              className="w-full text-left px-4 py-2.5 text-xs font-semibold text-teal hover:bg-cream/10 transition-colors flex items-center gap-2"
+            >
+              <Plus size={14} className="text-terracotta" />
+              Agendar Cita
+            </button>
+            <button
+              onClick={handleActionBlockSlot}
+              className="w-full text-left px-4 py-2.5 text-xs font-semibold text-teal hover:bg-cream/10 transition-colors flex items-center gap-2"
+            >
+              <X size={14} className="text-red-500" />
+              Bloquear Horario
+            </button>
+          </div>
+        )}
+
+      </div>
+
+      {/* Detail Modal */}
+      {selectedAppt && (
+        <AppointmentDetailModal
+          appt={selectedAppt}
+          onClose={() => setSelectedAppt(null)}
+          onUpdate={(data) => updateMutation.mutate(data)}
+          onDelete={(id) => deleteMutation.mutate({ id })}
+          isUpdating={updateMutation.isPending}
+        />
       )}
+
+      {/* New Appointment Modal */}
+      <NuevaCitaKineModal
+        isOpen={showNewCitaModal}
+        onClose={() => setShowNewCitaModal(false)}
+        initialDateStr={initialNewCitaDate}
+        onSuccess={() => refetch()}
+      />
     </div>
   );
 }

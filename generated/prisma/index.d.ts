@@ -53,6 +53,11 @@ export type CommunityMessage = $Result.DefaultSelection<Prisma.$CommunityMessage
  * 
  */
 export type SiteConfig = $Result.DefaultSelection<Prisma.$SiteConfigPayload>
+/**
+ * Model BlockedSlot
+ * 
+ */
+export type BlockedSlot = $Result.DefaultSelection<Prisma.$BlockedSlotPayload>
 
 /**
  * Enums
@@ -310,6 +315,16 @@ export class PrismaClient<
     * ```
     */
   get siteConfig(): Prisma.SiteConfigDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.blockedSlot`: Exposes CRUD operations for the **BlockedSlot** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more BlockedSlots
+    * const blockedSlots = await prisma.blockedSlot.findMany()
+    * ```
+    */
+  get blockedSlot(): Prisma.BlockedSlotDelegate<ExtArgs, ClientOptions>;
 }
 
 export namespace Prisma {
@@ -758,7 +773,8 @@ export namespace Prisma {
     Service: 'Service',
     GalleryPhoto: 'GalleryPhoto',
     CommunityMessage: 'CommunityMessage',
-    SiteConfig: 'SiteConfig'
+    SiteConfig: 'SiteConfig',
+    BlockedSlot: 'BlockedSlot'
   };
 
   export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -777,7 +793,7 @@ export namespace Prisma {
       omit: GlobalOmitOptions
     }
     meta: {
-      modelProps: "user" | "patient" | "appointment" | "serviceCategory" | "service" | "galleryPhoto" | "communityMessage" | "siteConfig"
+      modelProps: "user" | "patient" | "appointment" | "serviceCategory" | "service" | "galleryPhoto" | "communityMessage" | "siteConfig" | "blockedSlot"
       txIsolationLevel: Prisma.TransactionIsolationLevel
     }
     model: {
@@ -1373,6 +1389,80 @@ export namespace Prisma {
           }
         }
       }
+      BlockedSlot: {
+        payload: Prisma.$BlockedSlotPayload<ExtArgs>
+        fields: Prisma.BlockedSlotFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.BlockedSlotFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BlockedSlotPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.BlockedSlotFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BlockedSlotPayload>
+          }
+          findFirst: {
+            args: Prisma.BlockedSlotFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BlockedSlotPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.BlockedSlotFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BlockedSlotPayload>
+          }
+          findMany: {
+            args: Prisma.BlockedSlotFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BlockedSlotPayload>[]
+          }
+          create: {
+            args: Prisma.BlockedSlotCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BlockedSlotPayload>
+          }
+          createMany: {
+            args: Prisma.BlockedSlotCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.BlockedSlotCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BlockedSlotPayload>[]
+          }
+          delete: {
+            args: Prisma.BlockedSlotDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BlockedSlotPayload>
+          }
+          update: {
+            args: Prisma.BlockedSlotUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BlockedSlotPayload>
+          }
+          deleteMany: {
+            args: Prisma.BlockedSlotDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.BlockedSlotUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.BlockedSlotUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BlockedSlotPayload>[]
+          }
+          upsert: {
+            args: Prisma.BlockedSlotUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BlockedSlotPayload>
+          }
+          aggregate: {
+            args: Prisma.BlockedSlotAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateBlockedSlot>
+          }
+          groupBy: {
+            args: Prisma.BlockedSlotGroupByArgs<ExtArgs>
+            result: $Utils.Optional<BlockedSlotGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.BlockedSlotCountArgs<ExtArgs>
+            result: $Utils.Optional<BlockedSlotCountAggregateOutputType> | number
+          }
+        }
+      }
     }
   } & {
     other: {
@@ -1477,6 +1567,7 @@ export namespace Prisma {
     galleryPhoto?: GalleryPhotoOmit
     communityMessage?: CommunityMessageOmit
     siteConfig?: SiteConfigOmit
+    blockedSlot?: BlockedSlotOmit
   }
 
   /* Types for Logging */
@@ -10383,6 +10474,1048 @@ export namespace Prisma {
 
 
   /**
+   * Model BlockedSlot
+   */
+
+  export type AggregateBlockedSlot = {
+    _count: BlockedSlotCountAggregateOutputType | null
+    _avg: BlockedSlotAvgAggregateOutputType | null
+    _sum: BlockedSlotSumAggregateOutputType | null
+    _min: BlockedSlotMinAggregateOutputType | null
+    _max: BlockedSlotMaxAggregateOutputType | null
+  }
+
+  export type BlockedSlotAvgAggregateOutputType = {
+    calComOverrideId: number | null
+  }
+
+  export type BlockedSlotSumAggregateOutputType = {
+    calComOverrideId: number | null
+  }
+
+  export type BlockedSlotMinAggregateOutputType = {
+    id: string | null
+    startAt: Date | null
+    endAt: Date | null
+    reason: string | null
+    calComOverrideId: number | null
+    createdAt: Date | null
+  }
+
+  export type BlockedSlotMaxAggregateOutputType = {
+    id: string | null
+    startAt: Date | null
+    endAt: Date | null
+    reason: string | null
+    calComOverrideId: number | null
+    createdAt: Date | null
+  }
+
+  export type BlockedSlotCountAggregateOutputType = {
+    id: number
+    startAt: number
+    endAt: number
+    reason: number
+    calComOverrideId: number
+    createdAt: number
+    _all: number
+  }
+
+
+  export type BlockedSlotAvgAggregateInputType = {
+    calComOverrideId?: true
+  }
+
+  export type BlockedSlotSumAggregateInputType = {
+    calComOverrideId?: true
+  }
+
+  export type BlockedSlotMinAggregateInputType = {
+    id?: true
+    startAt?: true
+    endAt?: true
+    reason?: true
+    calComOverrideId?: true
+    createdAt?: true
+  }
+
+  export type BlockedSlotMaxAggregateInputType = {
+    id?: true
+    startAt?: true
+    endAt?: true
+    reason?: true
+    calComOverrideId?: true
+    createdAt?: true
+  }
+
+  export type BlockedSlotCountAggregateInputType = {
+    id?: true
+    startAt?: true
+    endAt?: true
+    reason?: true
+    calComOverrideId?: true
+    createdAt?: true
+    _all?: true
+  }
+
+  export type BlockedSlotAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which BlockedSlot to aggregate.
+     */
+    where?: BlockedSlotWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of BlockedSlots to fetch.
+     */
+    orderBy?: BlockedSlotOrderByWithRelationInput | BlockedSlotOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: BlockedSlotWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` BlockedSlots from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` BlockedSlots.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned BlockedSlots
+    **/
+    _count?: true | BlockedSlotCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to average
+    **/
+    _avg?: BlockedSlotAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: BlockedSlotSumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: BlockedSlotMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: BlockedSlotMaxAggregateInputType
+  }
+
+  export type GetBlockedSlotAggregateType<T extends BlockedSlotAggregateArgs> = {
+        [P in keyof T & keyof AggregateBlockedSlot]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateBlockedSlot[P]>
+      : GetScalarType<T[P], AggregateBlockedSlot[P]>
+  }
+
+
+
+
+  export type BlockedSlotGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: BlockedSlotWhereInput
+    orderBy?: BlockedSlotOrderByWithAggregationInput | BlockedSlotOrderByWithAggregationInput[]
+    by: BlockedSlotScalarFieldEnum[] | BlockedSlotScalarFieldEnum
+    having?: BlockedSlotScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: BlockedSlotCountAggregateInputType | true
+    _avg?: BlockedSlotAvgAggregateInputType
+    _sum?: BlockedSlotSumAggregateInputType
+    _min?: BlockedSlotMinAggregateInputType
+    _max?: BlockedSlotMaxAggregateInputType
+  }
+
+  export type BlockedSlotGroupByOutputType = {
+    id: string
+    startAt: Date
+    endAt: Date
+    reason: string | null
+    calComOverrideId: number | null
+    createdAt: Date
+    _count: BlockedSlotCountAggregateOutputType | null
+    _avg: BlockedSlotAvgAggregateOutputType | null
+    _sum: BlockedSlotSumAggregateOutputType | null
+    _min: BlockedSlotMinAggregateOutputType | null
+    _max: BlockedSlotMaxAggregateOutputType | null
+  }
+
+  type GetBlockedSlotGroupByPayload<T extends BlockedSlotGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<BlockedSlotGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof BlockedSlotGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], BlockedSlotGroupByOutputType[P]>
+            : GetScalarType<T[P], BlockedSlotGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type BlockedSlotSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    startAt?: boolean
+    endAt?: boolean
+    reason?: boolean
+    calComOverrideId?: boolean
+    createdAt?: boolean
+  }, ExtArgs["result"]["blockedSlot"]>
+
+  export type BlockedSlotSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    startAt?: boolean
+    endAt?: boolean
+    reason?: boolean
+    calComOverrideId?: boolean
+    createdAt?: boolean
+  }, ExtArgs["result"]["blockedSlot"]>
+
+  export type BlockedSlotSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    startAt?: boolean
+    endAt?: boolean
+    reason?: boolean
+    calComOverrideId?: boolean
+    createdAt?: boolean
+  }, ExtArgs["result"]["blockedSlot"]>
+
+  export type BlockedSlotSelectScalar = {
+    id?: boolean
+    startAt?: boolean
+    endAt?: boolean
+    reason?: boolean
+    calComOverrideId?: boolean
+    createdAt?: boolean
+  }
+
+  export type BlockedSlotOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "startAt" | "endAt" | "reason" | "calComOverrideId" | "createdAt", ExtArgs["result"]["blockedSlot"]>
+
+  export type $BlockedSlotPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "BlockedSlot"
+    objects: {}
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      startAt: Date
+      endAt: Date
+      reason: string | null
+      calComOverrideId: number | null
+      createdAt: Date
+    }, ExtArgs["result"]["blockedSlot"]>
+    composites: {}
+  }
+
+  type BlockedSlotGetPayload<S extends boolean | null | undefined | BlockedSlotDefaultArgs> = $Result.GetResult<Prisma.$BlockedSlotPayload, S>
+
+  type BlockedSlotCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<BlockedSlotFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: BlockedSlotCountAggregateInputType | true
+    }
+
+  export interface BlockedSlotDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['BlockedSlot'], meta: { name: 'BlockedSlot' } }
+    /**
+     * Find zero or one BlockedSlot that matches the filter.
+     * @param {BlockedSlotFindUniqueArgs} args - Arguments to find a BlockedSlot
+     * @example
+     * // Get one BlockedSlot
+     * const blockedSlot = await prisma.blockedSlot.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends BlockedSlotFindUniqueArgs>(args: SelectSubset<T, BlockedSlotFindUniqueArgs<ExtArgs>>): Prisma__BlockedSlotClient<$Result.GetResult<Prisma.$BlockedSlotPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one BlockedSlot that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {BlockedSlotFindUniqueOrThrowArgs} args - Arguments to find a BlockedSlot
+     * @example
+     * // Get one BlockedSlot
+     * const blockedSlot = await prisma.blockedSlot.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends BlockedSlotFindUniqueOrThrowArgs>(args: SelectSubset<T, BlockedSlotFindUniqueOrThrowArgs<ExtArgs>>): Prisma__BlockedSlotClient<$Result.GetResult<Prisma.$BlockedSlotPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first BlockedSlot that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {BlockedSlotFindFirstArgs} args - Arguments to find a BlockedSlot
+     * @example
+     * // Get one BlockedSlot
+     * const blockedSlot = await prisma.blockedSlot.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends BlockedSlotFindFirstArgs>(args?: SelectSubset<T, BlockedSlotFindFirstArgs<ExtArgs>>): Prisma__BlockedSlotClient<$Result.GetResult<Prisma.$BlockedSlotPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first BlockedSlot that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {BlockedSlotFindFirstOrThrowArgs} args - Arguments to find a BlockedSlot
+     * @example
+     * // Get one BlockedSlot
+     * const blockedSlot = await prisma.blockedSlot.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends BlockedSlotFindFirstOrThrowArgs>(args?: SelectSubset<T, BlockedSlotFindFirstOrThrowArgs<ExtArgs>>): Prisma__BlockedSlotClient<$Result.GetResult<Prisma.$BlockedSlotPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more BlockedSlots that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {BlockedSlotFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all BlockedSlots
+     * const blockedSlots = await prisma.blockedSlot.findMany()
+     * 
+     * // Get first 10 BlockedSlots
+     * const blockedSlots = await prisma.blockedSlot.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const blockedSlotWithIdOnly = await prisma.blockedSlot.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends BlockedSlotFindManyArgs>(args?: SelectSubset<T, BlockedSlotFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$BlockedSlotPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a BlockedSlot.
+     * @param {BlockedSlotCreateArgs} args - Arguments to create a BlockedSlot.
+     * @example
+     * // Create one BlockedSlot
+     * const BlockedSlot = await prisma.blockedSlot.create({
+     *   data: {
+     *     // ... data to create a BlockedSlot
+     *   }
+     * })
+     * 
+     */
+    create<T extends BlockedSlotCreateArgs>(args: SelectSubset<T, BlockedSlotCreateArgs<ExtArgs>>): Prisma__BlockedSlotClient<$Result.GetResult<Prisma.$BlockedSlotPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many BlockedSlots.
+     * @param {BlockedSlotCreateManyArgs} args - Arguments to create many BlockedSlots.
+     * @example
+     * // Create many BlockedSlots
+     * const blockedSlot = await prisma.blockedSlot.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends BlockedSlotCreateManyArgs>(args?: SelectSubset<T, BlockedSlotCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many BlockedSlots and returns the data saved in the database.
+     * @param {BlockedSlotCreateManyAndReturnArgs} args - Arguments to create many BlockedSlots.
+     * @example
+     * // Create many BlockedSlots
+     * const blockedSlot = await prisma.blockedSlot.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many BlockedSlots and only return the `id`
+     * const blockedSlotWithIdOnly = await prisma.blockedSlot.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends BlockedSlotCreateManyAndReturnArgs>(args?: SelectSubset<T, BlockedSlotCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$BlockedSlotPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a BlockedSlot.
+     * @param {BlockedSlotDeleteArgs} args - Arguments to delete one BlockedSlot.
+     * @example
+     * // Delete one BlockedSlot
+     * const BlockedSlot = await prisma.blockedSlot.delete({
+     *   where: {
+     *     // ... filter to delete one BlockedSlot
+     *   }
+     * })
+     * 
+     */
+    delete<T extends BlockedSlotDeleteArgs>(args: SelectSubset<T, BlockedSlotDeleteArgs<ExtArgs>>): Prisma__BlockedSlotClient<$Result.GetResult<Prisma.$BlockedSlotPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one BlockedSlot.
+     * @param {BlockedSlotUpdateArgs} args - Arguments to update one BlockedSlot.
+     * @example
+     * // Update one BlockedSlot
+     * const blockedSlot = await prisma.blockedSlot.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends BlockedSlotUpdateArgs>(args: SelectSubset<T, BlockedSlotUpdateArgs<ExtArgs>>): Prisma__BlockedSlotClient<$Result.GetResult<Prisma.$BlockedSlotPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more BlockedSlots.
+     * @param {BlockedSlotDeleteManyArgs} args - Arguments to filter BlockedSlots to delete.
+     * @example
+     * // Delete a few BlockedSlots
+     * const { count } = await prisma.blockedSlot.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends BlockedSlotDeleteManyArgs>(args?: SelectSubset<T, BlockedSlotDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more BlockedSlots.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {BlockedSlotUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many BlockedSlots
+     * const blockedSlot = await prisma.blockedSlot.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends BlockedSlotUpdateManyArgs>(args: SelectSubset<T, BlockedSlotUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more BlockedSlots and returns the data updated in the database.
+     * @param {BlockedSlotUpdateManyAndReturnArgs} args - Arguments to update many BlockedSlots.
+     * @example
+     * // Update many BlockedSlots
+     * const blockedSlot = await prisma.blockedSlot.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more BlockedSlots and only return the `id`
+     * const blockedSlotWithIdOnly = await prisma.blockedSlot.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends BlockedSlotUpdateManyAndReturnArgs>(args: SelectSubset<T, BlockedSlotUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$BlockedSlotPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one BlockedSlot.
+     * @param {BlockedSlotUpsertArgs} args - Arguments to update or create a BlockedSlot.
+     * @example
+     * // Update or create a BlockedSlot
+     * const blockedSlot = await prisma.blockedSlot.upsert({
+     *   create: {
+     *     // ... data to create a BlockedSlot
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the BlockedSlot we want to update
+     *   }
+     * })
+     */
+    upsert<T extends BlockedSlotUpsertArgs>(args: SelectSubset<T, BlockedSlotUpsertArgs<ExtArgs>>): Prisma__BlockedSlotClient<$Result.GetResult<Prisma.$BlockedSlotPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of BlockedSlots.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {BlockedSlotCountArgs} args - Arguments to filter BlockedSlots to count.
+     * @example
+     * // Count the number of BlockedSlots
+     * const count = await prisma.blockedSlot.count({
+     *   where: {
+     *     // ... the filter for the BlockedSlots we want to count
+     *   }
+     * })
+    **/
+    count<T extends BlockedSlotCountArgs>(
+      args?: Subset<T, BlockedSlotCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], BlockedSlotCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a BlockedSlot.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {BlockedSlotAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends BlockedSlotAggregateArgs>(args: Subset<T, BlockedSlotAggregateArgs>): Prisma.PrismaPromise<GetBlockedSlotAggregateType<T>>
+
+    /**
+     * Group by BlockedSlot.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {BlockedSlotGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends BlockedSlotGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: BlockedSlotGroupByArgs['orderBy'] }
+        : { orderBy?: BlockedSlotGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, BlockedSlotGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetBlockedSlotGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the BlockedSlot model
+   */
+  readonly fields: BlockedSlotFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for BlockedSlot.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__BlockedSlotClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the BlockedSlot model
+   */
+  interface BlockedSlotFieldRefs {
+    readonly id: FieldRef<"BlockedSlot", 'String'>
+    readonly startAt: FieldRef<"BlockedSlot", 'DateTime'>
+    readonly endAt: FieldRef<"BlockedSlot", 'DateTime'>
+    readonly reason: FieldRef<"BlockedSlot", 'String'>
+    readonly calComOverrideId: FieldRef<"BlockedSlot", 'Int'>
+    readonly createdAt: FieldRef<"BlockedSlot", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * BlockedSlot findUnique
+   */
+  export type BlockedSlotFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BlockedSlot
+     */
+    select?: BlockedSlotSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the BlockedSlot
+     */
+    omit?: BlockedSlotOmit<ExtArgs> | null
+    /**
+     * Filter, which BlockedSlot to fetch.
+     */
+    where: BlockedSlotWhereUniqueInput
+  }
+
+  /**
+   * BlockedSlot findUniqueOrThrow
+   */
+  export type BlockedSlotFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BlockedSlot
+     */
+    select?: BlockedSlotSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the BlockedSlot
+     */
+    omit?: BlockedSlotOmit<ExtArgs> | null
+    /**
+     * Filter, which BlockedSlot to fetch.
+     */
+    where: BlockedSlotWhereUniqueInput
+  }
+
+  /**
+   * BlockedSlot findFirst
+   */
+  export type BlockedSlotFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BlockedSlot
+     */
+    select?: BlockedSlotSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the BlockedSlot
+     */
+    omit?: BlockedSlotOmit<ExtArgs> | null
+    /**
+     * Filter, which BlockedSlot to fetch.
+     */
+    where?: BlockedSlotWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of BlockedSlots to fetch.
+     */
+    orderBy?: BlockedSlotOrderByWithRelationInput | BlockedSlotOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for BlockedSlots.
+     */
+    cursor?: BlockedSlotWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` BlockedSlots from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` BlockedSlots.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of BlockedSlots.
+     */
+    distinct?: BlockedSlotScalarFieldEnum | BlockedSlotScalarFieldEnum[]
+  }
+
+  /**
+   * BlockedSlot findFirstOrThrow
+   */
+  export type BlockedSlotFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BlockedSlot
+     */
+    select?: BlockedSlotSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the BlockedSlot
+     */
+    omit?: BlockedSlotOmit<ExtArgs> | null
+    /**
+     * Filter, which BlockedSlot to fetch.
+     */
+    where?: BlockedSlotWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of BlockedSlots to fetch.
+     */
+    orderBy?: BlockedSlotOrderByWithRelationInput | BlockedSlotOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for BlockedSlots.
+     */
+    cursor?: BlockedSlotWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` BlockedSlots from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` BlockedSlots.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of BlockedSlots.
+     */
+    distinct?: BlockedSlotScalarFieldEnum | BlockedSlotScalarFieldEnum[]
+  }
+
+  /**
+   * BlockedSlot findMany
+   */
+  export type BlockedSlotFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BlockedSlot
+     */
+    select?: BlockedSlotSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the BlockedSlot
+     */
+    omit?: BlockedSlotOmit<ExtArgs> | null
+    /**
+     * Filter, which BlockedSlots to fetch.
+     */
+    where?: BlockedSlotWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of BlockedSlots to fetch.
+     */
+    orderBy?: BlockedSlotOrderByWithRelationInput | BlockedSlotOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing BlockedSlots.
+     */
+    cursor?: BlockedSlotWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` BlockedSlots from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` BlockedSlots.
+     */
+    skip?: number
+    distinct?: BlockedSlotScalarFieldEnum | BlockedSlotScalarFieldEnum[]
+  }
+
+  /**
+   * BlockedSlot create
+   */
+  export type BlockedSlotCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BlockedSlot
+     */
+    select?: BlockedSlotSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the BlockedSlot
+     */
+    omit?: BlockedSlotOmit<ExtArgs> | null
+    /**
+     * The data needed to create a BlockedSlot.
+     */
+    data: XOR<BlockedSlotCreateInput, BlockedSlotUncheckedCreateInput>
+  }
+
+  /**
+   * BlockedSlot createMany
+   */
+  export type BlockedSlotCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many BlockedSlots.
+     */
+    data: BlockedSlotCreateManyInput | BlockedSlotCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * BlockedSlot createManyAndReturn
+   */
+  export type BlockedSlotCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BlockedSlot
+     */
+    select?: BlockedSlotSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the BlockedSlot
+     */
+    omit?: BlockedSlotOmit<ExtArgs> | null
+    /**
+     * The data used to create many BlockedSlots.
+     */
+    data: BlockedSlotCreateManyInput | BlockedSlotCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * BlockedSlot update
+   */
+  export type BlockedSlotUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BlockedSlot
+     */
+    select?: BlockedSlotSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the BlockedSlot
+     */
+    omit?: BlockedSlotOmit<ExtArgs> | null
+    /**
+     * The data needed to update a BlockedSlot.
+     */
+    data: XOR<BlockedSlotUpdateInput, BlockedSlotUncheckedUpdateInput>
+    /**
+     * Choose, which BlockedSlot to update.
+     */
+    where: BlockedSlotWhereUniqueInput
+  }
+
+  /**
+   * BlockedSlot updateMany
+   */
+  export type BlockedSlotUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update BlockedSlots.
+     */
+    data: XOR<BlockedSlotUpdateManyMutationInput, BlockedSlotUncheckedUpdateManyInput>
+    /**
+     * Filter which BlockedSlots to update
+     */
+    where?: BlockedSlotWhereInput
+    /**
+     * Limit how many BlockedSlots to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * BlockedSlot updateManyAndReturn
+   */
+  export type BlockedSlotUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BlockedSlot
+     */
+    select?: BlockedSlotSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the BlockedSlot
+     */
+    omit?: BlockedSlotOmit<ExtArgs> | null
+    /**
+     * The data used to update BlockedSlots.
+     */
+    data: XOR<BlockedSlotUpdateManyMutationInput, BlockedSlotUncheckedUpdateManyInput>
+    /**
+     * Filter which BlockedSlots to update
+     */
+    where?: BlockedSlotWhereInput
+    /**
+     * Limit how many BlockedSlots to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * BlockedSlot upsert
+   */
+  export type BlockedSlotUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BlockedSlot
+     */
+    select?: BlockedSlotSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the BlockedSlot
+     */
+    omit?: BlockedSlotOmit<ExtArgs> | null
+    /**
+     * The filter to search for the BlockedSlot to update in case it exists.
+     */
+    where: BlockedSlotWhereUniqueInput
+    /**
+     * In case the BlockedSlot found by the `where` argument doesn't exist, create a new BlockedSlot with this data.
+     */
+    create: XOR<BlockedSlotCreateInput, BlockedSlotUncheckedCreateInput>
+    /**
+     * In case the BlockedSlot was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<BlockedSlotUpdateInput, BlockedSlotUncheckedUpdateInput>
+  }
+
+  /**
+   * BlockedSlot delete
+   */
+  export type BlockedSlotDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BlockedSlot
+     */
+    select?: BlockedSlotSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the BlockedSlot
+     */
+    omit?: BlockedSlotOmit<ExtArgs> | null
+    /**
+     * Filter which BlockedSlot to delete.
+     */
+    where: BlockedSlotWhereUniqueInput
+  }
+
+  /**
+   * BlockedSlot deleteMany
+   */
+  export type BlockedSlotDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which BlockedSlots to delete
+     */
+    where?: BlockedSlotWhereInput
+    /**
+     * Limit how many BlockedSlots to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * BlockedSlot without action
+   */
+  export type BlockedSlotDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BlockedSlot
+     */
+    select?: BlockedSlotSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the BlockedSlot
+     */
+    omit?: BlockedSlotOmit<ExtArgs> | null
+  }
+
+
+  /**
    * Enums
    */
 
@@ -10503,6 +11636,18 @@ export namespace Prisma {
   };
 
   export type SiteConfigScalarFieldEnum = (typeof SiteConfigScalarFieldEnum)[keyof typeof SiteConfigScalarFieldEnum]
+
+
+  export const BlockedSlotScalarFieldEnum: {
+    id: 'id',
+    startAt: 'startAt',
+    endAt: 'endAt',
+    reason: 'reason',
+    calComOverrideId: 'calComOverrideId',
+    createdAt: 'createdAt'
+  };
+
+  export type BlockedSlotScalarFieldEnum = (typeof BlockedSlotScalarFieldEnum)[keyof typeof BlockedSlotScalarFieldEnum]
 
 
   export const SortOrder: {
@@ -11203,6 +12348,65 @@ export namespace Prisma {
     updatedAt?: DateTimeWithAggregatesFilter<"SiteConfig"> | Date | string
   }
 
+  export type BlockedSlotWhereInput = {
+    AND?: BlockedSlotWhereInput | BlockedSlotWhereInput[]
+    OR?: BlockedSlotWhereInput[]
+    NOT?: BlockedSlotWhereInput | BlockedSlotWhereInput[]
+    id?: StringFilter<"BlockedSlot"> | string
+    startAt?: DateTimeFilter<"BlockedSlot"> | Date | string
+    endAt?: DateTimeFilter<"BlockedSlot"> | Date | string
+    reason?: StringNullableFilter<"BlockedSlot"> | string | null
+    calComOverrideId?: IntNullableFilter<"BlockedSlot"> | number | null
+    createdAt?: DateTimeFilter<"BlockedSlot"> | Date | string
+  }
+
+  export type BlockedSlotOrderByWithRelationInput = {
+    id?: SortOrder
+    startAt?: SortOrder
+    endAt?: SortOrder
+    reason?: SortOrderInput | SortOrder
+    calComOverrideId?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+  }
+
+  export type BlockedSlotWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    AND?: BlockedSlotWhereInput | BlockedSlotWhereInput[]
+    OR?: BlockedSlotWhereInput[]
+    NOT?: BlockedSlotWhereInput | BlockedSlotWhereInput[]
+    startAt?: DateTimeFilter<"BlockedSlot"> | Date | string
+    endAt?: DateTimeFilter<"BlockedSlot"> | Date | string
+    reason?: StringNullableFilter<"BlockedSlot"> | string | null
+    calComOverrideId?: IntNullableFilter<"BlockedSlot"> | number | null
+    createdAt?: DateTimeFilter<"BlockedSlot"> | Date | string
+  }, "id">
+
+  export type BlockedSlotOrderByWithAggregationInput = {
+    id?: SortOrder
+    startAt?: SortOrder
+    endAt?: SortOrder
+    reason?: SortOrderInput | SortOrder
+    calComOverrideId?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+    _count?: BlockedSlotCountOrderByAggregateInput
+    _avg?: BlockedSlotAvgOrderByAggregateInput
+    _max?: BlockedSlotMaxOrderByAggregateInput
+    _min?: BlockedSlotMinOrderByAggregateInput
+    _sum?: BlockedSlotSumOrderByAggregateInput
+  }
+
+  export type BlockedSlotScalarWhereWithAggregatesInput = {
+    AND?: BlockedSlotScalarWhereWithAggregatesInput | BlockedSlotScalarWhereWithAggregatesInput[]
+    OR?: BlockedSlotScalarWhereWithAggregatesInput[]
+    NOT?: BlockedSlotScalarWhereWithAggregatesInput | BlockedSlotScalarWhereWithAggregatesInput[]
+    id?: StringWithAggregatesFilter<"BlockedSlot"> | string
+    startAt?: DateTimeWithAggregatesFilter<"BlockedSlot"> | Date | string
+    endAt?: DateTimeWithAggregatesFilter<"BlockedSlot"> | Date | string
+    reason?: StringNullableWithAggregatesFilter<"BlockedSlot"> | string | null
+    calComOverrideId?: IntNullableWithAggregatesFilter<"BlockedSlot"> | number | null
+    createdAt?: DateTimeWithAggregatesFilter<"BlockedSlot"> | Date | string
+  }
+
   export type UserCreateInput = {
     id?: string
     name?: string | null
@@ -11807,6 +13011,69 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
+  export type BlockedSlotCreateInput = {
+    id?: string
+    startAt: Date | string
+    endAt: Date | string
+    reason?: string | null
+    calComOverrideId?: number | null
+    createdAt?: Date | string
+  }
+
+  export type BlockedSlotUncheckedCreateInput = {
+    id?: string
+    startAt: Date | string
+    endAt: Date | string
+    reason?: string | null
+    calComOverrideId?: number | null
+    createdAt?: Date | string
+  }
+
+  export type BlockedSlotUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    startAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    endAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    reason?: NullableStringFieldUpdateOperationsInput | string | null
+    calComOverrideId?: NullableIntFieldUpdateOperationsInput | number | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type BlockedSlotUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    startAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    endAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    reason?: NullableStringFieldUpdateOperationsInput | string | null
+    calComOverrideId?: NullableIntFieldUpdateOperationsInput | number | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type BlockedSlotCreateManyInput = {
+    id?: string
+    startAt: Date | string
+    endAt: Date | string
+    reason?: string | null
+    calComOverrideId?: number | null
+    createdAt?: Date | string
+  }
+
+  export type BlockedSlotUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    startAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    endAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    reason?: NullableStringFieldUpdateOperationsInput | string | null
+    calComOverrideId?: NullableIntFieldUpdateOperationsInput | number | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type BlockedSlotUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    startAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    endAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    reason?: NullableStringFieldUpdateOperationsInput | string | null
+    calComOverrideId?: NullableIntFieldUpdateOperationsInput | number | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
   export type StringFilter<$PrismaModel = never> = {
     equals?: string | StringFieldRefInput<$PrismaModel>
     in?: string[] | ListStringFieldRefInput<$PrismaModel>
@@ -12364,6 +13631,41 @@ export namespace Prisma {
     key?: SortOrder
     value?: SortOrder
     updatedAt?: SortOrder
+  }
+
+  export type BlockedSlotCountOrderByAggregateInput = {
+    id?: SortOrder
+    startAt?: SortOrder
+    endAt?: SortOrder
+    reason?: SortOrder
+    calComOverrideId?: SortOrder
+    createdAt?: SortOrder
+  }
+
+  export type BlockedSlotAvgOrderByAggregateInput = {
+    calComOverrideId?: SortOrder
+  }
+
+  export type BlockedSlotMaxOrderByAggregateInput = {
+    id?: SortOrder
+    startAt?: SortOrder
+    endAt?: SortOrder
+    reason?: SortOrder
+    calComOverrideId?: SortOrder
+    createdAt?: SortOrder
+  }
+
+  export type BlockedSlotMinOrderByAggregateInput = {
+    id?: SortOrder
+    startAt?: SortOrder
+    endAt?: SortOrder
+    reason?: SortOrder
+    calComOverrideId?: SortOrder
+    createdAt?: SortOrder
+  }
+
+  export type BlockedSlotSumOrderByAggregateInput = {
+    calComOverrideId?: SortOrder
   }
 
   export type StringFieldUpdateOperationsInput = {

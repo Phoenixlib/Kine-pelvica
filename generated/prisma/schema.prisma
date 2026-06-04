@@ -135,3 +135,13 @@ model SiteConfig {
   value     String
   updatedAt DateTime @updatedAt
 }
+
+// --- Bloqueo de Agenda (Cal.com y Local) ---
+model BlockedSlot {
+  id               String   @id @default(cuid())
+  startAt          DateTime
+  endAt            DateTime
+  reason           String?
+  calComOverrideId Int? // ID del override en Cal.com (null si no se sincronizó)
+  createdAt        DateTime @default(now())
+}

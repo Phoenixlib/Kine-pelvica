@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
-import { cancelCalComBooking, rescheduleCalComBooking } from "~/lib/calcom";
+import { cancelCalComBooking, rescheduleCalComBooking, createCalComBooking } from "~/lib/calcom";
 
 export const appointmentRouter = createTRPCRouter({
   getAll: protectedProcedure
@@ -89,6 +89,38 @@ export const appointmentRouter = createTRPCRouter({
       })
     )
     .mutation(async ({ ctx, input }) => {
+      let calComEventId: string | null = null;
+      let calComBookingId: string | null = null;
+
+      if (input.serviceId) {
+        // Fetch service and patient to sync with Cal.com
+        const [service, patient] = await Promise.all([
+          ctx.db.service.findUnique({ where: { id: input.serviceId } }),
+          ctx.db.patient.findUnique({ where: { id: input.patientId } })
+        ]);
+
+        if (service?.calComEventTypeId && patient) {
+          try {
+            // start is in UTC ISO format (which Cal.com expects)
+            const startIso = input.date.toISOString(); 
+            const calRes = await createCalComBooking(
+              service.calComEventTypeId,
+              startIso,
+              `${patient.firstName} ${patient.lastName}`,
+              patient.email || `no_email_${Date.now()}@estudiopelvico.cl`,
+              patient.phone || undefined
+            );
+            if (calRes && calRes.data) {
+              calComEventId = calRes.data.uid;
+              calComBookingId = String(calRes.data.id);
+            }
+          } catch (e) {
+            console.error("Error al agendar en Cal.com durante creación manual", e);
+            // We proceed with local creation even if Cal.com fails
+          }
+        }
+      }
+
       return ctx.db.appointment.create({
         data: {
           patientId: input.patientId,
@@ -100,6 +132,8 @@ export const appointmentRouter = createTRPCRouter({
           paymentMethod: input.paymentMethod || "PENDING",
           cancelReason: input.cancelReason || null,
           notes: input.notes || null,
+          calComEventId,
+          calComBookingId,
         },
       });
     }),

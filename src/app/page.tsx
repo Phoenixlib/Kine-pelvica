@@ -110,43 +110,43 @@ export default async function Home() {
   return (
     <>
       <Navbar />
-      
+
       <main className="min-h-screen font-body text-teal bg-offwhite selection:bg-terracotta selection:text-white scroll-smooth relative">
         {/* Section 1: Hero (bg-teal / Verde) */}
         <Hero />
-        
+
         {/* Section 2: About (bg-cream / Café Claro) */}
-        <About 
+        <About
           title={aboutData.title}
           description={aboutData.description}
           imageUrl={aboutData.imageUrl}
         />
-        
+
         {/* Section 3: Services (bg-offwhite / Crema) */}
         <Services initialCategories={servicesData} />
 
-        {/* Section 4: Community Inbox Form (bg-teal / Verde) */}
-        <BuzonComunidad />
-        
-        {/* Section 5: Reviews / Reseñas (bg-cream / Café Claro) */}
+        {/* Section 4: Reviews / Reseñas (bg-cream / Café Claro) */}
         <Reviews />
-        
-        {/* Section 6: Gallery / Antes y Después (bg-offwhite / Crema) */}
+
+        {/* Section 5: Gallery / Antes y Después (bg-offwhite / Crema) */}
         <Gallery photos={galleryData} />
-        
-        {/* Section 7: Blog / Artículos (bg-teal / Verde) */}
+
+        {/* Section 6: Blog / Artículos (bg-teal / Verde) */}
         <Blog initialPosts={postsData} />
-        
+
+        {/* Section 7: Community Inbox Form (bg-teal / Verde) */}
+        <BuzonComunidad />
+
         {/* Section 8: Location / Cómo llegar (bg-offwhite) */}
         <Location address={aboutData.address} />
       </main>
-      
+
       <Footer />
 
       {/* Floating WhatsApp Button */}
-      <a 
-        href="https://wa.me/56950840767" 
-        target="_blank" 
+      <a
+        href="https://wa.me/56950840767"
+        target="_blank"
         rel="noopener noreferrer"
         className="fixed bottom-6 right-6 w-14 h-14 bg-[#25D366] text-white rounded-full flex items-center justify-center shadow-2xl hover:scale-110 hover:shadow-[#25D366]/50 transition-all z-50 animate-bounce-slow gap-2"
         aria-label="Contactar por WhatsApp"

@@ -206,6 +206,15 @@ exports.Prisma.SiteConfigScalarFieldEnum = {
   updatedAt: 'updatedAt'
 };
 
+exports.Prisma.BlockedSlotScalarFieldEnum = {
+  id: 'id',
+  startAt: 'startAt',
+  endAt: 'endAt',
+  reason: 'reason',
+  calComOverrideId: 'calComOverrideId',
+  createdAt: 'createdAt'
+};
+
 exports.Prisma.SortOrder = {
   asc: 'asc',
   desc: 'desc'
@@ -254,7 +263,8 @@ exports.Prisma.ModelName = {
   Service: 'Service',
   GalleryPhoto: 'GalleryPhoto',
   CommunityMessage: 'CommunityMessage',
-  SiteConfig: 'SiteConfig'
+  SiteConfig: 'SiteConfig',
+  BlockedSlot: 'BlockedSlot'
 };
 
 /**
