@@ -72,6 +72,9 @@ export async function createCalComBooking(
           language: "es",
           ...(attendeePhone ? { phoneNumber: attendeePhone } : {}),
         },
+        responses: {
+          phone: attendeePhone || "+56900000000"
+        }
       }),
     });
 
