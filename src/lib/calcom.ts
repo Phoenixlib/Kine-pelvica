@@ -51,7 +51,7 @@ export async function createCalComBooking(
     return null;
   }
 
-  const baseUrl = (env.CALCOM_API_URL || "https://api.cal.com/v1").replace("/v2", "/v1");
+  const baseUrl = env.CALCOM_API_URL || "https://api.cal.com/v2";
   const url = `${baseUrl}/bookings`;
 
   try {
@@ -60,37 +60,31 @@ export async function createCalComBooking(
       headers: {
         "Authorization": `Bearer ${env.CALCOM_API_KEY}`,
         "Content-Type": "application/json",
+        "cal-api-version": "2024-08-13",
       },
       body: JSON.stringify({
         start: startIso,
         eventTypeId: eventTypeId,
-        timeZone: "America/Santiago",
-        language: "es",
-        responses: {
+        attendee: {
           name: attendeeName,
           email: attendeeEmail || `no_email_${Date.now()}@estudiopelvico.cl`,
-          phone: attendeePhone || "+56900000000"
+          timeZone: "America/Santiago",
+          language: "es",
+          ...(attendeePhone ? { phoneNumber: attendeePhone } : {}),
         },
-        metadata: {
-          phone: attendeePhone
+        bookingFieldsResponses: {
+          phone: attendeePhone || "+56900000000"
         }
       }),
     });
 
     if (!res.ok) {
       const errText = await res.text();
-      console.error(`Failed to create booking on Cal.com (v1 API):`, errText);
+      console.error(`Failed to create booking on Cal.com:`, errText);
       throw new Error(`Cal.com error: ${res.statusText} (${errText})`);
     }
 
-    const data = await res.json();
-    return {
-      status: "success",
-      data: {
-        id: data.booking?.id || data.id,
-        uid: data.booking?.uid || data.uid
-      }
-    };
+    return await res.json() as CalComCreateBookingResponse;
   } catch (error) {
     console.error(`Error calling Cal.com create booking API:`, error);
     throw error;
