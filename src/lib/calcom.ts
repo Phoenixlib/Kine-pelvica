@@ -69,11 +69,9 @@ export async function createCalComBooking(
           name: attendeeName,
           email: attendeeEmail || `no_email_${Date.now()}@estudiopelvico.cl`,
           timeZone: "America/Santiago",
-          language: "es"
+          language: "es",
+          ...(attendeePhone ? { phoneNumber: attendeePhone } : {}),
         },
-        metadata: {
-          phone: attendeePhone
-        }
       }),
     });
 

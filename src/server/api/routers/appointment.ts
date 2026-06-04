@@ -101,8 +101,13 @@ export const appointmentRouter = createTRPCRouter({
 
         if (service?.calComEventTypeId && patient) {
           try {
-            // start is in UTC ISO format (which Cal.com expects)
-            const startIso = input.date.toISOString(); 
+            const startIso = input.date.toISOString();
+            console.log("[Cal.com] Attempting to create booking:", {
+              eventTypeId: service.calComEventTypeId,
+              startIso,
+              attendeeName: `${patient.firstName} ${patient.lastName}`,
+              attendeeEmail: patient.email,
+            });
             const calRes = await createCalComBooking(
               service.calComEventTypeId,
               startIso,
@@ -110,12 +115,16 @@ export const appointmentRouter = createTRPCRouter({
               patient.email || `no_email_${Date.now()}@estudiopelvico.cl`,
               patient.phone || undefined
             );
+            console.log("[Cal.com] Booking response:", JSON.stringify(calRes));
             if (calRes && calRes.data) {
               calComEventId = calRes.data.uid;
               calComBookingId = String(calRes.data.id);
             }
           } catch (e) {
-            console.error("Error al agendar en Cal.com durante creación manual", e);
+            const errMsg = e instanceof Error ? e.message : String(e);
+            console.error("[Cal.com] Booking creation failed:", errMsg);
+            // Store error in calComBookingId field for debugging via Prisma Studio
+            calComBookingId = `ERROR: ${errMsg.substring(0, 200)}`;
             // We proceed with local creation even if Cal.com fails
           }
         }
