@@ -114,6 +114,15 @@ export default function LoginPage() {
               />
             </div>
           </div>
+          
+          <div className="flex justify-end mt-2">
+            <Link 
+              href="/recuperar-password" 
+              className="text-[11px] font-body text-terracotta hover:text-terracotta/80 font-medium transition-colors"
+            >
+              ¿Olvidaste tu contraseña?
+            </Link>
+          </div>
 
           <button
             type="submit"

@@ -18,7 +18,8 @@ import {
   Home,
   Settings,
   Camera,
-  MessageSquare
+  MessageSquare,
+  UserCog
 } from "lucide-react";
 
 interface AdminLayoutProps {
@@ -42,6 +43,7 @@ export function AdminLayout({ children, user }: AdminLayoutProps) {
     { href: "/admin/contenido", label: "Contenido Sitio", icon: Home },
     { href: "/admin/galeria", label: "Galería de Fotos", icon: Camera },
     { href: "/admin/buzon", label: "Buzón de Comunidad", icon: MessageSquare },
+    { href: "/admin/configuracion", label: "Configuración", icon: UserCog },
   ];
 
   const handleSignOut = () => {

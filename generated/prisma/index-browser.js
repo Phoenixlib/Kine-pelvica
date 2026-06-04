@@ -130,6 +130,14 @@ exports.Prisma.UserScalarFieldEnum = {
   updatedAt: 'updatedAt'
 };
 
+exports.Prisma.PasswordResetTokenScalarFieldEnum = {
+  id: 'id',
+  token: 'token',
+  expiresAt: 'expiresAt',
+  userId: 'userId',
+  createdAt: 'createdAt'
+};
+
 exports.Prisma.PatientScalarFieldEnum = {
   id: 'id',
   firstName: 'firstName',
@@ -257,6 +265,7 @@ exports.CommunityMessageStatus = exports.$Enums.CommunityMessageStatus = {
 
 exports.Prisma.ModelName = {
   User: 'User',
+  PasswordResetToken: 'PasswordResetToken',
   Patient: 'Patient',
   Appointment: 'Appointment',
   ServiceCategory: 'ServiceCategory',

@@ -14,12 +14,22 @@ datasource db {
 
 // --- Autenticación ---
 model User {
+  id          String               @id @default(cuid())
+  name        String?
+  email       String               @unique
+  password    String // bcrypt hash
+  createdAt   DateTime             @default(now())
+  updatedAt   DateTime             @updatedAt
+  resetTokens PasswordResetToken[]
+}
+
+model PasswordResetToken {
   id        String   @id @default(cuid())
-  name      String?
-  email     String   @unique
-  password  String // bcrypt hash
+  token     String   @unique
+  expiresAt DateTime
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
 }
 
 // --- Pacientes ---
