@@ -39,6 +39,7 @@ interface Appointment {
   date: Date | string;
   durationMinutes: number;
   status: string;
+  paymentMethod?: string | null;
   notes: string | null;
 }
 
@@ -644,20 +645,61 @@ export default function PacientesPage() {
       )}
 
       {/* Clinical File & History Modal */}
-      {isClinicalModalOpen && selectedPatient && (
+      {isClinicalModalOpen && selectedPatient && (() => {
+        // Calcular estadísticas
+        let booked = 0, confirmed = 0, attended = 0, noShow = 0, cancelled = 0, cashPayments = 0;
+        
+        selectedPatient.appointments?.forEach(appt => {
+          if (appt.status === "BOOKED") booked++;
+          else if (appt.status === "CONFIRMED") confirmed++;
+          else if (appt.status === "ATTENDED") attended++;
+          else if (appt.status === "NO_SHOW") noShow++;
+          else if (appt.status === "CANCELLED") cancelled++;
+
+          if (appt.paymentMethod === "CASH_PAID" || appt.paymentMethod === "CASH_PENDING") {
+            cashPayments++;
+          }
+        });
+
+        return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#0f3f3e]/40 backdrop-blur-xs animate-in fade-in duration-300">
           <div className="relative bg-offwhite w-full max-w-4xl rounded-3xl shadow-2xl border-t-[8px] border-terracotta overflow-hidden h-[85vh] flex flex-col">
             {/* Header */}
-            <div className="p-6 border-b border-cream/30 bg-white flex items-center justify-between flex-shrink-0">
-              <div className="flex items-center gap-2">
-                <FileText className="text-terracotta" size={22} />
-                <div>
-                  <h3 className="font-title text-xl text-teal font-bold">Ficha Clínica: {selectedPatient.firstName} {selectedPatient.lastName}</h3>
+            <div className="p-6 border-b border-cream/30 bg-white flex flex-col flex-shrink-0">
+              <div className="flex items-start justify-between">
+                <div className="flex items-start gap-3">
+                  <FileText className="text-terracotta mt-1" size={22} />
+                  <div>
+                    <h3 className="font-title text-xl text-teal font-bold">Ficha Clínica: {selectedPatient.firstName} {selectedPatient.lastName}</h3>
+                    {/* Resumen de actividad */}
+                    <div className="flex flex-wrap gap-2 mt-2">
+                      <div className="flex items-center gap-1.5 px-2 py-1 bg-blue-50 text-blue-700 rounded-lg text-[10px] font-subtitle uppercase tracking-widest font-bold">
+                        Reservadas <span className="bg-blue-100 px-1.5 py-0.5 rounded-md text-blue-800">{booked}</span>
+                      </div>
+                      <div className="flex items-center gap-1.5 px-2 py-1 bg-amber-50 text-amber-700 rounded-lg text-[10px] font-subtitle uppercase tracking-widest font-bold">
+                        Confirmadas <span className="bg-amber-100 px-1.5 py-0.5 rounded-md text-amber-800">{confirmed}</span>
+                      </div>
+                      <div className="flex items-center gap-1.5 px-2 py-1 bg-emerald-50 text-emerald-700 rounded-lg text-[10px] font-subtitle uppercase tracking-widest font-bold">
+                        Asistidas <span className="bg-emerald-100 px-1.5 py-0.5 rounded-md text-emerald-800">{attended}</span>
+                      </div>
+                      <div className="flex items-center gap-1.5 px-2 py-1 bg-red-50 text-red-700 rounded-lg text-[10px] font-subtitle uppercase tracking-widest font-bold">
+                        No Asistidas <span className="bg-red-100 px-1.5 py-0.5 rounded-md text-red-800">{noShow}</span>
+                      </div>
+                      <div className="flex items-center gap-1.5 px-2 py-1 bg-redbrown/10 text-redbrown rounded-lg text-[10px] font-subtitle uppercase tracking-widest font-bold">
+                        Canceladas <span className="bg-redbrown/20 px-1.5 py-0.5 rounded-md text-redbrown">{cancelled}</span>
+                      </div>
+                      {cashPayments > 0 && (
+                        <div className="flex items-center gap-1.5 px-2 py-1 bg-teal/10 text-teal rounded-lg text-[10px] font-subtitle uppercase tracking-widest font-bold">
+                          Efectivo <span className="bg-teal/20 px-1.5 py-0.5 rounded-md text-teal">{cashPayments}</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
                 </div>
+                <button onClick={() => setIsClinicalModalOpen(false)} className="p-1.5 hover:bg-offwhite rounded-xl text-teal/50 ml-4 flex-shrink-0">
+                  <X size={18} />
+                </button>
               </div>
-              <button onClick={() => setIsClinicalModalOpen(false)} className="p-1.5 hover:bg-offwhite rounded-xl text-teal/50">
-                <X size={18} />
-              </button>
             </div>
 
             {/* Split Screen layout */}
@@ -757,7 +799,8 @@ export default function PacientesPage() {
             </div>
           </div>
         </div>
-      )}
+        );
+      })()}
       {/* Delete Confirmation Modal */}
       {isDeleteModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-teal/40 backdrop-blur-sm animate-in fade-in duration-200">
