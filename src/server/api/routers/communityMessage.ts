@@ -1,16 +1,9 @@
 import { z } from "zod";
 import { createTRPCRouter, protectedProcedure, publicProcedure } from "~/server/api/trpc";
 
-export const testimonialRouter = createTRPCRouter({
-  getAllVisible: publicProcedure.query(async ({ ctx }) => {
-    return ctx.db.testimonial.findMany({
-      where: { status: "READ" },
-      orderBy: { createdAt: "desc" },
-    });
-  }),
-
+export const communityMessageRouter = createTRPCRouter({
   getAllAdmin: protectedProcedure.query(async ({ ctx }) => {
-    return ctx.db.testimonial.findMany({
+    return ctx.db.communityMessage.findMany({
       orderBy: { createdAt: "desc" },
     });
   }),
@@ -21,14 +14,16 @@ export const testimonialRouter = createTRPCRouter({
         name: z.string().min(2),
         email: z.string().email().optional().nullable(),
         message: z.string().min(5),
+        type: z.enum(["EXPERIENCE", "QUESTION"]),
       })
     )
     .mutation(async ({ ctx, input }) => {
-      return ctx.db.testimonial.create({
+      return ctx.db.communityMessage.create({
         data: {
           name: input.name,
           email: input.email || null,
           message: input.message,
+          type: input.type,
           status: "PENDING",
         },
       });
@@ -38,11 +33,11 @@ export const testimonialRouter = createTRPCRouter({
     .input(
       z.object({
         id: z.string(),
-        status: z.enum(["PENDING", "READ", "ARCHIVED"]),
+        status: z.enum(["PENDING", "READ", "PUBLISHED_IN_BLOG"]),
       })
     )
     .mutation(async ({ ctx, input }) => {
-      return ctx.db.testimonial.update({
+      return ctx.db.communityMessage.update({
         where: { id: input.id },
         data: { status: input.status },
       });
@@ -51,7 +46,7 @@ export const testimonialRouter = createTRPCRouter({
   delete: protectedProcedure
     .input(z.object({ id: z.string() }))
     .mutation(async ({ ctx, input }) => {
-      return ctx.db.testimonial.delete({
+      return ctx.db.communityMessage.delete({
         where: { id: input.id },
       });
     }),

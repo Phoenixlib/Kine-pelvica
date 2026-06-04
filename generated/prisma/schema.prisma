@@ -107,20 +107,26 @@ model GalleryPhoto {
   createdAt DateTime @default(now())
 }
 
-// --- Testimonios (del formulario del landing) ---
-model Testimonial {
-  id        String            @id @default(cuid())
+// --- Buzón de la Comunidad (Historias y Dudas) ---
+model CommunityMessage {
+  id        String                 @id @default(cuid())
   name      String
   email     String?
+  type      CommunityMessageType   @default(EXPERIENCE)
   message   String
-  status    TestimonialStatus @default(PENDING)
-  createdAt DateTime          @default(now())
+  status    CommunityMessageStatus @default(PENDING)
+  createdAt DateTime               @default(now())
 }
 
-enum TestimonialStatus {
+enum CommunityMessageType {
+  EXPERIENCE // Historia/Experiencia
+  QUESTION // Consulta/Duda
+}
+
+enum CommunityMessageStatus {
   PENDING // Sin leer
   READ // Leído
-  ARCHIVED // Archivado
+  PUBLISHED_IN_BLOG // Usado en Blog / Publicado
 }
 
 // --- Config general del sitio (Quién Soy, etc.) ---

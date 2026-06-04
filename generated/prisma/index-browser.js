@@ -190,10 +190,11 @@ exports.Prisma.GalleryPhotoScalarFieldEnum = {
   createdAt: 'createdAt'
 };
 
-exports.Prisma.TestimonialScalarFieldEnum = {
+exports.Prisma.CommunityMessageScalarFieldEnum = {
   id: 'id',
   name: 'name',
   email: 'email',
+  type: 'type',
   message: 'message',
   status: 'status',
   createdAt: 'createdAt'
@@ -234,10 +235,15 @@ exports.PaymentMethod = exports.$Enums.PaymentMethod = {
   CASH_PAID: 'CASH_PAID'
 };
 
-exports.TestimonialStatus = exports.$Enums.TestimonialStatus = {
+exports.CommunityMessageType = exports.$Enums.CommunityMessageType = {
+  EXPERIENCE: 'EXPERIENCE',
+  QUESTION: 'QUESTION'
+};
+
+exports.CommunityMessageStatus = exports.$Enums.CommunityMessageStatus = {
   PENDING: 'PENDING',
   READ: 'READ',
-  ARCHIVED: 'ARCHIVED'
+  PUBLISHED_IN_BLOG: 'PUBLISHED_IN_BLOG'
 };
 
 exports.Prisma.ModelName = {
@@ -247,7 +253,7 @@ exports.Prisma.ModelName = {
   ServiceCategory: 'ServiceCategory',
   Service: 'Service',
   GalleryPhoto: 'GalleryPhoto',
-  Testimonial: 'Testimonial',
+  CommunityMessage: 'CommunityMessage',
   SiteConfig: 'SiteConfig'
 };
 

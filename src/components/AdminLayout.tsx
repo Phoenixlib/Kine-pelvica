@@ -41,7 +41,7 @@ export function AdminLayout({ children, user }: AdminLayoutProps) {
     { href: "/admin/servicios", label: "Servicios / Terapias", icon: Settings },
     { href: "/admin/contenido", label: "Contenido Sitio", icon: Home },
     { href: "/admin/galeria", label: "Galería de Fotos", icon: Camera },
-    { href: "/admin/testimonios", label: "Testimonios", icon: MessageSquare },
+    { href: "/admin/buzon", label: "Buzón de Comunidad", icon: MessageSquare },
   ];
 
   const handleSignOut = () => {

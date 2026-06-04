@@ -4,7 +4,7 @@ import { appointmentRouter } from "~/server/api/routers/appointment";
 import { serviceRouter } from "~/server/api/routers/service";
 import { siteConfigRouter } from "~/server/api/routers/siteConfig";
 import { galleryRouter } from "~/server/api/routers/gallery";
-import { testimonialRouter } from "~/server/api/routers/testimonial";
+import { communityMessageRouter } from "~/server/api/routers/communityMessage";
 import { createCallerFactory, createTRPCRouter } from "~/server/api/trpc";
 
 /**
@@ -19,7 +19,7 @@ export const appRouter = createTRPCRouter({
   service: serviceRouter,
   siteConfig: siteConfigRouter,
   gallery: galleryRouter,
-  testimonial: testimonialRouter,
+  communityMessage: communityMessageRouter,
 });
 
 // export type definition of API

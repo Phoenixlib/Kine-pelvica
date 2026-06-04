@@ -44,10 +44,10 @@ export type Service = $Result.DefaultSelection<Prisma.$ServicePayload>
  */
 export type GalleryPhoto = $Result.DefaultSelection<Prisma.$GalleryPhotoPayload>
 /**
- * Model Testimonial
+ * Model CommunityMessage
  * 
  */
-export type Testimonial = $Result.DefaultSelection<Prisma.$TestimonialPayload>
+export type CommunityMessage = $Result.DefaultSelection<Prisma.$CommunityMessagePayload>
 /**
  * Model SiteConfig
  * 
@@ -79,13 +79,21 @@ export const PaymentMethod: {
 export type PaymentMethod = (typeof PaymentMethod)[keyof typeof PaymentMethod]
 
 
-export const TestimonialStatus: {
-  PENDING: 'PENDING',
-  READ: 'READ',
-  ARCHIVED: 'ARCHIVED'
+export const CommunityMessageType: {
+  EXPERIENCE: 'EXPERIENCE',
+  QUESTION: 'QUESTION'
 };
 
-export type TestimonialStatus = (typeof TestimonialStatus)[keyof typeof TestimonialStatus]
+export type CommunityMessageType = (typeof CommunityMessageType)[keyof typeof CommunityMessageType]
+
+
+export const CommunityMessageStatus: {
+  PENDING: 'PENDING',
+  READ: 'READ',
+  PUBLISHED_IN_BLOG: 'PUBLISHED_IN_BLOG'
+};
+
+export type CommunityMessageStatus = (typeof CommunityMessageStatus)[keyof typeof CommunityMessageStatus]
 
 }
 
@@ -97,9 +105,13 @@ export type PaymentMethod = $Enums.PaymentMethod
 
 export const PaymentMethod: typeof $Enums.PaymentMethod
 
-export type TestimonialStatus = $Enums.TestimonialStatus
+export type CommunityMessageType = $Enums.CommunityMessageType
 
-export const TestimonialStatus: typeof $Enums.TestimonialStatus
+export const CommunityMessageType: typeof $Enums.CommunityMessageType
+
+export type CommunityMessageStatus = $Enums.CommunityMessageStatus
+
+export const CommunityMessageStatus: typeof $Enums.CommunityMessageStatus
 
 /**
  * ##  Prisma Client ʲˢ
@@ -280,14 +292,14 @@ export class PrismaClient<
   get galleryPhoto(): Prisma.GalleryPhotoDelegate<ExtArgs, ClientOptions>;
 
   /**
-   * `prisma.testimonial`: Exposes CRUD operations for the **Testimonial** model.
+   * `prisma.communityMessage`: Exposes CRUD operations for the **CommunityMessage** model.
     * Example usage:
     * ```ts
-    * // Fetch zero or more Testimonials
-    * const testimonials = await prisma.testimonial.findMany()
+    * // Fetch zero or more CommunityMessages
+    * const communityMessages = await prisma.communityMessage.findMany()
     * ```
     */
-  get testimonial(): Prisma.TestimonialDelegate<ExtArgs, ClientOptions>;
+  get communityMessage(): Prisma.CommunityMessageDelegate<ExtArgs, ClientOptions>;
 
   /**
    * `prisma.siteConfig`: Exposes CRUD operations for the **SiteConfig** model.
@@ -745,7 +757,7 @@ export namespace Prisma {
     ServiceCategory: 'ServiceCategory',
     Service: 'Service',
     GalleryPhoto: 'GalleryPhoto',
-    Testimonial: 'Testimonial',
+    CommunityMessage: 'CommunityMessage',
     SiteConfig: 'SiteConfig'
   };
 
@@ -765,7 +777,7 @@ export namespace Prisma {
       omit: GlobalOmitOptions
     }
     meta: {
-      modelProps: "user" | "patient" | "appointment" | "serviceCategory" | "service" | "galleryPhoto" | "testimonial" | "siteConfig"
+      modelProps: "user" | "patient" | "appointment" | "serviceCategory" | "service" | "galleryPhoto" | "communityMessage" | "siteConfig"
       txIsolationLevel: Prisma.TransactionIsolationLevel
     }
     model: {
@@ -1213,77 +1225,77 @@ export namespace Prisma {
           }
         }
       }
-      Testimonial: {
-        payload: Prisma.$TestimonialPayload<ExtArgs>
-        fields: Prisma.TestimonialFieldRefs
+      CommunityMessage: {
+        payload: Prisma.$CommunityMessagePayload<ExtArgs>
+        fields: Prisma.CommunityMessageFieldRefs
         operations: {
           findUnique: {
-            args: Prisma.TestimonialFindUniqueArgs<ExtArgs>
-            result: $Utils.PayloadToResult<Prisma.$TestimonialPayload> | null
+            args: Prisma.CommunityMessageFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CommunityMessagePayload> | null
           }
           findUniqueOrThrow: {
-            args: Prisma.TestimonialFindUniqueOrThrowArgs<ExtArgs>
-            result: $Utils.PayloadToResult<Prisma.$TestimonialPayload>
+            args: Prisma.CommunityMessageFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CommunityMessagePayload>
           }
           findFirst: {
-            args: Prisma.TestimonialFindFirstArgs<ExtArgs>
-            result: $Utils.PayloadToResult<Prisma.$TestimonialPayload> | null
+            args: Prisma.CommunityMessageFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CommunityMessagePayload> | null
           }
           findFirstOrThrow: {
-            args: Prisma.TestimonialFindFirstOrThrowArgs<ExtArgs>
-            result: $Utils.PayloadToResult<Prisma.$TestimonialPayload>
+            args: Prisma.CommunityMessageFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CommunityMessagePayload>
           }
           findMany: {
-            args: Prisma.TestimonialFindManyArgs<ExtArgs>
-            result: $Utils.PayloadToResult<Prisma.$TestimonialPayload>[]
+            args: Prisma.CommunityMessageFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CommunityMessagePayload>[]
           }
           create: {
-            args: Prisma.TestimonialCreateArgs<ExtArgs>
-            result: $Utils.PayloadToResult<Prisma.$TestimonialPayload>
+            args: Prisma.CommunityMessageCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CommunityMessagePayload>
           }
           createMany: {
-            args: Prisma.TestimonialCreateManyArgs<ExtArgs>
+            args: Prisma.CommunityMessageCreateManyArgs<ExtArgs>
             result: BatchPayload
           }
           createManyAndReturn: {
-            args: Prisma.TestimonialCreateManyAndReturnArgs<ExtArgs>
-            result: $Utils.PayloadToResult<Prisma.$TestimonialPayload>[]
+            args: Prisma.CommunityMessageCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CommunityMessagePayload>[]
           }
           delete: {
-            args: Prisma.TestimonialDeleteArgs<ExtArgs>
-            result: $Utils.PayloadToResult<Prisma.$TestimonialPayload>
+            args: Prisma.CommunityMessageDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CommunityMessagePayload>
           }
           update: {
-            args: Prisma.TestimonialUpdateArgs<ExtArgs>
-            result: $Utils.PayloadToResult<Prisma.$TestimonialPayload>
+            args: Prisma.CommunityMessageUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CommunityMessagePayload>
           }
           deleteMany: {
-            args: Prisma.TestimonialDeleteManyArgs<ExtArgs>
+            args: Prisma.CommunityMessageDeleteManyArgs<ExtArgs>
             result: BatchPayload
           }
           updateMany: {
-            args: Prisma.TestimonialUpdateManyArgs<ExtArgs>
+            args: Prisma.CommunityMessageUpdateManyArgs<ExtArgs>
             result: BatchPayload
           }
           updateManyAndReturn: {
-            args: Prisma.TestimonialUpdateManyAndReturnArgs<ExtArgs>
-            result: $Utils.PayloadToResult<Prisma.$TestimonialPayload>[]
+            args: Prisma.CommunityMessageUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CommunityMessagePayload>[]
           }
           upsert: {
-            args: Prisma.TestimonialUpsertArgs<ExtArgs>
-            result: $Utils.PayloadToResult<Prisma.$TestimonialPayload>
+            args: Prisma.CommunityMessageUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CommunityMessagePayload>
           }
           aggregate: {
-            args: Prisma.TestimonialAggregateArgs<ExtArgs>
-            result: $Utils.Optional<AggregateTestimonial>
+            args: Prisma.CommunityMessageAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateCommunityMessage>
           }
           groupBy: {
-            args: Prisma.TestimonialGroupByArgs<ExtArgs>
-            result: $Utils.Optional<TestimonialGroupByOutputType>[]
+            args: Prisma.CommunityMessageGroupByArgs<ExtArgs>
+            result: $Utils.Optional<CommunityMessageGroupByOutputType>[]
           }
           count: {
-            args: Prisma.TestimonialCountArgs<ExtArgs>
-            result: $Utils.Optional<TestimonialCountAggregateOutputType> | number
+            args: Prisma.CommunityMessageCountArgs<ExtArgs>
+            result: $Utils.Optional<CommunityMessageCountAggregateOutputType> | number
           }
         }
       }
@@ -1463,7 +1475,7 @@ export namespace Prisma {
     serviceCategory?: ServiceCategoryOmit
     service?: ServiceOmit
     galleryPhoto?: GalleryPhotoOmit
-    testimonial?: TestimonialOmit
+    communityMessage?: CommunityMessageOmit
     siteConfig?: SiteConfigOmit
   }
 
@@ -8381,37 +8393,40 @@ export namespace Prisma {
 
 
   /**
-   * Model Testimonial
+   * Model CommunityMessage
    */
 
-  export type AggregateTestimonial = {
-    _count: TestimonialCountAggregateOutputType | null
-    _min: TestimonialMinAggregateOutputType | null
-    _max: TestimonialMaxAggregateOutputType | null
+  export type AggregateCommunityMessage = {
+    _count: CommunityMessageCountAggregateOutputType | null
+    _min: CommunityMessageMinAggregateOutputType | null
+    _max: CommunityMessageMaxAggregateOutputType | null
   }
 
-  export type TestimonialMinAggregateOutputType = {
+  export type CommunityMessageMinAggregateOutputType = {
     id: string | null
     name: string | null
     email: string | null
+    type: $Enums.CommunityMessageType | null
     message: string | null
-    status: $Enums.TestimonialStatus | null
+    status: $Enums.CommunityMessageStatus | null
     createdAt: Date | null
   }
 
-  export type TestimonialMaxAggregateOutputType = {
+  export type CommunityMessageMaxAggregateOutputType = {
     id: string | null
     name: string | null
     email: string | null
+    type: $Enums.CommunityMessageType | null
     message: string | null
-    status: $Enums.TestimonialStatus | null
+    status: $Enums.CommunityMessageStatus | null
     createdAt: Date | null
   }
 
-  export type TestimonialCountAggregateOutputType = {
+  export type CommunityMessageCountAggregateOutputType = {
     id: number
     name: number
     email: number
+    type: number
     message: number
     status: number
     createdAt: number
@@ -8419,310 +8434,319 @@ export namespace Prisma {
   }
 
 
-  export type TestimonialMinAggregateInputType = {
+  export type CommunityMessageMinAggregateInputType = {
     id?: true
     name?: true
     email?: true
+    type?: true
     message?: true
     status?: true
     createdAt?: true
   }
 
-  export type TestimonialMaxAggregateInputType = {
+  export type CommunityMessageMaxAggregateInputType = {
     id?: true
     name?: true
     email?: true
+    type?: true
     message?: true
     status?: true
     createdAt?: true
   }
 
-  export type TestimonialCountAggregateInputType = {
+  export type CommunityMessageCountAggregateInputType = {
     id?: true
     name?: true
     email?: true
+    type?: true
     message?: true
     status?: true
     createdAt?: true
     _all?: true
   }
 
-  export type TestimonialAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+  export type CommunityMessageAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     /**
-     * Filter which Testimonial to aggregate.
+     * Filter which CommunityMessage to aggregate.
      */
-    where?: TestimonialWhereInput
+    where?: CommunityMessageWhereInput
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
      * 
-     * Determine the order of Testimonials to fetch.
+     * Determine the order of CommunityMessages to fetch.
      */
-    orderBy?: TestimonialOrderByWithRelationInput | TestimonialOrderByWithRelationInput[]
+    orderBy?: CommunityMessageOrderByWithRelationInput | CommunityMessageOrderByWithRelationInput[]
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
      * 
      * Sets the start position
      */
-    cursor?: TestimonialWhereUniqueInput
+    cursor?: CommunityMessageWhereUniqueInput
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
      * 
-     * Take `±n` Testimonials from the position of the cursor.
+     * Take `±n` CommunityMessages from the position of the cursor.
      */
     take?: number
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
      * 
-     * Skip the first `n` Testimonials.
+     * Skip the first `n` CommunityMessages.
      */
     skip?: number
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
      * 
-     * Count returned Testimonials
+     * Count returned CommunityMessages
     **/
-    _count?: true | TestimonialCountAggregateInputType
+    _count?: true | CommunityMessageCountAggregateInputType
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
      * 
      * Select which fields to find the minimum value
     **/
-    _min?: TestimonialMinAggregateInputType
+    _min?: CommunityMessageMinAggregateInputType
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
      * 
      * Select which fields to find the maximum value
     **/
-    _max?: TestimonialMaxAggregateInputType
+    _max?: CommunityMessageMaxAggregateInputType
   }
 
-  export type GetTestimonialAggregateType<T extends TestimonialAggregateArgs> = {
-        [P in keyof T & keyof AggregateTestimonial]: P extends '_count' | 'count'
+  export type GetCommunityMessageAggregateType<T extends CommunityMessageAggregateArgs> = {
+        [P in keyof T & keyof AggregateCommunityMessage]: P extends '_count' | 'count'
       ? T[P] extends true
         ? number
-        : GetScalarType<T[P], AggregateTestimonial[P]>
-      : GetScalarType<T[P], AggregateTestimonial[P]>
+        : GetScalarType<T[P], AggregateCommunityMessage[P]>
+      : GetScalarType<T[P], AggregateCommunityMessage[P]>
   }
 
 
 
 
-  export type TestimonialGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    where?: TestimonialWhereInput
-    orderBy?: TestimonialOrderByWithAggregationInput | TestimonialOrderByWithAggregationInput[]
-    by: TestimonialScalarFieldEnum[] | TestimonialScalarFieldEnum
-    having?: TestimonialScalarWhereWithAggregatesInput
+  export type CommunityMessageGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: CommunityMessageWhereInput
+    orderBy?: CommunityMessageOrderByWithAggregationInput | CommunityMessageOrderByWithAggregationInput[]
+    by: CommunityMessageScalarFieldEnum[] | CommunityMessageScalarFieldEnum
+    having?: CommunityMessageScalarWhereWithAggregatesInput
     take?: number
     skip?: number
-    _count?: TestimonialCountAggregateInputType | true
-    _min?: TestimonialMinAggregateInputType
-    _max?: TestimonialMaxAggregateInputType
+    _count?: CommunityMessageCountAggregateInputType | true
+    _min?: CommunityMessageMinAggregateInputType
+    _max?: CommunityMessageMaxAggregateInputType
   }
 
-  export type TestimonialGroupByOutputType = {
+  export type CommunityMessageGroupByOutputType = {
     id: string
     name: string
     email: string | null
+    type: $Enums.CommunityMessageType
     message: string
-    status: $Enums.TestimonialStatus
+    status: $Enums.CommunityMessageStatus
     createdAt: Date
-    _count: TestimonialCountAggregateOutputType | null
-    _min: TestimonialMinAggregateOutputType | null
-    _max: TestimonialMaxAggregateOutputType | null
+    _count: CommunityMessageCountAggregateOutputType | null
+    _min: CommunityMessageMinAggregateOutputType | null
+    _max: CommunityMessageMaxAggregateOutputType | null
   }
 
-  type GetTestimonialGroupByPayload<T extends TestimonialGroupByArgs> = Prisma.PrismaPromise<
+  type GetCommunityMessageGroupByPayload<T extends CommunityMessageGroupByArgs> = Prisma.PrismaPromise<
     Array<
-      PickEnumerable<TestimonialGroupByOutputType, T['by']> &
+      PickEnumerable<CommunityMessageGroupByOutputType, T['by']> &
         {
-          [P in ((keyof T) & (keyof TestimonialGroupByOutputType))]: P extends '_count'
+          [P in ((keyof T) & (keyof CommunityMessageGroupByOutputType))]: P extends '_count'
             ? T[P] extends boolean
               ? number
-              : GetScalarType<T[P], TestimonialGroupByOutputType[P]>
-            : GetScalarType<T[P], TestimonialGroupByOutputType[P]>
+              : GetScalarType<T[P], CommunityMessageGroupByOutputType[P]>
+            : GetScalarType<T[P], CommunityMessageGroupByOutputType[P]>
         }
       >
     >
 
 
-  export type TestimonialSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+  export type CommunityMessageSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
     id?: boolean
     name?: boolean
     email?: boolean
+    type?: boolean
     message?: boolean
     status?: boolean
     createdAt?: boolean
-  }, ExtArgs["result"]["testimonial"]>
+  }, ExtArgs["result"]["communityMessage"]>
 
-  export type TestimonialSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+  export type CommunityMessageSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
     id?: boolean
     name?: boolean
     email?: boolean
+    type?: boolean
     message?: boolean
     status?: boolean
     createdAt?: boolean
-  }, ExtArgs["result"]["testimonial"]>
+  }, ExtArgs["result"]["communityMessage"]>
 
-  export type TestimonialSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+  export type CommunityMessageSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
     id?: boolean
     name?: boolean
     email?: boolean
+    type?: boolean
     message?: boolean
     status?: boolean
     createdAt?: boolean
-  }, ExtArgs["result"]["testimonial"]>
+  }, ExtArgs["result"]["communityMessage"]>
 
-  export type TestimonialSelectScalar = {
+  export type CommunityMessageSelectScalar = {
     id?: boolean
     name?: boolean
     email?: boolean
+    type?: boolean
     message?: boolean
     status?: boolean
     createdAt?: boolean
   }
 
-  export type TestimonialOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "name" | "email" | "message" | "status" | "createdAt", ExtArgs["result"]["testimonial"]>
+  export type CommunityMessageOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "name" | "email" | "type" | "message" | "status" | "createdAt", ExtArgs["result"]["communityMessage"]>
 
-  export type $TestimonialPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    name: "Testimonial"
+  export type $CommunityMessagePayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "CommunityMessage"
     objects: {}
     scalars: $Extensions.GetPayloadResult<{
       id: string
       name: string
       email: string | null
+      type: $Enums.CommunityMessageType
       message: string
-      status: $Enums.TestimonialStatus
+      status: $Enums.CommunityMessageStatus
       createdAt: Date
-    }, ExtArgs["result"]["testimonial"]>
+    }, ExtArgs["result"]["communityMessage"]>
     composites: {}
   }
 
-  type TestimonialGetPayload<S extends boolean | null | undefined | TestimonialDefaultArgs> = $Result.GetResult<Prisma.$TestimonialPayload, S>
+  type CommunityMessageGetPayload<S extends boolean | null | undefined | CommunityMessageDefaultArgs> = $Result.GetResult<Prisma.$CommunityMessagePayload, S>
 
-  type TestimonialCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
-    Omit<TestimonialFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
-      select?: TestimonialCountAggregateInputType | true
+  type CommunityMessageCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<CommunityMessageFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: CommunityMessageCountAggregateInputType | true
     }
 
-  export interface TestimonialDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
-    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['Testimonial'], meta: { name: 'Testimonial' } }
+  export interface CommunityMessageDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['CommunityMessage'], meta: { name: 'CommunityMessage' } }
     /**
-     * Find zero or one Testimonial that matches the filter.
-     * @param {TestimonialFindUniqueArgs} args - Arguments to find a Testimonial
+     * Find zero or one CommunityMessage that matches the filter.
+     * @param {CommunityMessageFindUniqueArgs} args - Arguments to find a CommunityMessage
      * @example
-     * // Get one Testimonial
-     * const testimonial = await prisma.testimonial.findUnique({
+     * // Get one CommunityMessage
+     * const communityMessage = await prisma.communityMessage.findUnique({
      *   where: {
      *     // ... provide filter here
      *   }
      * })
      */
-    findUnique<T extends TestimonialFindUniqueArgs>(args: SelectSubset<T, TestimonialFindUniqueArgs<ExtArgs>>): Prisma__TestimonialClient<$Result.GetResult<Prisma.$TestimonialPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+    findUnique<T extends CommunityMessageFindUniqueArgs>(args: SelectSubset<T, CommunityMessageFindUniqueArgs<ExtArgs>>): Prisma__CommunityMessageClient<$Result.GetResult<Prisma.$CommunityMessagePayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
 
     /**
-     * Find one Testimonial that matches the filter or throw an error with `error.code='P2025'`
+     * Find one CommunityMessage that matches the filter or throw an error with `error.code='P2025'`
      * if no matches were found.
-     * @param {TestimonialFindUniqueOrThrowArgs} args - Arguments to find a Testimonial
+     * @param {CommunityMessageFindUniqueOrThrowArgs} args - Arguments to find a CommunityMessage
      * @example
-     * // Get one Testimonial
-     * const testimonial = await prisma.testimonial.findUniqueOrThrow({
+     * // Get one CommunityMessage
+     * const communityMessage = await prisma.communityMessage.findUniqueOrThrow({
      *   where: {
      *     // ... provide filter here
      *   }
      * })
      */
-    findUniqueOrThrow<T extends TestimonialFindUniqueOrThrowArgs>(args: SelectSubset<T, TestimonialFindUniqueOrThrowArgs<ExtArgs>>): Prisma__TestimonialClient<$Result.GetResult<Prisma.$TestimonialPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+    findUniqueOrThrow<T extends CommunityMessageFindUniqueOrThrowArgs>(args: SelectSubset<T, CommunityMessageFindUniqueOrThrowArgs<ExtArgs>>): Prisma__CommunityMessageClient<$Result.GetResult<Prisma.$CommunityMessagePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
 
     /**
-     * Find the first Testimonial that matches the filter.
+     * Find the first CommunityMessage that matches the filter.
      * Note, that providing `undefined` is treated as the value not being there.
      * Read more here: https://pris.ly/d/null-undefined
-     * @param {TestimonialFindFirstArgs} args - Arguments to find a Testimonial
+     * @param {CommunityMessageFindFirstArgs} args - Arguments to find a CommunityMessage
      * @example
-     * // Get one Testimonial
-     * const testimonial = await prisma.testimonial.findFirst({
+     * // Get one CommunityMessage
+     * const communityMessage = await prisma.communityMessage.findFirst({
      *   where: {
      *     // ... provide filter here
      *   }
      * })
      */
-    findFirst<T extends TestimonialFindFirstArgs>(args?: SelectSubset<T, TestimonialFindFirstArgs<ExtArgs>>): Prisma__TestimonialClient<$Result.GetResult<Prisma.$TestimonialPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+    findFirst<T extends CommunityMessageFindFirstArgs>(args?: SelectSubset<T, CommunityMessageFindFirstArgs<ExtArgs>>): Prisma__CommunityMessageClient<$Result.GetResult<Prisma.$CommunityMessagePayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
 
     /**
-     * Find the first Testimonial that matches the filter or
+     * Find the first CommunityMessage that matches the filter or
      * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
      * Note, that providing `undefined` is treated as the value not being there.
      * Read more here: https://pris.ly/d/null-undefined
-     * @param {TestimonialFindFirstOrThrowArgs} args - Arguments to find a Testimonial
+     * @param {CommunityMessageFindFirstOrThrowArgs} args - Arguments to find a CommunityMessage
      * @example
-     * // Get one Testimonial
-     * const testimonial = await prisma.testimonial.findFirstOrThrow({
+     * // Get one CommunityMessage
+     * const communityMessage = await prisma.communityMessage.findFirstOrThrow({
      *   where: {
      *     // ... provide filter here
      *   }
      * })
      */
-    findFirstOrThrow<T extends TestimonialFindFirstOrThrowArgs>(args?: SelectSubset<T, TestimonialFindFirstOrThrowArgs<ExtArgs>>): Prisma__TestimonialClient<$Result.GetResult<Prisma.$TestimonialPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+    findFirstOrThrow<T extends CommunityMessageFindFirstOrThrowArgs>(args?: SelectSubset<T, CommunityMessageFindFirstOrThrowArgs<ExtArgs>>): Prisma__CommunityMessageClient<$Result.GetResult<Prisma.$CommunityMessagePayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
 
     /**
-     * Find zero or more Testimonials that matches the filter.
+     * Find zero or more CommunityMessages that matches the filter.
      * Note, that providing `undefined` is treated as the value not being there.
      * Read more here: https://pris.ly/d/null-undefined
-     * @param {TestimonialFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @param {CommunityMessageFindManyArgs} args - Arguments to filter and select certain fields only.
      * @example
-     * // Get all Testimonials
-     * const testimonials = await prisma.testimonial.findMany()
+     * // Get all CommunityMessages
+     * const communityMessages = await prisma.communityMessage.findMany()
      * 
-     * // Get first 10 Testimonials
-     * const testimonials = await prisma.testimonial.findMany({ take: 10 })
+     * // Get first 10 CommunityMessages
+     * const communityMessages = await prisma.communityMessage.findMany({ take: 10 })
      * 
      * // Only select the `id`
-     * const testimonialWithIdOnly = await prisma.testimonial.findMany({ select: { id: true } })
+     * const communityMessageWithIdOnly = await prisma.communityMessage.findMany({ select: { id: true } })
      * 
      */
-    findMany<T extends TestimonialFindManyArgs>(args?: SelectSubset<T, TestimonialFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$TestimonialPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+    findMany<T extends CommunityMessageFindManyArgs>(args?: SelectSubset<T, CommunityMessageFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$CommunityMessagePayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
 
     /**
-     * Create a Testimonial.
-     * @param {TestimonialCreateArgs} args - Arguments to create a Testimonial.
+     * Create a CommunityMessage.
+     * @param {CommunityMessageCreateArgs} args - Arguments to create a CommunityMessage.
      * @example
-     * // Create one Testimonial
-     * const Testimonial = await prisma.testimonial.create({
+     * // Create one CommunityMessage
+     * const CommunityMessage = await prisma.communityMessage.create({
      *   data: {
-     *     // ... data to create a Testimonial
+     *     // ... data to create a CommunityMessage
      *   }
      * })
      * 
      */
-    create<T extends TestimonialCreateArgs>(args: SelectSubset<T, TestimonialCreateArgs<ExtArgs>>): Prisma__TestimonialClient<$Result.GetResult<Prisma.$TestimonialPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+    create<T extends CommunityMessageCreateArgs>(args: SelectSubset<T, CommunityMessageCreateArgs<ExtArgs>>): Prisma__CommunityMessageClient<$Result.GetResult<Prisma.$CommunityMessagePayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
 
     /**
-     * Create many Testimonials.
-     * @param {TestimonialCreateManyArgs} args - Arguments to create many Testimonials.
+     * Create many CommunityMessages.
+     * @param {CommunityMessageCreateManyArgs} args - Arguments to create many CommunityMessages.
      * @example
-     * // Create many Testimonials
-     * const testimonial = await prisma.testimonial.createMany({
+     * // Create many CommunityMessages
+     * const communityMessage = await prisma.communityMessage.createMany({
      *   data: [
      *     // ... provide data here
      *   ]
      * })
      *     
      */
-    createMany<T extends TestimonialCreateManyArgs>(args?: SelectSubset<T, TestimonialCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+    createMany<T extends CommunityMessageCreateManyArgs>(args?: SelectSubset<T, CommunityMessageCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
 
     /**
-     * Create many Testimonials and returns the data saved in the database.
-     * @param {TestimonialCreateManyAndReturnArgs} args - Arguments to create many Testimonials.
+     * Create many CommunityMessages and returns the data saved in the database.
+     * @param {CommunityMessageCreateManyAndReturnArgs} args - Arguments to create many CommunityMessages.
      * @example
-     * // Create many Testimonials
-     * const testimonial = await prisma.testimonial.createManyAndReturn({
+     * // Create many CommunityMessages
+     * const communityMessage = await prisma.communityMessage.createManyAndReturn({
      *   data: [
      *     // ... provide data here
      *   ]
      * })
      * 
-     * // Create many Testimonials and only return the `id`
-     * const testimonialWithIdOnly = await prisma.testimonial.createManyAndReturn({
+     * // Create many CommunityMessages and only return the `id`
+     * const communityMessageWithIdOnly = await prisma.communityMessage.createManyAndReturn({
      *   select: { id: true },
      *   data: [
      *     // ... provide data here
@@ -8732,28 +8756,28 @@ export namespace Prisma {
      * Read more here: https://pris.ly/d/null-undefined
      * 
      */
-    createManyAndReturn<T extends TestimonialCreateManyAndReturnArgs>(args?: SelectSubset<T, TestimonialCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$TestimonialPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+    createManyAndReturn<T extends CommunityMessageCreateManyAndReturnArgs>(args?: SelectSubset<T, CommunityMessageCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$CommunityMessagePayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
 
     /**
-     * Delete a Testimonial.
-     * @param {TestimonialDeleteArgs} args - Arguments to delete one Testimonial.
+     * Delete a CommunityMessage.
+     * @param {CommunityMessageDeleteArgs} args - Arguments to delete one CommunityMessage.
      * @example
-     * // Delete one Testimonial
-     * const Testimonial = await prisma.testimonial.delete({
+     * // Delete one CommunityMessage
+     * const CommunityMessage = await prisma.communityMessage.delete({
      *   where: {
-     *     // ... filter to delete one Testimonial
+     *     // ... filter to delete one CommunityMessage
      *   }
      * })
      * 
      */
-    delete<T extends TestimonialDeleteArgs>(args: SelectSubset<T, TestimonialDeleteArgs<ExtArgs>>): Prisma__TestimonialClient<$Result.GetResult<Prisma.$TestimonialPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+    delete<T extends CommunityMessageDeleteArgs>(args: SelectSubset<T, CommunityMessageDeleteArgs<ExtArgs>>): Prisma__CommunityMessageClient<$Result.GetResult<Prisma.$CommunityMessagePayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
 
     /**
-     * Update one Testimonial.
-     * @param {TestimonialUpdateArgs} args - Arguments to update one Testimonial.
+     * Update one CommunityMessage.
+     * @param {CommunityMessageUpdateArgs} args - Arguments to update one CommunityMessage.
      * @example
-     * // Update one Testimonial
-     * const testimonial = await prisma.testimonial.update({
+     * // Update one CommunityMessage
+     * const communityMessage = await prisma.communityMessage.update({
      *   where: {
      *     // ... provide filter here
      *   },
@@ -8763,30 +8787,30 @@ export namespace Prisma {
      * })
      * 
      */
-    update<T extends TestimonialUpdateArgs>(args: SelectSubset<T, TestimonialUpdateArgs<ExtArgs>>): Prisma__TestimonialClient<$Result.GetResult<Prisma.$TestimonialPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+    update<T extends CommunityMessageUpdateArgs>(args: SelectSubset<T, CommunityMessageUpdateArgs<ExtArgs>>): Prisma__CommunityMessageClient<$Result.GetResult<Prisma.$CommunityMessagePayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
 
     /**
-     * Delete zero or more Testimonials.
-     * @param {TestimonialDeleteManyArgs} args - Arguments to filter Testimonials to delete.
+     * Delete zero or more CommunityMessages.
+     * @param {CommunityMessageDeleteManyArgs} args - Arguments to filter CommunityMessages to delete.
      * @example
-     * // Delete a few Testimonials
-     * const { count } = await prisma.testimonial.deleteMany({
+     * // Delete a few CommunityMessages
+     * const { count } = await prisma.communityMessage.deleteMany({
      *   where: {
      *     // ... provide filter here
      *   }
      * })
      * 
      */
-    deleteMany<T extends TestimonialDeleteManyArgs>(args?: SelectSubset<T, TestimonialDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+    deleteMany<T extends CommunityMessageDeleteManyArgs>(args?: SelectSubset<T, CommunityMessageDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
 
     /**
-     * Update zero or more Testimonials.
+     * Update zero or more CommunityMessages.
      * Note, that providing `undefined` is treated as the value not being there.
      * Read more here: https://pris.ly/d/null-undefined
-     * @param {TestimonialUpdateManyArgs} args - Arguments to update one or more rows.
+     * @param {CommunityMessageUpdateManyArgs} args - Arguments to update one or more rows.
      * @example
-     * // Update many Testimonials
-     * const testimonial = await prisma.testimonial.updateMany({
+     * // Update many CommunityMessages
+     * const communityMessage = await prisma.communityMessage.updateMany({
      *   where: {
      *     // ... provide filter here
      *   },
@@ -8796,14 +8820,14 @@ export namespace Prisma {
      * })
      * 
      */
-    updateMany<T extends TestimonialUpdateManyArgs>(args: SelectSubset<T, TestimonialUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+    updateMany<T extends CommunityMessageUpdateManyArgs>(args: SelectSubset<T, CommunityMessageUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
 
     /**
-     * Update zero or more Testimonials and returns the data updated in the database.
-     * @param {TestimonialUpdateManyAndReturnArgs} args - Arguments to update many Testimonials.
+     * Update zero or more CommunityMessages and returns the data updated in the database.
+     * @param {CommunityMessageUpdateManyAndReturnArgs} args - Arguments to update many CommunityMessages.
      * @example
-     * // Update many Testimonials
-     * const testimonial = await prisma.testimonial.updateManyAndReturn({
+     * // Update many CommunityMessages
+     * const communityMessage = await prisma.communityMessage.updateManyAndReturn({
      *   where: {
      *     // ... provide filter here
      *   },
@@ -8812,8 +8836,8 @@ export namespace Prisma {
      *   ]
      * })
      * 
-     * // Update zero or more Testimonials and only return the `id`
-     * const testimonialWithIdOnly = await prisma.testimonial.updateManyAndReturn({
+     * // Update zero or more CommunityMessages and only return the `id`
+     * const communityMessageWithIdOnly = await prisma.communityMessage.updateManyAndReturn({
      *   select: { id: true },
      *   where: {
      *     // ... provide filter here
@@ -8826,56 +8850,56 @@ export namespace Prisma {
      * Read more here: https://pris.ly/d/null-undefined
      * 
      */
-    updateManyAndReturn<T extends TestimonialUpdateManyAndReturnArgs>(args: SelectSubset<T, TestimonialUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$TestimonialPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+    updateManyAndReturn<T extends CommunityMessageUpdateManyAndReturnArgs>(args: SelectSubset<T, CommunityMessageUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$CommunityMessagePayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
 
     /**
-     * Create or update one Testimonial.
-     * @param {TestimonialUpsertArgs} args - Arguments to update or create a Testimonial.
+     * Create or update one CommunityMessage.
+     * @param {CommunityMessageUpsertArgs} args - Arguments to update or create a CommunityMessage.
      * @example
-     * // Update or create a Testimonial
-     * const testimonial = await prisma.testimonial.upsert({
+     * // Update or create a CommunityMessage
+     * const communityMessage = await prisma.communityMessage.upsert({
      *   create: {
-     *     // ... data to create a Testimonial
+     *     // ... data to create a CommunityMessage
      *   },
      *   update: {
      *     // ... in case it already exists, update
      *   },
      *   where: {
-     *     // ... the filter for the Testimonial we want to update
+     *     // ... the filter for the CommunityMessage we want to update
      *   }
      * })
      */
-    upsert<T extends TestimonialUpsertArgs>(args: SelectSubset<T, TestimonialUpsertArgs<ExtArgs>>): Prisma__TestimonialClient<$Result.GetResult<Prisma.$TestimonialPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+    upsert<T extends CommunityMessageUpsertArgs>(args: SelectSubset<T, CommunityMessageUpsertArgs<ExtArgs>>): Prisma__CommunityMessageClient<$Result.GetResult<Prisma.$CommunityMessagePayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
 
 
     /**
-     * Count the number of Testimonials.
+     * Count the number of CommunityMessages.
      * Note, that providing `undefined` is treated as the value not being there.
      * Read more here: https://pris.ly/d/null-undefined
-     * @param {TestimonialCountArgs} args - Arguments to filter Testimonials to count.
+     * @param {CommunityMessageCountArgs} args - Arguments to filter CommunityMessages to count.
      * @example
-     * // Count the number of Testimonials
-     * const count = await prisma.testimonial.count({
+     * // Count the number of CommunityMessages
+     * const count = await prisma.communityMessage.count({
      *   where: {
-     *     // ... the filter for the Testimonials we want to count
+     *     // ... the filter for the CommunityMessages we want to count
      *   }
      * })
     **/
-    count<T extends TestimonialCountArgs>(
-      args?: Subset<T, TestimonialCountArgs>,
+    count<T extends CommunityMessageCountArgs>(
+      args?: Subset<T, CommunityMessageCountArgs>,
     ): Prisma.PrismaPromise<
       T extends $Utils.Record<'select', any>
         ? T['select'] extends true
           ? number
-          : GetScalarType<T['select'], TestimonialCountAggregateOutputType>
+          : GetScalarType<T['select'], CommunityMessageCountAggregateOutputType>
         : number
     >
 
     /**
-     * Allows you to perform aggregations operations on a Testimonial.
+     * Allows you to perform aggregations operations on a CommunityMessage.
      * Note, that providing `undefined` is treated as the value not being there.
      * Read more here: https://pris.ly/d/null-undefined
-     * @param {TestimonialAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @param {CommunityMessageAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
      * @example
      * // Ordered by age ascending
      * // Where email contains prisma.io
@@ -8895,13 +8919,13 @@ export namespace Prisma {
      *   take: 10,
      * })
     **/
-    aggregate<T extends TestimonialAggregateArgs>(args: Subset<T, TestimonialAggregateArgs>): Prisma.PrismaPromise<GetTestimonialAggregateType<T>>
+    aggregate<T extends CommunityMessageAggregateArgs>(args: Subset<T, CommunityMessageAggregateArgs>): Prisma.PrismaPromise<GetCommunityMessageAggregateType<T>>
 
     /**
-     * Group by Testimonial.
+     * Group by CommunityMessage.
      * Note, that providing `undefined` is treated as the value not being there.
      * Read more here: https://pris.ly/d/null-undefined
-     * @param {TestimonialGroupByArgs} args - Group by arguments.
+     * @param {CommunityMessageGroupByArgs} args - Group by arguments.
      * @example
      * // Group by city, order by createdAt, get count
      * const result = await prisma.user.groupBy({
@@ -8916,14 +8940,14 @@ export namespace Prisma {
      * 
     **/
     groupBy<
-      T extends TestimonialGroupByArgs,
+      T extends CommunityMessageGroupByArgs,
       HasSelectOrTake extends Or<
         Extends<'skip', Keys<T>>,
         Extends<'take', Keys<T>>
       >,
       OrderByArg extends True extends HasSelectOrTake
-        ? { orderBy: TestimonialGroupByArgs['orderBy'] }
-        : { orderBy?: TestimonialGroupByArgs['orderBy'] },
+        ? { orderBy: CommunityMessageGroupByArgs['orderBy'] }
+        : { orderBy?: CommunityMessageGroupByArgs['orderBy'] },
       OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
       ByFields extends MaybeTupleToUnion<T['by']>,
       ByValid extends Has<ByFields, OrderFields>,
@@ -8972,20 +8996,20 @@ export namespace Prisma {
             ? never
             : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
         }[OrderFields]
-    >(args: SubsetIntersection<T, TestimonialGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetTestimonialGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+    >(args: SubsetIntersection<T, CommunityMessageGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetCommunityMessageGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
   /**
-   * Fields of the Testimonial model
+   * Fields of the CommunityMessage model
    */
-  readonly fields: TestimonialFieldRefs;
+  readonly fields: CommunityMessageFieldRefs;
   }
 
   /**
-   * The delegate class that acts as a "Promise-like" for Testimonial.
+   * The delegate class that acts as a "Promise-like" for CommunityMessage.
    * Why is this prefixed with `Prisma__`?
    * Because we want to prevent naming conflicts as mentioned in
    * https://github.com/prisma/prisma-client-js/issues/707
    */
-  export interface Prisma__TestimonialClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+  export interface Prisma__CommunityMessageClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
     readonly [Symbol.toStringTag]: "PrismaPromise"
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
@@ -9013,378 +9037,379 @@ export namespace Prisma {
 
 
   /**
-   * Fields of the Testimonial model
+   * Fields of the CommunityMessage model
    */
-  interface TestimonialFieldRefs {
-    readonly id: FieldRef<"Testimonial", 'String'>
-    readonly name: FieldRef<"Testimonial", 'String'>
-    readonly email: FieldRef<"Testimonial", 'String'>
-    readonly message: FieldRef<"Testimonial", 'String'>
-    readonly status: FieldRef<"Testimonial", 'TestimonialStatus'>
-    readonly createdAt: FieldRef<"Testimonial", 'DateTime'>
+  interface CommunityMessageFieldRefs {
+    readonly id: FieldRef<"CommunityMessage", 'String'>
+    readonly name: FieldRef<"CommunityMessage", 'String'>
+    readonly email: FieldRef<"CommunityMessage", 'String'>
+    readonly type: FieldRef<"CommunityMessage", 'CommunityMessageType'>
+    readonly message: FieldRef<"CommunityMessage", 'String'>
+    readonly status: FieldRef<"CommunityMessage", 'CommunityMessageStatus'>
+    readonly createdAt: FieldRef<"CommunityMessage", 'DateTime'>
   }
     
 
   // Custom InputTypes
   /**
-   * Testimonial findUnique
+   * CommunityMessage findUnique
    */
-  export type TestimonialFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+  export type CommunityMessageFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     /**
-     * Select specific fields to fetch from the Testimonial
+     * Select specific fields to fetch from the CommunityMessage
      */
-    select?: TestimonialSelect<ExtArgs> | null
+    select?: CommunityMessageSelect<ExtArgs> | null
     /**
-     * Omit specific fields from the Testimonial
+     * Omit specific fields from the CommunityMessage
      */
-    omit?: TestimonialOmit<ExtArgs> | null
+    omit?: CommunityMessageOmit<ExtArgs> | null
     /**
-     * Filter, which Testimonial to fetch.
+     * Filter, which CommunityMessage to fetch.
      */
-    where: TestimonialWhereUniqueInput
+    where: CommunityMessageWhereUniqueInput
   }
 
   /**
-   * Testimonial findUniqueOrThrow
+   * CommunityMessage findUniqueOrThrow
    */
-  export type TestimonialFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+  export type CommunityMessageFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     /**
-     * Select specific fields to fetch from the Testimonial
+     * Select specific fields to fetch from the CommunityMessage
      */
-    select?: TestimonialSelect<ExtArgs> | null
+    select?: CommunityMessageSelect<ExtArgs> | null
     /**
-     * Omit specific fields from the Testimonial
+     * Omit specific fields from the CommunityMessage
      */
-    omit?: TestimonialOmit<ExtArgs> | null
+    omit?: CommunityMessageOmit<ExtArgs> | null
     /**
-     * Filter, which Testimonial to fetch.
+     * Filter, which CommunityMessage to fetch.
      */
-    where: TestimonialWhereUniqueInput
+    where: CommunityMessageWhereUniqueInput
   }
 
   /**
-   * Testimonial findFirst
+   * CommunityMessage findFirst
    */
-  export type TestimonialFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+  export type CommunityMessageFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     /**
-     * Select specific fields to fetch from the Testimonial
+     * Select specific fields to fetch from the CommunityMessage
      */
-    select?: TestimonialSelect<ExtArgs> | null
+    select?: CommunityMessageSelect<ExtArgs> | null
     /**
-     * Omit specific fields from the Testimonial
+     * Omit specific fields from the CommunityMessage
      */
-    omit?: TestimonialOmit<ExtArgs> | null
+    omit?: CommunityMessageOmit<ExtArgs> | null
     /**
-     * Filter, which Testimonial to fetch.
+     * Filter, which CommunityMessage to fetch.
      */
-    where?: TestimonialWhereInput
+    where?: CommunityMessageWhereInput
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
      * 
-     * Determine the order of Testimonials to fetch.
+     * Determine the order of CommunityMessages to fetch.
      */
-    orderBy?: TestimonialOrderByWithRelationInput | TestimonialOrderByWithRelationInput[]
+    orderBy?: CommunityMessageOrderByWithRelationInput | CommunityMessageOrderByWithRelationInput[]
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
      * 
-     * Sets the position for searching for Testimonials.
+     * Sets the position for searching for CommunityMessages.
      */
-    cursor?: TestimonialWhereUniqueInput
+    cursor?: CommunityMessageWhereUniqueInput
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
      * 
-     * Take `±n` Testimonials from the position of the cursor.
+     * Take `±n` CommunityMessages from the position of the cursor.
      */
     take?: number
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
      * 
-     * Skip the first `n` Testimonials.
+     * Skip the first `n` CommunityMessages.
      */
     skip?: number
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
      * 
-     * Filter by unique combinations of Testimonials.
+     * Filter by unique combinations of CommunityMessages.
      */
-    distinct?: TestimonialScalarFieldEnum | TestimonialScalarFieldEnum[]
+    distinct?: CommunityMessageScalarFieldEnum | CommunityMessageScalarFieldEnum[]
   }
 
   /**
-   * Testimonial findFirstOrThrow
+   * CommunityMessage findFirstOrThrow
    */
-  export type TestimonialFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+  export type CommunityMessageFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     /**
-     * Select specific fields to fetch from the Testimonial
+     * Select specific fields to fetch from the CommunityMessage
      */
-    select?: TestimonialSelect<ExtArgs> | null
+    select?: CommunityMessageSelect<ExtArgs> | null
     /**
-     * Omit specific fields from the Testimonial
+     * Omit specific fields from the CommunityMessage
      */
-    omit?: TestimonialOmit<ExtArgs> | null
+    omit?: CommunityMessageOmit<ExtArgs> | null
     /**
-     * Filter, which Testimonial to fetch.
+     * Filter, which CommunityMessage to fetch.
      */
-    where?: TestimonialWhereInput
+    where?: CommunityMessageWhereInput
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
      * 
-     * Determine the order of Testimonials to fetch.
+     * Determine the order of CommunityMessages to fetch.
      */
-    orderBy?: TestimonialOrderByWithRelationInput | TestimonialOrderByWithRelationInput[]
+    orderBy?: CommunityMessageOrderByWithRelationInput | CommunityMessageOrderByWithRelationInput[]
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
      * 
-     * Sets the position for searching for Testimonials.
+     * Sets the position for searching for CommunityMessages.
      */
-    cursor?: TestimonialWhereUniqueInput
+    cursor?: CommunityMessageWhereUniqueInput
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
      * 
-     * Take `±n` Testimonials from the position of the cursor.
+     * Take `±n` CommunityMessages from the position of the cursor.
      */
     take?: number
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
      * 
-     * Skip the first `n` Testimonials.
+     * Skip the first `n` CommunityMessages.
      */
     skip?: number
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
      * 
-     * Filter by unique combinations of Testimonials.
+     * Filter by unique combinations of CommunityMessages.
      */
-    distinct?: TestimonialScalarFieldEnum | TestimonialScalarFieldEnum[]
+    distinct?: CommunityMessageScalarFieldEnum | CommunityMessageScalarFieldEnum[]
   }
 
   /**
-   * Testimonial findMany
+   * CommunityMessage findMany
    */
-  export type TestimonialFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+  export type CommunityMessageFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     /**
-     * Select specific fields to fetch from the Testimonial
+     * Select specific fields to fetch from the CommunityMessage
      */
-    select?: TestimonialSelect<ExtArgs> | null
+    select?: CommunityMessageSelect<ExtArgs> | null
     /**
-     * Omit specific fields from the Testimonial
+     * Omit specific fields from the CommunityMessage
      */
-    omit?: TestimonialOmit<ExtArgs> | null
+    omit?: CommunityMessageOmit<ExtArgs> | null
     /**
-     * Filter, which Testimonials to fetch.
+     * Filter, which CommunityMessages to fetch.
      */
-    where?: TestimonialWhereInput
+    where?: CommunityMessageWhereInput
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
      * 
-     * Determine the order of Testimonials to fetch.
+     * Determine the order of CommunityMessages to fetch.
      */
-    orderBy?: TestimonialOrderByWithRelationInput | TestimonialOrderByWithRelationInput[]
+    orderBy?: CommunityMessageOrderByWithRelationInput | CommunityMessageOrderByWithRelationInput[]
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
      * 
-     * Sets the position for listing Testimonials.
+     * Sets the position for listing CommunityMessages.
      */
-    cursor?: TestimonialWhereUniqueInput
+    cursor?: CommunityMessageWhereUniqueInput
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
      * 
-     * Take `±n` Testimonials from the position of the cursor.
+     * Take `±n` CommunityMessages from the position of the cursor.
      */
     take?: number
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
      * 
-     * Skip the first `n` Testimonials.
+     * Skip the first `n` CommunityMessages.
      */
     skip?: number
-    distinct?: TestimonialScalarFieldEnum | TestimonialScalarFieldEnum[]
+    distinct?: CommunityMessageScalarFieldEnum | CommunityMessageScalarFieldEnum[]
   }
 
   /**
-   * Testimonial create
+   * CommunityMessage create
    */
-  export type TestimonialCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+  export type CommunityMessageCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     /**
-     * Select specific fields to fetch from the Testimonial
+     * Select specific fields to fetch from the CommunityMessage
      */
-    select?: TestimonialSelect<ExtArgs> | null
+    select?: CommunityMessageSelect<ExtArgs> | null
     /**
-     * Omit specific fields from the Testimonial
+     * Omit specific fields from the CommunityMessage
      */
-    omit?: TestimonialOmit<ExtArgs> | null
+    omit?: CommunityMessageOmit<ExtArgs> | null
     /**
-     * The data needed to create a Testimonial.
+     * The data needed to create a CommunityMessage.
      */
-    data: XOR<TestimonialCreateInput, TestimonialUncheckedCreateInput>
+    data: XOR<CommunityMessageCreateInput, CommunityMessageUncheckedCreateInput>
   }
 
   /**
-   * Testimonial createMany
+   * CommunityMessage createMany
    */
-  export type TestimonialCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+  export type CommunityMessageCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     /**
-     * The data used to create many Testimonials.
+     * The data used to create many CommunityMessages.
      */
-    data: TestimonialCreateManyInput | TestimonialCreateManyInput[]
+    data: CommunityMessageCreateManyInput | CommunityMessageCreateManyInput[]
     skipDuplicates?: boolean
   }
 
   /**
-   * Testimonial createManyAndReturn
+   * CommunityMessage createManyAndReturn
    */
-  export type TestimonialCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+  export type CommunityMessageCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     /**
-     * Select specific fields to fetch from the Testimonial
+     * Select specific fields to fetch from the CommunityMessage
      */
-    select?: TestimonialSelectCreateManyAndReturn<ExtArgs> | null
+    select?: CommunityMessageSelectCreateManyAndReturn<ExtArgs> | null
     /**
-     * Omit specific fields from the Testimonial
+     * Omit specific fields from the CommunityMessage
      */
-    omit?: TestimonialOmit<ExtArgs> | null
+    omit?: CommunityMessageOmit<ExtArgs> | null
     /**
-     * The data used to create many Testimonials.
+     * The data used to create many CommunityMessages.
      */
-    data: TestimonialCreateManyInput | TestimonialCreateManyInput[]
+    data: CommunityMessageCreateManyInput | CommunityMessageCreateManyInput[]
     skipDuplicates?: boolean
   }
 
   /**
-   * Testimonial update
+   * CommunityMessage update
    */
-  export type TestimonialUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+  export type CommunityMessageUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     /**
-     * Select specific fields to fetch from the Testimonial
+     * Select specific fields to fetch from the CommunityMessage
      */
-    select?: TestimonialSelect<ExtArgs> | null
+    select?: CommunityMessageSelect<ExtArgs> | null
     /**
-     * Omit specific fields from the Testimonial
+     * Omit specific fields from the CommunityMessage
      */
-    omit?: TestimonialOmit<ExtArgs> | null
+    omit?: CommunityMessageOmit<ExtArgs> | null
     /**
-     * The data needed to update a Testimonial.
+     * The data needed to update a CommunityMessage.
      */
-    data: XOR<TestimonialUpdateInput, TestimonialUncheckedUpdateInput>
+    data: XOR<CommunityMessageUpdateInput, CommunityMessageUncheckedUpdateInput>
     /**
-     * Choose, which Testimonial to update.
+     * Choose, which CommunityMessage to update.
      */
-    where: TestimonialWhereUniqueInput
+    where: CommunityMessageWhereUniqueInput
   }
 
   /**
-   * Testimonial updateMany
+   * CommunityMessage updateMany
    */
-  export type TestimonialUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+  export type CommunityMessageUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     /**
-     * The data used to update Testimonials.
+     * The data used to update CommunityMessages.
      */
-    data: XOR<TestimonialUpdateManyMutationInput, TestimonialUncheckedUpdateManyInput>
+    data: XOR<CommunityMessageUpdateManyMutationInput, CommunityMessageUncheckedUpdateManyInput>
     /**
-     * Filter which Testimonials to update
+     * Filter which CommunityMessages to update
      */
-    where?: TestimonialWhereInput
+    where?: CommunityMessageWhereInput
     /**
-     * Limit how many Testimonials to update.
+     * Limit how many CommunityMessages to update.
      */
     limit?: number
   }
 
   /**
-   * Testimonial updateManyAndReturn
+   * CommunityMessage updateManyAndReturn
    */
-  export type TestimonialUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+  export type CommunityMessageUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     /**
-     * Select specific fields to fetch from the Testimonial
+     * Select specific fields to fetch from the CommunityMessage
      */
-    select?: TestimonialSelectUpdateManyAndReturn<ExtArgs> | null
+    select?: CommunityMessageSelectUpdateManyAndReturn<ExtArgs> | null
     /**
-     * Omit specific fields from the Testimonial
+     * Omit specific fields from the CommunityMessage
      */
-    omit?: TestimonialOmit<ExtArgs> | null
+    omit?: CommunityMessageOmit<ExtArgs> | null
     /**
-     * The data used to update Testimonials.
+     * The data used to update CommunityMessages.
      */
-    data: XOR<TestimonialUpdateManyMutationInput, TestimonialUncheckedUpdateManyInput>
+    data: XOR<CommunityMessageUpdateManyMutationInput, CommunityMessageUncheckedUpdateManyInput>
     /**
-     * Filter which Testimonials to update
+     * Filter which CommunityMessages to update
      */
-    where?: TestimonialWhereInput
+    where?: CommunityMessageWhereInput
     /**
-     * Limit how many Testimonials to update.
+     * Limit how many CommunityMessages to update.
      */
     limit?: number
   }
 
   /**
-   * Testimonial upsert
+   * CommunityMessage upsert
    */
-  export type TestimonialUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+  export type CommunityMessageUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     /**
-     * Select specific fields to fetch from the Testimonial
+     * Select specific fields to fetch from the CommunityMessage
      */
-    select?: TestimonialSelect<ExtArgs> | null
+    select?: CommunityMessageSelect<ExtArgs> | null
     /**
-     * Omit specific fields from the Testimonial
+     * Omit specific fields from the CommunityMessage
      */
-    omit?: TestimonialOmit<ExtArgs> | null
+    omit?: CommunityMessageOmit<ExtArgs> | null
     /**
-     * The filter to search for the Testimonial to update in case it exists.
+     * The filter to search for the CommunityMessage to update in case it exists.
      */
-    where: TestimonialWhereUniqueInput
+    where: CommunityMessageWhereUniqueInput
     /**
-     * In case the Testimonial found by the `where` argument doesn't exist, create a new Testimonial with this data.
+     * In case the CommunityMessage found by the `where` argument doesn't exist, create a new CommunityMessage with this data.
      */
-    create: XOR<TestimonialCreateInput, TestimonialUncheckedCreateInput>
+    create: XOR<CommunityMessageCreateInput, CommunityMessageUncheckedCreateInput>
     /**
-     * In case the Testimonial was found with the provided `where` argument, update it with this data.
+     * In case the CommunityMessage was found with the provided `where` argument, update it with this data.
      */
-    update: XOR<TestimonialUpdateInput, TestimonialUncheckedUpdateInput>
+    update: XOR<CommunityMessageUpdateInput, CommunityMessageUncheckedUpdateInput>
   }
 
   /**
-   * Testimonial delete
+   * CommunityMessage delete
    */
-  export type TestimonialDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+  export type CommunityMessageDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     /**
-     * Select specific fields to fetch from the Testimonial
+     * Select specific fields to fetch from the CommunityMessage
      */
-    select?: TestimonialSelect<ExtArgs> | null
+    select?: CommunityMessageSelect<ExtArgs> | null
     /**
-     * Omit specific fields from the Testimonial
+     * Omit specific fields from the CommunityMessage
      */
-    omit?: TestimonialOmit<ExtArgs> | null
+    omit?: CommunityMessageOmit<ExtArgs> | null
     /**
-     * Filter which Testimonial to delete.
+     * Filter which CommunityMessage to delete.
      */
-    where: TestimonialWhereUniqueInput
+    where: CommunityMessageWhereUniqueInput
   }
 
   /**
-   * Testimonial deleteMany
+   * CommunityMessage deleteMany
    */
-  export type TestimonialDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+  export type CommunityMessageDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     /**
-     * Filter which Testimonials to delete
+     * Filter which CommunityMessages to delete
      */
-    where?: TestimonialWhereInput
+    where?: CommunityMessageWhereInput
     /**
-     * Limit how many Testimonials to delete.
+     * Limit how many CommunityMessages to delete.
      */
     limit?: number
   }
 
   /**
-   * Testimonial without action
+   * CommunityMessage without action
    */
-  export type TestimonialDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+  export type CommunityMessageDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     /**
-     * Select specific fields to fetch from the Testimonial
+     * Select specific fields to fetch from the CommunityMessage
      */
-    select?: TestimonialSelect<ExtArgs> | null
+    select?: CommunityMessageSelect<ExtArgs> | null
     /**
-     * Omit specific fields from the Testimonial
+     * Omit specific fields from the CommunityMessage
      */
-    omit?: TestimonialOmit<ExtArgs> | null
+    omit?: CommunityMessageOmit<ExtArgs> | null
   }
 
 
@@ -10458,16 +10483,17 @@ export namespace Prisma {
   export type GalleryPhotoScalarFieldEnum = (typeof GalleryPhotoScalarFieldEnum)[keyof typeof GalleryPhotoScalarFieldEnum]
 
 
-  export const TestimonialScalarFieldEnum: {
+  export const CommunityMessageScalarFieldEnum: {
     id: 'id',
     name: 'name',
     email: 'email',
+    type: 'type',
     message: 'message',
     status: 'status',
     createdAt: 'createdAt'
   };
 
-  export type TestimonialScalarFieldEnum = (typeof TestimonialScalarFieldEnum)[keyof typeof TestimonialScalarFieldEnum]
+  export type CommunityMessageScalarFieldEnum = (typeof CommunityMessageScalarFieldEnum)[keyof typeof CommunityMessageScalarFieldEnum]
 
 
   export const SiteConfigScalarFieldEnum: {
@@ -10586,16 +10612,30 @@ export namespace Prisma {
 
 
   /**
-   * Reference to a field of type 'TestimonialStatus'
+   * Reference to a field of type 'CommunityMessageType'
    */
-  export type EnumTestimonialStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'TestimonialStatus'>
+  export type EnumCommunityMessageTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'CommunityMessageType'>
     
 
 
   /**
-   * Reference to a field of type 'TestimonialStatus[]'
+   * Reference to a field of type 'CommunityMessageType[]'
    */
-  export type ListEnumTestimonialStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'TestimonialStatus[]'>
+  export type ListEnumCommunityMessageTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'CommunityMessageType[]'>
+    
+
+
+  /**
+   * Reference to a field of type 'CommunityMessageStatus'
+   */
+  export type EnumCommunityMessageStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'CommunityMessageStatus'>
+    
+
+
+  /**
+   * Reference to a field of type 'CommunityMessageStatus[]'
+   */
+  export type ListEnumCommunityMessageStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'CommunityMessageStatus[]'>
     
 
 
@@ -11059,61 +11099,66 @@ export namespace Prisma {
     createdAt?: DateTimeWithAggregatesFilter<"GalleryPhoto"> | Date | string
   }
 
-  export type TestimonialWhereInput = {
-    AND?: TestimonialWhereInput | TestimonialWhereInput[]
-    OR?: TestimonialWhereInput[]
-    NOT?: TestimonialWhereInput | TestimonialWhereInput[]
-    id?: StringFilter<"Testimonial"> | string
-    name?: StringFilter<"Testimonial"> | string
-    email?: StringNullableFilter<"Testimonial"> | string | null
-    message?: StringFilter<"Testimonial"> | string
-    status?: EnumTestimonialStatusFilter<"Testimonial"> | $Enums.TestimonialStatus
-    createdAt?: DateTimeFilter<"Testimonial"> | Date | string
+  export type CommunityMessageWhereInput = {
+    AND?: CommunityMessageWhereInput | CommunityMessageWhereInput[]
+    OR?: CommunityMessageWhereInput[]
+    NOT?: CommunityMessageWhereInput | CommunityMessageWhereInput[]
+    id?: StringFilter<"CommunityMessage"> | string
+    name?: StringFilter<"CommunityMessage"> | string
+    email?: StringNullableFilter<"CommunityMessage"> | string | null
+    type?: EnumCommunityMessageTypeFilter<"CommunityMessage"> | $Enums.CommunityMessageType
+    message?: StringFilter<"CommunityMessage"> | string
+    status?: EnumCommunityMessageStatusFilter<"CommunityMessage"> | $Enums.CommunityMessageStatus
+    createdAt?: DateTimeFilter<"CommunityMessage"> | Date | string
   }
 
-  export type TestimonialOrderByWithRelationInput = {
+  export type CommunityMessageOrderByWithRelationInput = {
     id?: SortOrder
     name?: SortOrder
     email?: SortOrderInput | SortOrder
+    type?: SortOrder
     message?: SortOrder
     status?: SortOrder
     createdAt?: SortOrder
   }
 
-  export type TestimonialWhereUniqueInput = Prisma.AtLeast<{
+  export type CommunityMessageWhereUniqueInput = Prisma.AtLeast<{
     id?: string
-    AND?: TestimonialWhereInput | TestimonialWhereInput[]
-    OR?: TestimonialWhereInput[]
-    NOT?: TestimonialWhereInput | TestimonialWhereInput[]
-    name?: StringFilter<"Testimonial"> | string
-    email?: StringNullableFilter<"Testimonial"> | string | null
-    message?: StringFilter<"Testimonial"> | string
-    status?: EnumTestimonialStatusFilter<"Testimonial"> | $Enums.TestimonialStatus
-    createdAt?: DateTimeFilter<"Testimonial"> | Date | string
+    AND?: CommunityMessageWhereInput | CommunityMessageWhereInput[]
+    OR?: CommunityMessageWhereInput[]
+    NOT?: CommunityMessageWhereInput | CommunityMessageWhereInput[]
+    name?: StringFilter<"CommunityMessage"> | string
+    email?: StringNullableFilter<"CommunityMessage"> | string | null
+    type?: EnumCommunityMessageTypeFilter<"CommunityMessage"> | $Enums.CommunityMessageType
+    message?: StringFilter<"CommunityMessage"> | string
+    status?: EnumCommunityMessageStatusFilter<"CommunityMessage"> | $Enums.CommunityMessageStatus
+    createdAt?: DateTimeFilter<"CommunityMessage"> | Date | string
   }, "id">
 
-  export type TestimonialOrderByWithAggregationInput = {
+  export type CommunityMessageOrderByWithAggregationInput = {
     id?: SortOrder
     name?: SortOrder
     email?: SortOrderInput | SortOrder
+    type?: SortOrder
     message?: SortOrder
     status?: SortOrder
     createdAt?: SortOrder
-    _count?: TestimonialCountOrderByAggregateInput
-    _max?: TestimonialMaxOrderByAggregateInput
-    _min?: TestimonialMinOrderByAggregateInput
+    _count?: CommunityMessageCountOrderByAggregateInput
+    _max?: CommunityMessageMaxOrderByAggregateInput
+    _min?: CommunityMessageMinOrderByAggregateInput
   }
 
-  export type TestimonialScalarWhereWithAggregatesInput = {
-    AND?: TestimonialScalarWhereWithAggregatesInput | TestimonialScalarWhereWithAggregatesInput[]
-    OR?: TestimonialScalarWhereWithAggregatesInput[]
-    NOT?: TestimonialScalarWhereWithAggregatesInput | TestimonialScalarWhereWithAggregatesInput[]
-    id?: StringWithAggregatesFilter<"Testimonial"> | string
-    name?: StringWithAggregatesFilter<"Testimonial"> | string
-    email?: StringNullableWithAggregatesFilter<"Testimonial"> | string | null
-    message?: StringWithAggregatesFilter<"Testimonial"> | string
-    status?: EnumTestimonialStatusWithAggregatesFilter<"Testimonial"> | $Enums.TestimonialStatus
-    createdAt?: DateTimeWithAggregatesFilter<"Testimonial"> | Date | string
+  export type CommunityMessageScalarWhereWithAggregatesInput = {
+    AND?: CommunityMessageScalarWhereWithAggregatesInput | CommunityMessageScalarWhereWithAggregatesInput[]
+    OR?: CommunityMessageScalarWhereWithAggregatesInput[]
+    NOT?: CommunityMessageScalarWhereWithAggregatesInput | CommunityMessageScalarWhereWithAggregatesInput[]
+    id?: StringWithAggregatesFilter<"CommunityMessage"> | string
+    name?: StringWithAggregatesFilter<"CommunityMessage"> | string
+    email?: StringNullableWithAggregatesFilter<"CommunityMessage"> | string | null
+    type?: EnumCommunityMessageTypeWithAggregatesFilter<"CommunityMessage"> | $Enums.CommunityMessageType
+    message?: StringWithAggregatesFilter<"CommunityMessage"> | string
+    status?: EnumCommunityMessageStatusWithAggregatesFilter<"CommunityMessage"> | $Enums.CommunityMessageStatus
+    createdAt?: DateTimeWithAggregatesFilter<"CommunityMessage"> | Date | string
   }
 
   export type SiteConfigWhereInput = {
@@ -11650,66 +11695,73 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
-  export type TestimonialCreateInput = {
+  export type CommunityMessageCreateInput = {
     id?: string
     name: string
     email?: string | null
+    type?: $Enums.CommunityMessageType
     message: string
-    status?: $Enums.TestimonialStatus
+    status?: $Enums.CommunityMessageStatus
     createdAt?: Date | string
   }
 
-  export type TestimonialUncheckedCreateInput = {
+  export type CommunityMessageUncheckedCreateInput = {
     id?: string
     name: string
     email?: string | null
+    type?: $Enums.CommunityMessageType
     message: string
-    status?: $Enums.TestimonialStatus
+    status?: $Enums.CommunityMessageStatus
     createdAt?: Date | string
   }
 
-  export type TestimonialUpdateInput = {
+  export type CommunityMessageUpdateInput = {
     id?: StringFieldUpdateOperationsInput | string
     name?: StringFieldUpdateOperationsInput | string
     email?: NullableStringFieldUpdateOperationsInput | string | null
+    type?: EnumCommunityMessageTypeFieldUpdateOperationsInput | $Enums.CommunityMessageType
     message?: StringFieldUpdateOperationsInput | string
-    status?: EnumTestimonialStatusFieldUpdateOperationsInput | $Enums.TestimonialStatus
+    status?: EnumCommunityMessageStatusFieldUpdateOperationsInput | $Enums.CommunityMessageStatus
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
-  export type TestimonialUncheckedUpdateInput = {
+  export type CommunityMessageUncheckedUpdateInput = {
     id?: StringFieldUpdateOperationsInput | string
     name?: StringFieldUpdateOperationsInput | string
     email?: NullableStringFieldUpdateOperationsInput | string | null
+    type?: EnumCommunityMessageTypeFieldUpdateOperationsInput | $Enums.CommunityMessageType
     message?: StringFieldUpdateOperationsInput | string
-    status?: EnumTestimonialStatusFieldUpdateOperationsInput | $Enums.TestimonialStatus
+    status?: EnumCommunityMessageStatusFieldUpdateOperationsInput | $Enums.CommunityMessageStatus
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
-  export type TestimonialCreateManyInput = {
+  export type CommunityMessageCreateManyInput = {
     id?: string
     name: string
     email?: string | null
+    type?: $Enums.CommunityMessageType
     message: string
-    status?: $Enums.TestimonialStatus
+    status?: $Enums.CommunityMessageStatus
     createdAt?: Date | string
   }
 
-  export type TestimonialUpdateManyMutationInput = {
+  export type CommunityMessageUpdateManyMutationInput = {
     id?: StringFieldUpdateOperationsInput | string
     name?: StringFieldUpdateOperationsInput | string
     email?: NullableStringFieldUpdateOperationsInput | string | null
+    type?: EnumCommunityMessageTypeFieldUpdateOperationsInput | $Enums.CommunityMessageType
     message?: StringFieldUpdateOperationsInput | string
-    status?: EnumTestimonialStatusFieldUpdateOperationsInput | $Enums.TestimonialStatus
+    status?: EnumCommunityMessageStatusFieldUpdateOperationsInput | $Enums.CommunityMessageStatus
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
-  export type TestimonialUncheckedUpdateManyInput = {
+  export type CommunityMessageUncheckedUpdateManyInput = {
     id?: StringFieldUpdateOperationsInput | string
     name?: StringFieldUpdateOperationsInput | string
     email?: NullableStringFieldUpdateOperationsInput | string | null
+    type?: EnumCommunityMessageTypeFieldUpdateOperationsInput | $Enums.CommunityMessageType
     message?: StringFieldUpdateOperationsInput | string
-    status?: EnumTestimonialStatusFieldUpdateOperationsInput | $Enums.TestimonialStatus
+    status?: EnumCommunityMessageStatusFieldUpdateOperationsInput | $Enums.CommunityMessageStatus
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
@@ -12232,48 +12284,68 @@ export namespace Prisma {
     order?: SortOrder
   }
 
-  export type EnumTestimonialStatusFilter<$PrismaModel = never> = {
-    equals?: $Enums.TestimonialStatus | EnumTestimonialStatusFieldRefInput<$PrismaModel>
-    in?: $Enums.TestimonialStatus[] | ListEnumTestimonialStatusFieldRefInput<$PrismaModel>
-    notIn?: $Enums.TestimonialStatus[] | ListEnumTestimonialStatusFieldRefInput<$PrismaModel>
-    not?: NestedEnumTestimonialStatusFilter<$PrismaModel> | $Enums.TestimonialStatus
+  export type EnumCommunityMessageTypeFilter<$PrismaModel = never> = {
+    equals?: $Enums.CommunityMessageType | EnumCommunityMessageTypeFieldRefInput<$PrismaModel>
+    in?: $Enums.CommunityMessageType[] | ListEnumCommunityMessageTypeFieldRefInput<$PrismaModel>
+    notIn?: $Enums.CommunityMessageType[] | ListEnumCommunityMessageTypeFieldRefInput<$PrismaModel>
+    not?: NestedEnumCommunityMessageTypeFilter<$PrismaModel> | $Enums.CommunityMessageType
   }
 
-  export type TestimonialCountOrderByAggregateInput = {
+  export type EnumCommunityMessageStatusFilter<$PrismaModel = never> = {
+    equals?: $Enums.CommunityMessageStatus | EnumCommunityMessageStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.CommunityMessageStatus[] | ListEnumCommunityMessageStatusFieldRefInput<$PrismaModel>
+    notIn?: $Enums.CommunityMessageStatus[] | ListEnumCommunityMessageStatusFieldRefInput<$PrismaModel>
+    not?: NestedEnumCommunityMessageStatusFilter<$PrismaModel> | $Enums.CommunityMessageStatus
+  }
+
+  export type CommunityMessageCountOrderByAggregateInput = {
     id?: SortOrder
     name?: SortOrder
     email?: SortOrder
+    type?: SortOrder
     message?: SortOrder
     status?: SortOrder
     createdAt?: SortOrder
   }
 
-  export type TestimonialMaxOrderByAggregateInput = {
+  export type CommunityMessageMaxOrderByAggregateInput = {
     id?: SortOrder
     name?: SortOrder
     email?: SortOrder
+    type?: SortOrder
     message?: SortOrder
     status?: SortOrder
     createdAt?: SortOrder
   }
 
-  export type TestimonialMinOrderByAggregateInput = {
+  export type CommunityMessageMinOrderByAggregateInput = {
     id?: SortOrder
     name?: SortOrder
     email?: SortOrder
+    type?: SortOrder
     message?: SortOrder
     status?: SortOrder
     createdAt?: SortOrder
   }
 
-  export type EnumTestimonialStatusWithAggregatesFilter<$PrismaModel = never> = {
-    equals?: $Enums.TestimonialStatus | EnumTestimonialStatusFieldRefInput<$PrismaModel>
-    in?: $Enums.TestimonialStatus[] | ListEnumTestimonialStatusFieldRefInput<$PrismaModel>
-    notIn?: $Enums.TestimonialStatus[] | ListEnumTestimonialStatusFieldRefInput<$PrismaModel>
-    not?: NestedEnumTestimonialStatusWithAggregatesFilter<$PrismaModel> | $Enums.TestimonialStatus
+  export type EnumCommunityMessageTypeWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.CommunityMessageType | EnumCommunityMessageTypeFieldRefInput<$PrismaModel>
+    in?: $Enums.CommunityMessageType[] | ListEnumCommunityMessageTypeFieldRefInput<$PrismaModel>
+    notIn?: $Enums.CommunityMessageType[] | ListEnumCommunityMessageTypeFieldRefInput<$PrismaModel>
+    not?: NestedEnumCommunityMessageTypeWithAggregatesFilter<$PrismaModel> | $Enums.CommunityMessageType
     _count?: NestedIntFilter<$PrismaModel>
-    _min?: NestedEnumTestimonialStatusFilter<$PrismaModel>
-    _max?: NestedEnumTestimonialStatusFilter<$PrismaModel>
+    _min?: NestedEnumCommunityMessageTypeFilter<$PrismaModel>
+    _max?: NestedEnumCommunityMessageTypeFilter<$PrismaModel>
+  }
+
+  export type EnumCommunityMessageStatusWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.CommunityMessageStatus | EnumCommunityMessageStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.CommunityMessageStatus[] | ListEnumCommunityMessageStatusFieldRefInput<$PrismaModel>
+    notIn?: $Enums.CommunityMessageStatus[] | ListEnumCommunityMessageStatusFieldRefInput<$PrismaModel>
+    not?: NestedEnumCommunityMessageStatusWithAggregatesFilter<$PrismaModel> | $Enums.CommunityMessageStatus
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumCommunityMessageStatusFilter<$PrismaModel>
+    _max?: NestedEnumCommunityMessageStatusFilter<$PrismaModel>
   }
 
   export type SiteConfigCountOrderByAggregateInput = {
@@ -12506,8 +12578,12 @@ export namespace Prisma {
     deleteMany?: AppointmentScalarWhereInput | AppointmentScalarWhereInput[]
   }
 
-  export type EnumTestimonialStatusFieldUpdateOperationsInput = {
-    set?: $Enums.TestimonialStatus
+  export type EnumCommunityMessageTypeFieldUpdateOperationsInput = {
+    set?: $Enums.CommunityMessageType
+  }
+
+  export type EnumCommunityMessageStatusFieldUpdateOperationsInput = {
+    set?: $Enums.CommunityMessageStatus
   }
 
   export type NestedStringFilter<$PrismaModel = never> = {
@@ -12720,21 +12796,38 @@ export namespace Prisma {
     not?: NestedFloatNullableFilter<$PrismaModel> | number | null
   }
 
-  export type NestedEnumTestimonialStatusFilter<$PrismaModel = never> = {
-    equals?: $Enums.TestimonialStatus | EnumTestimonialStatusFieldRefInput<$PrismaModel>
-    in?: $Enums.TestimonialStatus[] | ListEnumTestimonialStatusFieldRefInput<$PrismaModel>
-    notIn?: $Enums.TestimonialStatus[] | ListEnumTestimonialStatusFieldRefInput<$PrismaModel>
-    not?: NestedEnumTestimonialStatusFilter<$PrismaModel> | $Enums.TestimonialStatus
+  export type NestedEnumCommunityMessageTypeFilter<$PrismaModel = never> = {
+    equals?: $Enums.CommunityMessageType | EnumCommunityMessageTypeFieldRefInput<$PrismaModel>
+    in?: $Enums.CommunityMessageType[] | ListEnumCommunityMessageTypeFieldRefInput<$PrismaModel>
+    notIn?: $Enums.CommunityMessageType[] | ListEnumCommunityMessageTypeFieldRefInput<$PrismaModel>
+    not?: NestedEnumCommunityMessageTypeFilter<$PrismaModel> | $Enums.CommunityMessageType
   }
 
-  export type NestedEnumTestimonialStatusWithAggregatesFilter<$PrismaModel = never> = {
-    equals?: $Enums.TestimonialStatus | EnumTestimonialStatusFieldRefInput<$PrismaModel>
-    in?: $Enums.TestimonialStatus[] | ListEnumTestimonialStatusFieldRefInput<$PrismaModel>
-    notIn?: $Enums.TestimonialStatus[] | ListEnumTestimonialStatusFieldRefInput<$PrismaModel>
-    not?: NestedEnumTestimonialStatusWithAggregatesFilter<$PrismaModel> | $Enums.TestimonialStatus
+  export type NestedEnumCommunityMessageStatusFilter<$PrismaModel = never> = {
+    equals?: $Enums.CommunityMessageStatus | EnumCommunityMessageStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.CommunityMessageStatus[] | ListEnumCommunityMessageStatusFieldRefInput<$PrismaModel>
+    notIn?: $Enums.CommunityMessageStatus[] | ListEnumCommunityMessageStatusFieldRefInput<$PrismaModel>
+    not?: NestedEnumCommunityMessageStatusFilter<$PrismaModel> | $Enums.CommunityMessageStatus
+  }
+
+  export type NestedEnumCommunityMessageTypeWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.CommunityMessageType | EnumCommunityMessageTypeFieldRefInput<$PrismaModel>
+    in?: $Enums.CommunityMessageType[] | ListEnumCommunityMessageTypeFieldRefInput<$PrismaModel>
+    notIn?: $Enums.CommunityMessageType[] | ListEnumCommunityMessageTypeFieldRefInput<$PrismaModel>
+    not?: NestedEnumCommunityMessageTypeWithAggregatesFilter<$PrismaModel> | $Enums.CommunityMessageType
     _count?: NestedIntFilter<$PrismaModel>
-    _min?: NestedEnumTestimonialStatusFilter<$PrismaModel>
-    _max?: NestedEnumTestimonialStatusFilter<$PrismaModel>
+    _min?: NestedEnumCommunityMessageTypeFilter<$PrismaModel>
+    _max?: NestedEnumCommunityMessageTypeFilter<$PrismaModel>
+  }
+
+  export type NestedEnumCommunityMessageStatusWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.CommunityMessageStatus | EnumCommunityMessageStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.CommunityMessageStatus[] | ListEnumCommunityMessageStatusFieldRefInput<$PrismaModel>
+    notIn?: $Enums.CommunityMessageStatus[] | ListEnumCommunityMessageStatusFieldRefInput<$PrismaModel>
+    not?: NestedEnumCommunityMessageStatusWithAggregatesFilter<$PrismaModel> | $Enums.CommunityMessageStatus
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumCommunityMessageStatusFilter<$PrismaModel>
+    _max?: NestedEnumCommunityMessageStatusFilter<$PrismaModel>
   }
 
   export type AppointmentCreateWithoutPatientInput = {

@@ -2,7 +2,7 @@ import { Navbar } from "~/components/Navbar";
 import { Hero } from "~/components/Hero";
 import { About } from "~/components/About";
 import { Services } from "~/components/Services";
-import { Testimonials } from "~/components/Testimonials";
+import { BuzonComunidad } from "~/components/BuzonComunidad";
 import { Reviews } from "~/components/Reviews";
 import { Gallery } from "~/components/Gallery";
 import { Blog } from "~/components/Blog";
@@ -65,19 +65,6 @@ async function getAboutConfig() {
   }
 }
 
-async function getTestimonialsFromDb() {
-  try {
-    return await db.testimonial.findMany({
-      where: { status: "READ" },
-      orderBy: { createdAt: "desc" },
-      take: 6,
-    });
-  } catch (error) {
-    console.error("Error fetching testimonials from Prisma:", error);
-    return null;
-  }
-}
-
 async function getGalleryFromDb() {
   try {
     return await db.galleryPhoto.findMany({
@@ -117,7 +104,6 @@ export default async function Home() {
   // Fetch data sequentially to avoid Prisma connection pool exhaustion in dev
   const servicesData = await getServicesFromDb();
   const aboutData = await getAboutConfig();
-  const testimonialsData = await getTestimonialsFromDb();
   const galleryData = await getGalleryFromDb();
   const postsData = await getBlogPosts();
 
@@ -139,8 +125,8 @@ export default async function Home() {
         {/* Section 3: Services (bg-offwhite / Crema) */}
         <Services initialCategories={servicesData} />
 
-        {/* Section 4: Testimonials Carousel + Submit Form (bg-teal / Verde) */}
-        <Testimonials initialTestimonials={testimonialsData} />
+        {/* Section 4: Community Inbox Form (bg-teal / Verde) */}
+        <BuzonComunidad />
         
         {/* Section 5: Reviews / Reseñas (bg-cream / Café Claro) */}
         <Reviews />
