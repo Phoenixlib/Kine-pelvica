@@ -2,31 +2,30 @@
 
 import { api } from "~/trpc/react";
 import { 
-  Users, 
-  DollarSign, 
   Calendar as CalendarIcon, 
   TrendingUp, 
   Clock, 
   CheckCircle2, 
-  AlertCircle 
+  MessageSquare,
+  FileText
 } from "lucide-react";
 import { 
-  BarChart, 
-  Bar, 
-  XAxis, 
-  YAxis, 
-  CartesianGrid, 
+  PieChart, 
+  Pie, 
+  Cell,
+  Legend,
   Tooltip, 
   ResponsiveContainer 
 } from "recharts";
+import Link from "next/link";
 
 export default function AdminDashboardPage() {
   const { data: stats, isLoading: statsLoading, error: statsError } = 
-    api.stats.getDashboardStats.useQuery();
+    api.stats.getDashboardStats.useQuery(undefined, { staleTime: 0, refetchOnMount: true, refetchOnWindowFocus: true });
   const { data: chartData, isLoading: chartLoading } = 
-    api.stats.getForecastChartData.useQuery();
+    api.stats.getServicesChartData.useQuery(undefined, { staleTime: 0, refetchOnMount: true, refetchOnWindowFocus: true });
   const { data: apptData, isLoading: apptsLoading } = 
-    api.appointment.getAll.useQuery({ limit: 10 });
+    api.appointment.getAll.useQuery({ limit: 10 }, { staleTime: 0, refetchOnMount: true, refetchOnWindowFocus: true });
 
   const appointments = apptData?.appointments;
   const loading = statsLoading || chartLoading || apptsLoading;
@@ -55,32 +54,36 @@ export default function AdminDashboardPage() {
 
   const statCards = [
     { 
-      label: "Ingresos de Hoy", 
-      value: `$${stats.revenueToday.toLocaleString("es-CL")}`, 
-      icon: DollarSign, 
-      trend: "+12%", 
-      color: "border-teal/20" 
+      label: "Mensajes Pendientes", 
+      value: stats.unreadMessages, 
+      icon: MessageSquare, 
+      trend: "Buzón de Comunidad", 
+      color: "border-dustypink/20",
+      href: "/admin/buzon"
     },
     { 
       label: "Citas Agendadas Hoy", 
       value: stats.appointmentsToday, 
       icon: CalendarIcon, 
-      trend: "+2%", 
-      color: "border-terracotta/20" 
+      trend: "Revisar Agenda", 
+      color: "border-terracotta/20",
+      href: "/admin/citas"
     },
     { 
-      label: "Nuevos Pacientes (Semana)", 
-      value: stats.newClientsThisWeek, 
-      icon: Users, 
-      trend: "+5%", 
-      color: "border-dustypink/20" 
+      label: "Artículos Publicados", 
+      value: stats.blogArticles, 
+      icon: FileText, 
+      trend: "Blog Sanity", 
+      color: "border-teal/20",
+      href: "/admin/contenido"
     },
     { 
-      label: "Tasa de Retención", 
-      value: `${stats.retentionRate}%`, 
-      icon: TrendingUp, 
-      trend: "Estable", 
-      color: "border-lightbrown/20" 
+      label: "Tasa de Asistencia", 
+      value: `${stats.attendanceRate}%`, 
+      icon: CheckCircle2, 
+      trend: "Últimos 30 días", 
+      color: "border-lightbrown/20",
+      href: "/admin/citas"
     },
   ];
 
@@ -106,23 +109,24 @@ export default function AdminDashboardPage() {
         {statCards.map((stat, i) => {
           const Icon = stat.icon;
           return (
-            <div 
-              key={i} 
-              className={`bg-white p-6 rounded-3xl border ${stat.color} shadow-xs flex items-center justify-between hover:shadow-md transition-shadow duration-300`}
+            <Link 
+              key={i}
+              href={stat.href}
+              className={`bg-white p-6 rounded-3xl border ${stat.color} shadow-xs flex items-center justify-between hover:shadow-md hover:border-terracotta/40 transition-all duration-300 group`}
             >
               <div>
-                <p className="font-subtitle text-[10px] tracking-wider uppercase font-bold text-teal/55">
+                <p className="font-subtitle text-[10px] tracking-wider uppercase font-bold text-teal/55 group-hover:text-terracotta transition-colors">
                   {stat.label}
                 </p>
-                <h3 className="font-title text-3xl text-teal mt-2">{stat.value}</h3>
+                <h3 className="font-title text-3xl text-teal mt-2 group-hover:scale-105 origin-left transition-transform">{stat.value}</h3>
                 <span className="text-[10px] font-subtitle font-bold text-[#c48a6a] bg-cream/15 px-2 py-0.5 rounded-full mt-2.5 inline-block tracking-wider uppercase">
-                  {stat.trend} esta semana
+                  {stat.trend}
                 </span>
               </div>
-              <div className="p-4 bg-[#f7f3ef] rounded-2xl text-terracotta">
+              <div className="p-4 bg-[#f7f3ef] rounded-2xl text-terracotta group-hover:bg-terracotta group-hover:text-white transition-colors">
                 <Icon size={24} />
               </div>
-            </div>
+            </Link>
           );
         })}
       </div>
@@ -130,27 +134,32 @@ export default function AdminDashboardPage() {
       {/* Main Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Chart */}
-        <div className="lg:col-span-2 bg-white p-6 md:p-8 rounded-3xl border border-cream/30 shadow-xs">
+        <div className="lg:col-span-2 bg-white p-6 md:p-8 rounded-3xl border border-cream/30 shadow-xs flex flex-col">
           <h3 className="font-subtitle text-xs uppercase tracking-wider font-bold text-[#0f3f3e] mb-6 flex items-center gap-2">
             <TrendingUp size={16} className="text-terracotta" />
-            Flujo de Ingresos (Últimos 7 Días)
+            Servicios Más Solicitados (Últimos 30 días)
           </h3>
-          <div className="h-80 w-full">
+          <div className="flex-1 min-h-[320px] w-full">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={chartData || []}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#d8c7b4" opacity={0.3} />
-                <XAxis 
-                  dataKey="name" 
-                  axisLine={false} 
-                  tickLine={false} 
-                  tick={{ fill: '#0f3f3e', fontSize: 11, fontWeight: 'bold' }} 
-                />
-                <YAxis 
-                  axisLine={false} 
-                  tickLine={false} 
-                  tick={{ fill: '#0f3f3e', fontSize: 11 }} 
-                  tickFormatter={(val) => `$${val.toLocaleString("es-CL")}`}
-                />
+              <PieChart>
+                <Pie
+                  data={chartData || []}
+                  cx="50%"
+                  cy="50%"
+                  labelLine={false}
+                  label={({ percent }) => percent > 0.05 ? `${(percent * 100).toFixed(0)}%` : ''}
+                  outerRadius={110}
+                  innerRadius={60}
+                  fill="#8884d8"
+                  dataKey="count"
+                  stroke="#fff"
+                  strokeWidth={3}
+                >
+                  {(chartData || []).map((entry, index) => {
+                    const COLORS = ['#0f3f3e', '#c48a6a', '#3d726d', '#e6a885', '#d8c7b4', '#8a6552'];
+                    return <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />;
+                  })}
+                </Pie>
                 <Tooltip 
                   cursor={{ fill: 'transparent' }} 
                   contentStyle={{ 
@@ -159,12 +168,23 @@ export default function AdminDashboardPage() {
                     boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.05)',
                     backgroundColor: '#fff',
                     color: '#0f3f3e',
-                    fontFamily: 'Inter, sans-serif'
+                    fontFamily: 'Inter, sans-serif',
+                    fontWeight: 'bold'
                   }}
-                  formatter={(value: any) => [`$${value.toLocaleString("es-CL")}`, "Ingresos"]}
+                  formatter={(value: any) => [value, "Citas registradas"]}
                 />
-                <Bar dataKey="revenue" fill="#c48a6a" radius={[6, 6, 0, 0]} name="Ingresos" />
-              </BarChart>
+                <Legend 
+                  verticalAlign="bottom" 
+                  height={36} 
+                  iconType="circle"
+                  wrapperStyle={{
+                    fontFamily: 'Inter, sans-serif',
+                    fontSize: '11px',
+                    fontWeight: 'bold',
+                    color: '#0f3f3e'
+                  }}
+                />
+              </PieChart>
             </ResponsiveContainer>
           </div>
         </div>
@@ -195,12 +215,13 @@ export default function AdminDashboardPage() {
                 });
 
                 return (
-                  <div 
+                  <Link 
+                    href="/admin/citas"
                     key={appt.id} 
-                    className="p-4 rounded-2xl border border-cream/30 hover:border-terracotta/30 transition-colors flex items-center justify-between gap-4"
+                    className="p-4 rounded-2xl border border-cream/30 hover:border-terracotta/40 hover:shadow-sm cursor-pointer transition-all flex items-center justify-between gap-4 group"
                   >
                     <div className="min-w-0">
-                      <h4 className="font-subtitle text-xs font-bold text-teal truncate">
+                      <h4 className="font-subtitle text-xs font-bold text-teal truncate group-hover:text-terracotta transition-colors">
                         {appt.patient.firstName} {appt.patient.lastName}
                       </h4>
                       <p className="font-body text-[11px] text-teal/60 mt-1 truncate">
@@ -209,11 +230,11 @@ export default function AdminDashboardPage() {
                     </div>
 
                     <div className="text-right flex-shrink-0">
-                      <span className="inline-flex items-center gap-1 text-[10px] font-subtitle font-bold text-terracotta bg-[#f7f3ef] px-2.5 py-1 rounded-full uppercase tracking-wider">
+                      <span className="inline-flex items-center gap-1 text-[10px] font-subtitle font-bold text-terracotta bg-[#f7f3ef] px-2.5 py-1 rounded-full uppercase tracking-wider group-hover:bg-terracotta group-hover:text-white transition-colors">
                         {dateStr} - {timeStr}
                       </span>
                     </div>
-                  </div>
+                  </Link>
                 );
               })
             )}

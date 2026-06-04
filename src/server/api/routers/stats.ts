@@ -1,108 +1,98 @@
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
 import { startOfDay, endOfDay, subDays } from "date-fns";
+import { sanityClient } from "~/lib/sanity";
 
 export const statsRouter = createTRPCRouter({
   getDashboardStats: protectedProcedure.query(async ({ ctx }) => {
     const today = new Date();
     const todayStart = startOfDay(today);
     const todayEnd = endOfDay(today);
-    const oneWeekAgo = subDays(today, 7);
+    const thirtyDaysAgo = subDays(today, 30);
 
-    // 1. Today's Revenue
-    const appointmentsToday = await ctx.db.appointment.findMany({
+    // 1. Appointments Today
+    const appointmentsTodayCount = await ctx.db.appointment.count({
       where: {
         date: {
           gte: todayStart,
           lte: todayEnd,
         },
       },
+    });
+
+    // 2. Unread Community Messages
+    const unreadMessagesCount = await ctx.db.communityMessage.count({
+      where: {
+        status: "PENDING",
+      },
+    });
+
+    // 3. Blog Articles Count from Sanity
+    let blogArticlesCount = 0;
+    try {
+      if (process.env.NEXT_PUBLIC_SANITY_PROJECT_ID && process.env.NEXT_PUBLIC_SANITY_PROJECT_ID !== "placeholder") {
+        blogArticlesCount = await sanityClient.fetch<number>('count(*[_type == "post"])');
+      }
+    } catch (error) {
+      console.error("Error fetching blog post count from Sanity:", error);
+    }
+
+    // 4. Attendance vs Cancellation Rate (Last 30 days)
+    const appointmentsLast30Days = await ctx.db.appointment.findMany({
+      where: {
+        date: { gte: thirtyDaysAgo, lte: todayEnd },
+      },
+    });
+    
+    let attendedCount = 0;
+    let cancelledCount = 0;
+    let noShowCount = 0;
+
+    appointmentsLast30Days.forEach(appt => {
+      if (appt.status === "ATTENDED") attendedCount++;
+      else if (appt.status === "CANCELLED") cancelledCount++;
+      else if (appt.status === "NO_SHOW") noShowCount++;
+    });
+
+    const totalFinished = attendedCount + cancelledCount + noShowCount;
+    const attendanceRate = totalFinished > 0 
+      ? Math.round((attendedCount / totalFinished) * 100) 
+      : 0;
+
+    return {
+      appointmentsToday: appointmentsTodayCount,
+      unreadMessages: unreadMessagesCount,
+      blogArticles: blogArticlesCount,
+      attendanceRate,
+    };
+  }),
+
+  getServicesChartData: protectedProcedure.query(async ({ ctx }) => {
+    // Get appointments from the last 30 days to see requested services
+    const thirtyDaysAgo = subDays(new Date(), 30);
+    const recentAppointments = await ctx.db.appointment.findMany({
+      where: {
+        createdAt: {
+          gte: thirtyDaysAgo,
+        },
+        serviceId: { not: null },
+      },
       include: {
         service: true,
       },
     });
 
-    const revenueToday = appointmentsToday.reduce(
-      (sum, appt) => {
-        // Sum price if attended, transferred or pending cash payment (which means it's booked for today)
-        if (appt.status !== "CANCELLED" && appt.status !== "NO_SHOW" && (appt.status === "ATTENDED" || appt.paymentMethod === "CASH_PAID" || appt.paymentMethod === "TRANSFER" || appt.paymentMethod === "CASH_PENDING")) {
-          return sum + (appt.service?.price ?? 0);
-        }
-        return sum;
-      },
-      0
-    );
-
-    // 2. Appointments Today
-    const appointmentsTodayCount = appointmentsToday.length;
-
-    // 3. New Clients This Week
-    const newClientsThisWeek = await ctx.db.patient.count({
-      where: {
-        createdAt: {
-          gte: oneWeekAgo,
-        },
-      },
+    const serviceCounts: Record<string, number> = {};
+    recentAppointments.forEach((appt) => {
+      if (appt.service?.name) {
+        serviceCounts[appt.service.name] = (serviceCounts[appt.service.name] || 0) + 1;
+      }
     });
 
-    // 4. Retention Rate (percentage of patients with more than 1 appointment)
-    const totalPatients = await ctx.db.patient.count();
-    const repeatingPatients = await ctx.db.patient.count({
-      where: {
-        appointments: {
-          some: {},
-        },
-      },
-    });
-
-    const retentionRate = totalPatients > 0 
-      ? Math.round((repeatingPatients / totalPatients) * 100) 
-      : 85;
-
-    return {
-      revenueToday,
-      appointmentsToday: appointmentsTodayCount,
-      newClientsThisWeek,
-      retentionRate,
-    };
-  }),
-
-  getForecastChartData: protectedProcedure.query(async ({ ctx }) => {
-    const today = new Date();
-    const chartData = [];
-
-    // Return the last 7 days of revenue/appointments to display in the dashboard chart
-    for (let i = 6; i >= 0; i--) {
-      const day = subDays(today, i);
-      const dayStart = startOfDay(day);
-      const dayEnd = endOfDay(day);
-
-      const dayAppts = await ctx.db.appointment.findMany({
-        where: {
-          date: {
-            gte: dayStart,
-            lte: dayEnd,
-          },
-        },
-        include: {
-          service: true,
-        },
-      });
-
-      const revenue = dayAppts.reduce((sum, appt) => {
-        if (appt.status !== "CANCELLED" && appt.status !== "NO_SHOW" && (appt.status === "ATTENDED" || appt.paymentMethod === "CASH_PAID" || appt.paymentMethod === "TRANSFER" || appt.paymentMethod === "CASH_PENDING")) {
-          return sum + (appt.service?.price ?? 0);
-        }
-        return sum;
-      }, 0);
-      
-      const appointments = dayAppts.length;
-
-      chartData.push({
-        name: day.toLocaleDateString("es-CL", { weekday: "short" }),
-        revenue,
-        appointments,
-      });
-    }
+    // Format for Recharts
+    const chartData = Object.entries(serviceCounts)
+      .map(([name, count]) => ({ name, count }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 5); // top 5 services
 
     return chartData;
   }),
