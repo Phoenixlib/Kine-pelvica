@@ -45,7 +45,7 @@ export const siteConfigRouter = createTRPCRouter({
         update: { value: input.value },
         create: { key: input.key, value: input.value },
       });
-      revalidatePath("/", "layout");
+      revalidatePath("/");
       return result;
     }),
 
@@ -69,7 +69,7 @@ export const siteConfigRouter = createTRPCRouter({
         })
       );
       await Promise.all(operations);
-      revalidatePath("/", "layout");
+      revalidatePath("/");
       return { success: true };
     }),
 });

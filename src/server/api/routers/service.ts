@@ -41,12 +41,14 @@ export const serviceRouter = createTRPCRouter({
       })
     )
     .mutation(async ({ ctx, input }) => {
-      return ctx.db.serviceCategory.create({
+      const result = await ctx.db.serviceCategory.create({
         data: {
           name: input.name,
           order: input.order,
         },
       });
+      revalidatePath("/");
+      return result;
     }),
 
   updateCategory: protectedProcedure
@@ -59,7 +61,7 @@ export const serviceRouter = createTRPCRouter({
       })
     )
     .mutation(async ({ ctx, input }) => {
-      return ctx.db.serviceCategory.update({
+      const result = await ctx.db.serviceCategory.update({
         where: { id: input.id },
         data: {
           name: input.name,
@@ -67,14 +69,18 @@ export const serviceRouter = createTRPCRouter({
           isActive: input.isActive,
         },
       });
+      revalidatePath("/");
+      return result;
     }),
 
   deleteCategory: protectedProcedure
     .input(z.object({ id: z.string() }))
     .mutation(async ({ ctx, input }) => {
-      return ctx.db.serviceCategory.delete({
+      const result = await ctx.db.serviceCategory.delete({
         where: { id: input.id },
       });
+      revalidatePath("/");
+      return result;
     }),
 
   // Service CRUD with automatic Cal.com synchronization
@@ -116,7 +122,7 @@ export const serviceRouter = createTRPCRouter({
         throw new Error("No se pudo crear el servicio en Cal.com. Inténtalo de nuevo.");
       }
 
-      return ctx.db.service.create({
+      const result = await ctx.db.service.create({
         data: {
           name: input.name,
           price: input.price,
@@ -129,6 +135,8 @@ export const serviceRouter = createTRPCRouter({
           calComSlug,
         },
       });
+      revalidatePath("/");
+      return result;
     }),
 
   updateService: protectedProcedure
@@ -198,7 +206,7 @@ export const serviceRouter = createTRPCRouter({
         }
       }
 
-      return ctx.db.service.update({
+      const result = await ctx.db.service.update({
         where: { id: input.id },
         data: {
           name: input.name,
@@ -213,6 +221,8 @@ export const serviceRouter = createTRPCRouter({
           calComSlug,
         },
       });
+      revalidatePath("/");
+      return result;
     }),
 
   deleteService: protectedProcedure
@@ -233,7 +243,7 @@ export const serviceRouter = createTRPCRouter({
       const result = await ctx.db.service.delete({
         where: { id: input.id },
       });
-      revalidatePath("/", "layout");
+      revalidatePath("/");
       return result;
     }),
 
@@ -248,7 +258,7 @@ export const serviceRouter = createTRPCRouter({
           })
         )
       );
-      revalidatePath("/", "layout");
+      revalidatePath("/");
       return { success: true };
     }),
 
@@ -263,7 +273,7 @@ export const serviceRouter = createTRPCRouter({
           })
         )
       );
-      revalidatePath("/", "layout");
+      revalidatePath("/");
       return { success: true };
     }),
 });

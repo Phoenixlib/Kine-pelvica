@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
 import { cancelCalComBooking, rescheduleCalComBooking, createCalComBooking } from "~/lib/calcom";
+import { env } from "~/env";
 
 export const appointmentRouter = createTRPCRouter({
   getAll: protectedProcedure
@@ -123,9 +124,34 @@ export const appointmentRouter = createTRPCRouter({
           } catch (e) {
             const errMsg = e instanceof Error ? e.message : String(e);
             console.error("[Cal.com] Booking creation failed:", errMsg);
-            // Store error in calComBookingId field for debugging via Prisma Studio
-            calComBookingId = `ERROR: ${errMsg.substring(0, 200)}`;
-            // We proceed with local creation even if Cal.com fails
+            
+            // Try fallback if env variable is set
+            if (env.CALCOM_FALLBACK_EVENT_TYPE_ID) {
+              try {
+                console.log("[Cal.com] Attempting fallback overbooking on event type:", env.CALCOM_FALLBACK_EVENT_TYPE_ID);
+                const calFallbackRes = await createCalComBooking(
+                  Number(env.CALCOM_FALLBACK_EVENT_TYPE_ID),
+                  input.date.toISOString(),
+                  `${patient.firstName} ${patient.lastName}`,
+                  patient.email || `no_email_${Date.now()}@estudiopelvico.cl`,
+                  patient.phone || undefined
+                );
+                
+                if (calFallbackRes && calFallbackRes.data) {
+                  calComEventId = calFallbackRes.data.uid;
+                  calComBookingId = String(calFallbackRes.data.id);
+                  console.log("[Cal.com] Fallback overbooking succeeded!");
+                }
+              } catch (fallbackErr) {
+                const fallbackErrMsg = fallbackErr instanceof Error ? fallbackErr.message : String(fallbackErr);
+                console.error("[Cal.com] Fallback overbooking failed too:", fallbackErrMsg);
+                calComBookingId = `ERROR: Fallback also failed: ${fallbackErrMsg.substring(0, 150)}`;
+              }
+            } else {
+              // Store error in calComBookingId field for debugging via Prisma Studio
+              calComBookingId = `ERROR: ${errMsg.substring(0, 200)}`;
+              // We proceed with local creation even if Cal.com fails
+            }
           }
         }
       }

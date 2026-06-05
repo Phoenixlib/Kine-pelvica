@@ -58,7 +58,7 @@ export const galleryRouter = createTRPCRouter({
           isVisible: true,
         },
       });
-      revalidatePath("/", "layout");
+      revalidatePath("/");
       return result;
     }),
 
@@ -108,7 +108,7 @@ export const galleryRouter = createTRPCRouter({
           isVisible: input.isVisible,
         },
       });
-      revalidatePath("/", "layout");
+      revalidatePath("/");
       return result;
     }),
 
@@ -130,7 +130,7 @@ export const galleryRouter = createTRPCRouter({
       const result = await ctx.db.galleryPhoto.delete({
         where: { id: input.id },
       });
-      revalidatePath("/", "layout");
+      revalidatePath("/");
       return result;
     }),
 
@@ -145,7 +145,7 @@ export const galleryRouter = createTRPCRouter({
           })
         )
       );
-      revalidatePath("/", "layout");
+      revalidatePath("/");
       return { success: true };
     }),
 });

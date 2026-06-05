@@ -11,8 +11,8 @@ import { Footer } from "~/components/Footer";
 import { sanityClient } from "~/lib/sanity";
 import { db } from "~/server/db";
 
-// Dynamic cache revalidation interval (10 minutes)
-export const revalidate = 600;
+// Force dynamic rendering to ensure admin changes are immediately visible
+export const dynamic = "force-dynamic";
 
 async function getServicesFromDb() {
   try {
@@ -101,11 +101,13 @@ async function getBlogPosts() {
 }
 
 export default async function Home() {
-  // Fetch data sequentially to avoid Prisma connection pool exhaustion in dev
-  const servicesData = await getServicesFromDb();
-  const aboutData = await getAboutConfig();
-  const galleryData = await getGalleryFromDb();
-  const postsData = await getBlogPosts();
+  // Fetch data concurrently for optimal performance
+  const [servicesData, aboutData, galleryData, postsData] = await Promise.all([
+    getServicesFromDb(),
+    getAboutConfig(),
+    getGalleryFromDb(),
+    getBlogPosts()
+  ]);
 
   return (
     <>
