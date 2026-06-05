@@ -102,3 +102,51 @@ La agenda viaja con éxito al año seleccionado y se reposiciona en la semana co
 
 **Resultado Esperado:**
 La agenda regresa a su tamaño y posición normal en el panel de administración de manera fluida.
+
+---
+
+## 6. Validación de Caché y Revalidación en Producción (Landing Page)
+**Objetivo:** Validar que al realizar modificaciones en el panel de administración, la información en la landing page principal se actualice de manera inmediata en producción sin interferencia del caché.
+
+**Pasos:**
+1. Iniciar sesión en el panel de administración de producción.
+2. Navegar a **Contenido** (o Configuración de Sitio).
+3. Modificar el título de "Quién Soy" (o la descripción) en la sección correspondiente. Guardar los cambios.
+4. En una nueva pestaña o ventana privada, abrir la Landing Page principal en producción.
+5. **Verificación:** Validar que los cambios guardados se observen inmediatamente en la sección "Quién Soy" de la landing page, sin necesidad de esperar 10 minutos (tiempo de caché anterior) ni de forzar un refresco de página agresivo.
+6. Repetir la prueba editando un servicio (ej. cambiar precio o duración) en **Servicios** y añadiendo/ocultando una foto en **Galería**. Validar que se actualicen inmediatamente en sus respectivas secciones en la Landing Page.
+
+**Resultado Esperado:**
+Los cambios se reflejan de inmediato al cargar la landing page en producción, asegurando que la configuración de renderizado dinámico (`force-dynamic`) y paralelizado esté funcionando de manera correcta y rápida.
+
+---
+
+## 7. Sobrereserva y Sincronización Manual en Cal.com (Fallback de Horario Bloqueado)
+**Objetivo:** Validar que al agendar manualmente una cita fuera de la disponibilidad de Cal.com (o en un horario bloqueado), el sistema intente una sobrereserva usando el tipo de evento de fallback (`CALCOM_FALLBACK_EVENT_TYPE_ID`).
+
+**Pasos:**
+1. Asegurarse de tener configurada la variable `CALCOM_FALLBACK_EVENT_TYPE_ID` en el entorno.
+2. En la **Agenda** del administrador, hacer clic en un horario que esté bloqueado o fuera de disponibilidad en Cal.com (por ejemplo, a altas horas de la noche o un fin de semana sin disponibilidad configurada).
+3. Seleccionar un paciente y un servicio.
+4. Presionar **"Guardar Reserva"**.
+5. Ir a la base de datos (Prisma Studio o consulta directa) o verificar en los logs si la reserva se creó.
+6. **Verificación:** Buscar la cita recién creada y validar el campo `calComBookingId`.
+
+**Resultado Esperado:**
+La cita se guarda correctamente en el sistema local. En Cal.com, la cita es creada a través del evento de fallback (sobrereserva forzada), asignándole un ID numérico de reserva real en el campo correspondiente en lugar de un mensaje de error. Si el fallback también falla o no está configurado, la cita debe crearse localmente de todas formas, registrando la traza del error correspondiente para auditoría sin interrumpir al administrador.
+
+---
+
+## 8. Verificación del Botón CTA en la Sección Hero
+**Objetivo:** Validar que el botón del Hero de la página principal redirija correctamente y contenga el nuevo texto descriptivo.
+
+**Pasos:**
+1. Navegar a la página de inicio (Landing Page).
+2. Localizar la sección principal (Hero).
+3. **Verificación:** Validar que el botón de color transparente con borde diga **"Agendar Cita"** (anteriormente "Agendar Evaluación").
+4. Hacer clic sobre el botón.
+5. **Verificación:** Validar que la página realice un desplazamiento suave y posicione al usuario en la sección de **Contacto** (donde se encuentran las opciones de contacto/reserva) en el pie de página.
+
+**Resultado Esperado:**
+El botón contiene el texto "Agendar Cita" y el enlace funciona dirigiendo la vista a la sección de contacto correctamente.
+
