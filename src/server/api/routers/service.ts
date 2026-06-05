@@ -233,7 +233,7 @@ export const serviceRouter = createTRPCRouter({
       const result = await ctx.db.service.delete({
         where: { id: input.id },
       });
-      revalidatePath("/");
+      revalidatePath("/", "layout");
       return result;
     }),
 
@@ -248,7 +248,7 @@ export const serviceRouter = createTRPCRouter({
           })
         )
       );
-      revalidatePath("/");
+      revalidatePath("/", "layout");
       return { success: true };
     }),
 
@@ -263,7 +263,7 @@ export const serviceRouter = createTRPCRouter({
           })
         )
       );
-      revalidatePath("/");
+      revalidatePath("/", "layout");
       return { success: true };
     }),
 });

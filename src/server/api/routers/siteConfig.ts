@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { createTRPCRouter, protectedProcedure, publicProcedure } from "~/server/api/trpc";
+import { revalidatePath } from "next/cache";
 
 export const siteConfigRouter = createTRPCRouter({
   get: publicProcedure
@@ -39,11 +40,13 @@ export const siteConfigRouter = createTRPCRouter({
       })
     )
     .mutation(async ({ ctx, input }) => {
-      return ctx.db.siteConfig.upsert({
+      const result = await ctx.db.siteConfig.upsert({
         where: { key: input.key },
         update: { value: input.value },
         create: { key: input.key, value: input.value },
       });
+      revalidatePath("/", "layout");
+      return result;
     }),
 
   setMany: protectedProcedure
@@ -66,6 +69,7 @@ export const siteConfigRouter = createTRPCRouter({
         })
       );
       await Promise.all(operations);
+      revalidatePath("/", "layout");
       return { success: true };
     }),
 });

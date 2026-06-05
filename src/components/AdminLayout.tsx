@@ -56,13 +56,13 @@ export function AdminLayout({ children, user }: AdminLayoutProps) {
       <aside className="hidden md:flex flex-col w-64 border-r border-cream/40 bg-white shrink-0 h-screen sticky top-0">
         {/* Brand header */}
         <div className="h-24 flex items-center justify-center px-6 border-b border-cream/40 bg-[#0f3f3e]">
-          <Link href="/" className="flex items-center justify-center w-full group py-2">
+          <a href="/" className="flex items-center justify-center w-full group py-2">
             <img 
               src="/logo-editado.png" 
               alt="Estudio Pélvico" 
               className="h-16 w-auto object-contain transition-transform group-hover:scale-105"
             />
-          </Link>
+          </a>
         </div>
 
         {/* Navigation */}
@@ -125,13 +125,13 @@ export function AdminLayout({ children, user }: AdminLayoutProps) {
           </div>
 
           <div className="flex items-center gap-4">
-            <Link
+            <a
               href="/"
               className="p-2.5 text-teal/70 hover:text-teal hover:bg-[#f7f3ef] rounded-full transition"
               title="Volver a la Web"
             >
               <Home size={18} />
-            </Link>
+            </a>
             
             <button
               className="p-2.5 text-teal/70 hover:text-teal hover:bg-[#f7f3ef] rounded-full transition relative"
@@ -170,13 +170,13 @@ export function AdminLayout({ children, user }: AdminLayoutProps) {
           <div className="relative w-72 bg-white h-full shadow-2xl flex flex-col animate-in slide-in-from-left duration-300">
             {/* Header */}
             <div className="h-24 flex items-center justify-between px-6 border-b border-cream/40 bg-[#0f3f3e]">
-              <Link href="/" className="flex items-center justify-start group py-2">
+              <a href="/" className="flex items-center justify-start group py-2">
                 <img 
                   src="/logo-editado.png" 
                   alt="Estudio Pélvico" 
                   className="h-16 w-auto object-contain transition-transform group-hover:scale-105"
                 />
-              </Link>
+              </a>
               <button
                 onClick={() => setIsMobileOpen(false)}
                 className="p-1.5 text-cream hover:bg-white/10 rounded-xl"
