@@ -20,7 +20,7 @@ import {
   subMonths,
 } from "date-fns";
 import { es } from "date-fns/locale";
-import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Plus, RefreshCw, Maximize2, MoreVertical, X } from "lucide-react";
+import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Plus, RefreshCw, Maximize2, MoreVertical, X, Calendar } from "lucide-react";
 import { STATUS_STYLES, AppointmentDetailModal } from "~/components/admin/AppointmentDetailModal";
 import NuevaCitaKineModal from "~/components/admin/NuevaCitaKineModal";
 import BloqueoHorasModal from "~/components/admin/BloqueoHorasModal";
@@ -333,6 +333,15 @@ export default function AgendaPage() {
                 <Maximize2 size={18} />
               )}
             </button>
+            <a 
+              href="https://cal.com/availability/1597637" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="flex items-center justify-center bg-teal hover:bg-teal/90 transition-colors text-white px-3 py-2 sm:px-4 sm:py-2 rounded-xl text-xs font-bold uppercase tracking-widest gap-2 shadow-sm"
+            >
+              <Calendar size={18} />
+              <span className="hidden sm:inline">Disponibilidad</span>
+            </a>
             <button
               onClick={() => {
                 setInitialNewCitaDate(null);

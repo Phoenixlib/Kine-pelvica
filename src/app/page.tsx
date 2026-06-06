@@ -1,5 +1,6 @@
 import { Navbar } from "~/components/Navbar";
 import { Hero } from "~/components/Hero";
+import { auth } from "~/server/auth";
 import { About } from "~/components/About";
 import { Services } from "~/components/Services";
 import { BuzonComunidad } from "~/components/BuzonComunidad";
@@ -49,7 +50,7 @@ async function getAboutConfig() {
   try {
     const configs = await db.siteConfig.findMany({
       where: {
-        key: { in: ["about_title", "about_description", "about_image", "address"] },
+        key: { in: ["about_title", "about_description", "about_image", "address", "whatsapp_number", "instagram_url", "facebook_url", "email_address"] },
       },
     });
 
@@ -58,6 +59,10 @@ async function getAboutConfig() {
       description: configs.find((c) => c.key === "about_description")?.value,
       imageUrl: configs.find((c) => c.key === "about_image")?.value,
       address: configs.find((c) => c.key === "address")?.value,
+      whatsapp: configs.find((c) => c.key === "whatsapp_number")?.value,
+      instagram: configs.find((c) => c.key === "instagram_url")?.value,
+      facebook: configs.find((c) => c.key === "facebook_url")?.value,
+      email: configs.find((c) => c.key === "email_address")?.value,
     };
   } catch (error) {
     console.error("Error fetching about configurations from Prisma:", error);
@@ -102,16 +107,21 @@ async function getBlogPosts() {
 
 export default async function Home() {
   // Fetch data concurrently for optimal performance
-  const [servicesData, aboutData, galleryData, postsData] = await Promise.all([
+  const [servicesData, aboutData, galleryData, postsData, session] = await Promise.all([
     getServicesFromDb(),
     getAboutConfig(),
     getGalleryFromDb(),
-    getBlogPosts()
+    getBlogPosts(),
+    auth()
   ]);
+
+  const whatsappCleaned = aboutData.whatsapp
+    ? aboutData.whatsapp.replace(/\D/g, "")
+    : "56950840767";
 
   return (
     <>
-      <Navbar />
+      <Navbar isAdmin={!!session?.user} />
 
       <main className="min-h-screen font-body text-teal bg-offwhite selection:bg-terracotta selection:text-white scroll-smooth relative">
         {/* Section 1: Hero (bg-teal / Verde) */}
@@ -122,6 +132,10 @@ export default async function Home() {
           title={aboutData.title}
           description={aboutData.description}
           imageUrl={aboutData.imageUrl}
+          whatsapp={aboutData.whatsapp}
+          instagram={aboutData.instagram}
+          facebook={aboutData.facebook}
+          email={aboutData.email}
         />
 
         {/* Section 3: Services (bg-offwhite / Crema) */}
@@ -147,7 +161,7 @@ export default async function Home() {
 
       {/* Floating WhatsApp Button */}
       <a
-        href="https://wa.me/56950840767"
+        href={`https://wa.me/${whatsappCleaned}`}
         target="_blank"
         rel="noopener noreferrer"
         className="fixed bottom-6 right-6 w-14 h-14 bg-[#25D366] text-white rounded-full flex items-center justify-center shadow-2xl hover:scale-110 hover:shadow-[#25D366]/50 transition-all z-50 animate-bounce-slow gap-2"

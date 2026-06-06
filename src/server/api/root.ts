@@ -6,6 +6,7 @@ import { siteConfigRouter } from "~/server/api/routers/siteConfig";
 import { galleryRouter } from "~/server/api/routers/gallery";
 import { communityMessageRouter } from "~/server/api/routers/communityMessage";
 import { blockedSlotRouter } from "~/server/api/routers/blockedSlot";
+import { adminRouter } from "~/server/api/routers/admin";
 import { createCallerFactory, createTRPCRouter } from "~/server/api/trpc";
 
 /**
@@ -22,6 +23,7 @@ export const appRouter = createTRPCRouter({
   gallery: galleryRouter,
   communityMessage: communityMessageRouter,
   blockedSlot: blockedSlotRouter,
+  admin: adminRouter,
 });
 
 // export type definition of API

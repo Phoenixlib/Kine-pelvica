@@ -466,7 +466,7 @@ function getBaseAvailabilityForDate(dateStr: string, availability: CalComAvailab
     if (merged.length === 0) {
       merged.push(w);
     } else {
-      const last = merged[merged.length - 1];
+      const last = merged[merged.length - 1]!;
       if (w.start <= last.end) {
         last.end = Math.max(last.end, w.end);
       } else {
@@ -499,7 +499,7 @@ function addBlock(windows: {start: number, end: number}[], bStart: number, bEnd:
     if (result.length === 0) {
       result.push(w);
     } else {
-      const last = result[result.length - 1];
+      const last = result[result.length - 1]!;
       if (w.start <= last.end) {
         last.end = Math.max(last.end, w.end);
       } else {
@@ -513,7 +513,9 @@ function addBlock(windows: {start: number, end: number}[], bStart: number, bEnd:
 function isSameWindows(a: {start: number, end: number}[], b: {start: number, end: number}[]): boolean {
   if (a.length !== b.length) return false;
   for (let i=0; i<a.length; i++) {
-    if (a[i].start !== b[i].start || a[i].end !== b[i].end) return false;
+    const itemA = a[i];
+    const itemB = b[i];
+    if (!itemA || !itemB || itemA.start !== itemB.start || itemA.end !== itemB.end) return false;
   }
   return true;
 }
@@ -570,7 +572,8 @@ export async function createCalComScheduleOverride(
     let currentWindows: {start: number, end: number}[] = [];
 
     if (targetDateOverrides.length > 0) {
-      if (targetDateOverrides.length === 1 && targetDateOverrides[0].startTime === "00:00" && targetDateOverrides[0].endTime === "00:00") {
+      const firstOverride = targetDateOverrides[0];
+      if (targetDateOverrides.length === 1 && firstOverride && firstOverride.startTime === "00:00" && firstOverride.endTime === "00:00") {
         currentWindows = [];
       } else {
         currentWindows = targetDateOverrides.map(o => ({ start: timeToMins(o.startTime), end: timeToMins(o.endTime) }));
@@ -637,7 +640,8 @@ export async function deleteCalComScheduleOverride(
     const baseAvail = getBaseAvailabilityForDate(targetDate, getJson.data.availability || []);
     let currentWindows: {start: number, end: number}[] = [];
 
-    if (!(targetDateOverrides.length === 1 && targetDateOverrides[0].startTime === "00:00" && targetDateOverrides[0].endTime === "00:00")) {
+    const firstOverride = targetDateOverrides[0];
+    if (!(targetDateOverrides.length === 1 && firstOverride && firstOverride.startTime === "00:00" && firstOverride.endTime === "00:00")) {
       currentWindows = targetDateOverrides.map(o => ({ start: timeToMins(o.startTime), end: timeToMins(o.endTime) }));
     }
 

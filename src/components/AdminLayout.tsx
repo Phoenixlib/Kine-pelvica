@@ -38,7 +38,7 @@ export function AdminLayout({ children, user }: AdminLayoutProps) {
     { href: "/admin", label: "Dashboard", icon: LayoutDashboard },
     { href: "/admin/agenda", label: "Agenda", icon: Calendar },
     { href: "/admin/citas", label: "Citas / Reservas", icon: FileText },
-    { href: "/admin/pacientes", label: "Fichas Clínicas", icon: Users },
+    { href: "/admin/pacientes", label: "Directorio Pacientes", icon: Users },
     { href: "/admin/servicios", label: "Servicios / Terapias", icon: Settings },
     { href: "/admin/contenido", label: "Contenido Sitio", icon: Home },
     { href: "/admin/galeria", label: "Galería de Fotos", icon: Camera },

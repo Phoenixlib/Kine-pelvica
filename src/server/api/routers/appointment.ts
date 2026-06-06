@@ -15,6 +15,7 @@ export const appointmentRouter = createTRPCRouter({
         limit: z.number().int().min(1).optional().default(20),
         status: z.enum(["BOOKED", "CONFIRMED", "ATTENDED", "NO_SHOW", "CANCELLED"]).optional(),
         searchQuery: z.string().optional(),
+        view: z.enum(["upcoming", "past", "all"]).optional().default("all"),
       }).optional()
     )
     .query(async ({ ctx, input }) => {
@@ -55,6 +56,25 @@ export const appointmentRouter = createTRPCRouter({
         ];
       }
 
+      let orderBy: Prisma.AppointmentOrderByWithRelationInput = { date: "asc" };
+      if (input?.view === "upcoming") {
+        const currentDateGte = input?.startDate && input.startDate > new Date() ? input.startDate : new Date();
+        whereClause.date = {
+          ...(typeof whereClause.date === "object" ? whereClause.date : {}),
+          gte: currentDateGte,
+        };
+        orderBy = { date: "asc" };
+      } else if (input?.view === "past") {
+        const currentDateLt = input?.endDate && input.endDate < new Date() ? input.endDate : new Date();
+        whereClause.date = {
+          ...(typeof whereClause.date === "object" ? whereClause.date : {}),
+          lt: currentDateLt,
+        };
+        orderBy = { date: "desc" };
+      } else {
+        orderBy = { date: "asc" };
+      }
+
       const [appointments, total] = await Promise.all([
         ctx.db.appointment.findMany({
           where: whereClause,
@@ -62,7 +82,7 @@ export const appointmentRouter = createTRPCRouter({
             patient: true,
             service: true,
           },
-          orderBy: { date: "desc" },
+          orderBy,
           skip,
           take: limit,
         }),

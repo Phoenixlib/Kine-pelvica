@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { TRPCError } from "@trpc/server";
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
 
 // --- Helpers de Validación ---
@@ -119,6 +120,34 @@ export const patientRouter = createTRPCRouter({
       })
     )
     .mutation(async ({ ctx, input }) => {
+      const existingPatient = await ctx.db.patient.findFirst({
+        where: {
+          OR: [
+            { phone: input.phone },
+            {
+              AND: [
+                { firstName: { equals: input.firstName, mode: "insensitive" } },
+                { lastName: { equals: input.lastName, mode: "insensitive" } }
+              ]
+            }
+          ]
+        }
+      });
+
+      if (existingPatient) {
+        if (existingPatient.phone === input.phone) {
+          throw new TRPCError({
+            code: "CONFLICT",
+            message: "Ya existe un paciente con este número de teléfono",
+          });
+        } else {
+          throw new TRPCError({
+            code: "CONFLICT",
+            message: "Ya existe un paciente con este mismo nombre y apellido",
+          });
+        }
+      }
+
       return ctx.db.patient.create({
         data: {
           firstName: input.firstName,
@@ -142,6 +171,35 @@ export const patientRouter = createTRPCRouter({
       })
     )
     .mutation(async ({ ctx, input }) => {
+      const existingPatient = await ctx.db.patient.findFirst({
+        where: {
+          id: { not: input.id },
+          OR: [
+            { phone: input.phone },
+            {
+              AND: [
+                { firstName: { equals: input.firstName, mode: "insensitive" } },
+                { lastName: { equals: input.lastName, mode: "insensitive" } }
+              ]
+            }
+          ]
+        }
+      });
+
+      if (existingPatient) {
+        if (existingPatient.phone === input.phone) {
+          throw new TRPCError({
+            code: "CONFLICT",
+            message: "Ya existe otro paciente con este número de teléfono",
+          });
+        } else {
+          throw new TRPCError({
+            code: "CONFLICT",
+            message: "Ya existe otro paciente con este mismo nombre y apellido",
+          });
+        }
+      }
+
       return ctx.db.patient.update({
         where: { id: input.id },
         data: {

@@ -13212,17 +13212,17 @@ export namespace Prisma {
   export type PatientWhereUniqueInput = Prisma.AtLeast<{
     id?: string
     email?: string
+    phone?: string
     AND?: PatientWhereInput | PatientWhereInput[]
     OR?: PatientWhereInput[]
     NOT?: PatientWhereInput | PatientWhereInput[]
     firstName?: StringFilter<"Patient"> | string
     lastName?: StringFilter<"Patient"> | string
-    phone?: StringFilter<"Patient"> | string
     notes?: StringNullableFilter<"Patient"> | string | null
     createdAt?: DateTimeFilter<"Patient"> | Date | string
     updatedAt?: DateTimeFilter<"Patient"> | Date | string
     appointments?: AppointmentListRelationFilter
-  }, "id" | "email">
+  }, "id" | "email" | "phone">
 
   export type PatientOrderByWithAggregationInput = {
     id?: SortOrder

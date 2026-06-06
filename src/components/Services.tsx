@@ -27,6 +27,7 @@ export function Services({ initialCategories }: ServicesProps) {
     open: false,
     calLink: "",
   });
+  const [selectedService, setSelectedService] = useState<Service | null>(null);
 
   const fallbackCategories: ServiceCategory[] = [
     {
@@ -130,7 +131,11 @@ export function Services({ initialCategories }: ServicesProps) {
             </h4>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 animate-in slide-in-from-bottom-2 fade-in duration-500" key={safeActiveIndex}>
               {currentCategory.services.map((service, sIndex) => (
-                <div key={sIndex} className="bg-white border border-terracotta/20 rounded-2xl p-6 flex flex-col hover:border-terracotta/50 hover:shadow-md transition-all h-full relative group">
+                <div 
+                  key={sIndex} 
+                  onClick={() => setSelectedService(service)}
+                  className="bg-white border border-terracotta/20 rounded-2xl p-6 flex flex-col hover:border-terracotta/50 hover:shadow-md transition-all h-full relative group cursor-pointer"
+                >
                   <div className="flex-1">
                     <h4 className="font-subtitle text-[13px] font-bold text-[#0f3f3e] mb-1">{service.name}</h4>
                     <div className="font-body text-sm text-[#0f3f3e]/60 mb-2 flex justify-between items-center">
@@ -138,14 +143,15 @@ export function Services({ initialCategories }: ServicesProps) {
                       <span className="font-bold text-terracotta text-base">{formatPrice(service.price)}</span>
                     </div>
                     {service.details && (
-                      <p className="font-body text-xs text-[#0f3f3e]/70 leading-relaxed mb-4 line-clamp-3 group-hover:line-clamp-none transition-all">
+                      <p className="font-body text-xs text-[#0f3f3e]/70 leading-relaxed mb-4 line-clamp-3">
                         {service.details}
                       </p>
                     )}
                     {!service.details && <div className="mb-4"></div>}
                   </div>
                   <button 
-                    onClick={() => {
+                    onClick={(e) => {
+                      e.stopPropagation();
                       const calPath = service.bookingUrl?.replace("https://cal.com/", "") ?? "";
                       setBookingModal({ open: true, calLink: calPath });
                     }}
@@ -171,6 +177,87 @@ export function Services({ initialCategories }: ServicesProps) {
               <X size={16} className="text-charcoal" />
             </button>
             <BookingFlow calLink={bookingModal.calLink} />
+          </div>
+        </div>
+      )}
+
+      {/* Service Detail Modal */}
+      {selectedService && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-charcoal/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+          <div className="bg-[#f7f3ef] border border-cream/50 rounded-3xl p-6 md:p-8 max-w-lg w-full relative shadow-2xl animate-in zoom-in-95 duration-200">
+            <button
+              onClick={() => setSelectedService(null)}
+              className="absolute top-4 right-4 p-2 bg-white rounded-full shadow hover:bg-offwhite transition"
+              aria-label="Cerrar modal"
+            >
+              <X size={16} className="text-charcoal" />
+            </button>
+            
+            <div className="mt-2">
+              <span className="text-[10px] font-subtitle font-bold tracking-[0.2em] text-terracotta uppercase">
+                {currentCategory?.name || "Servicio"}
+              </span>
+              <h3 className="font-title text-3xl text-teal mt-1 mb-4 leading-tight">
+                {selectedService.name}
+              </h3>
+              
+              <div className="flex flex-wrap gap-4 mb-6 text-sm">
+                {selectedService.duration && (
+                  <div className="flex items-center gap-1.5 bg-white px-3 py-1.5 rounded-full border border-cream/30 text-teal/80 font-medium">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-terracotta">
+                      <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+                    </svg>
+                    {formatDuration(selectedService.duration)}
+                  </div>
+                )}
+                <div className="flex items-center gap-1.5 bg-white px-3 py-1.5 rounded-full border border-cream/30 text-teal font-bold">
+                  <span className="text-terracotta">$</span>
+                  {formatPrice(selectedService.price).replace("$", "")}
+                </div>
+              </div>
+
+              {selectedService.details ? (
+                <div className="bg-white rounded-2xl p-5 border border-cream/20 mb-6 max-h-[300px] overflow-y-auto">
+                  <p className="font-body text-sm text-[#0f3f3e]/80 leading-relaxed whitespace-pre-line">
+                    {selectedService.details}
+                  </p>
+                </div>
+              ) : (
+                <div className="bg-white rounded-2xl p-5 border border-cream/20 mb-6 italic text-sm text-teal/40">
+                  Sin descripción disponible.
+                </div>
+              )}
+
+              <div className="flex flex-col sm:flex-row gap-3">
+                {selectedService.bookingUrl ? (
+                  <button
+                    onClick={() => {
+                      const calPath = selectedService.bookingUrl?.replace("https://cal.com/", "") ?? "";
+                      setBookingModal({ open: true, calLink: calPath });
+                      setSelectedService(null);
+                    }}
+                    className="flex-1 bg-terracotta text-white py-3 px-6 rounded-full font-subtitle text-xs uppercase tracking-widest font-bold hover:bg-teal transition-colors shadow-sm text-center cursor-pointer"
+                  >
+                    Agendar servicio
+                  </button>
+                ) : (
+                  <a
+                    href="https://wa.me/56950840767"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex-1 bg-teal text-white py-3 px-6 rounded-full font-subtitle text-xs uppercase tracking-widest font-bold hover:bg-terracotta transition-colors shadow-sm text-center cursor-pointer"
+                  >
+                    Consultar por WhatsApp
+                  </a>
+                )}
+                <button
+                  onClick={() => setSelectedService(null)}
+                  className="sm:flex-none border border-cream text-teal bg-white hover:bg-cream/10 py-3 px-6 rounded-full font-subtitle text-xs uppercase tracking-widest font-bold transition-colors cursor-pointer"
+                >
+                  Cerrar
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}

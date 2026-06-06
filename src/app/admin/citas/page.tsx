@@ -37,6 +37,7 @@ export default function CitasPage() {
   const [page, setPage] = useState(1);
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("All");
+  const [view, setView] = useState<"upcoming" | "past" | "all">("upcoming");
 
   // Selection states for modals
   const [selectedAppt, setSelectedAppt] = useState<Appointment | null>(null);
@@ -49,7 +50,7 @@ export default function CitasPage() {
   // Reset page on search or filter change
   useEffect(() => {
     setPage(1);
-  }, [searchQuery, statusFilter]);
+  }, [searchQuery, statusFilter, view]);
 
   useEffect(() => {
     setMounted(true);
@@ -60,6 +61,7 @@ export default function CitasPage() {
     limit: 15,
     status: statusFilter === "All" ? undefined : (statusFilter as AppointmentStatus),
     searchQuery: searchQuery || undefined,
+    view,
   }, {
     placeholderData: (previousData) => previousData,
   });
@@ -178,10 +180,29 @@ export default function CitasPage() {
         </div>
 
         <div className="flex flex-wrap gap-3 w-full md:w-auto">
+          <div className="flex gap-2 w-full md:w-auto overflow-x-auto pb-1 md:pb-0 hide-scrollbar items-center">
+            {[
+              { value: "upcoming", label: "Próximas" },
+              { value: "past", label: "Historial" },
+              { value: "all", label: "Todas" },
+            ].map(tab => (
+              <button
+                key={tab.value}
+                onClick={() => { setView(tab.value as "upcoming" | "past" | "all"); setPage(1); }}
+                className={`px-4 py-2 rounded-full font-subtitle text-[10px] uppercase tracking-widest font-bold transition-all whitespace-nowrap shrink-0 ${
+                  view === tab.value
+                    ? "bg-teal text-white shadow-sm"
+                    : "bg-white text-teal border border-cream hover:bg-offwhite"
+                }`}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
-            className="px-4 py-2.5 bg-offwhite border border-cream rounded-xl font-body text-xs text-teal focus:outline-none focus:border-terracotta focus:ring-1 focus:ring-terracotta transition-colors"
+            className="px-4 py-2.5 bg-offwhite border border-cream rounded-xl font-body text-xs text-teal focus:outline-none focus:border-terracotta focus:ring-1 focus:ring-terracotta transition-colors shrink-0"
           >
             <option value="All">Todos los Estados</option>
             <option value="BOOKED">Reservadas</option>

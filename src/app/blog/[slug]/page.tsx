@@ -1,5 +1,6 @@
 import { Navbar } from "~/components/Navbar";
 import { Footer } from "~/components/Footer";
+import { auth } from "~/server/auth";
 import { sanityClient } from "~/lib/sanity";
 import { notFound } from "next/navigation";
 import { PortableText } from "@portabletext/react";
@@ -145,7 +146,10 @@ interface BlogPostPageProps {
 
 export default async function BlogPostPage({ params }: BlogPostPageProps) {
   const { slug } = await params;
-  const sanityPost = await getPostData(slug);
+  const [sanityPost, session] = await Promise.all([
+    getPostData(slug),
+    auth()
+  ]);
   const fallbackPost = fallbackPosts[slug];
 
   if (!sanityPost && !fallbackPost) {
@@ -162,13 +166,13 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
 
   return (
     <>
-      <Navbar />
+      <Navbar isAdmin={!!session?.user} />
       
       <main className="min-h-screen pt-32 pb-24 bg-offwhite">
         <article className="container mx-auto px-4 max-w-4xl">
           {/* Back Link */}
           <Link 
-            href="/#blog" 
+            href="/blog" 
             className="inline-flex items-center text-teal hover:text-terracotta font-subtitle text-xs uppercase tracking-widest font-bold mb-10 transition-colors gap-2"
           >
             <ArrowLeft size={16} /> Volver al Blog

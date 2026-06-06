@@ -12,7 +12,7 @@ export interface CalComPrefill {
 interface CalComEmbedProps {
   calLink: string;
   prefill?: CalComPrefill;
-  onSuccess?: () => void;
+  onSuccess?: (e: any) => void;
 }
 
 export default function CalComEmbed({ calLink, prefill, onSuccess }: CalComEmbedProps) {

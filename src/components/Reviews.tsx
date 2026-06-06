@@ -27,7 +27,7 @@ export function Reviews() {
   ];
 
   return (
-    <section className="py-24 bg-cream">
+    <section id="testimonios" className="py-24 bg-cream">
       <div className="container mx-auto px-4 lg:px-8">
         
         <div className="text-center mb-16">

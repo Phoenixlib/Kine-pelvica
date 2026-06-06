@@ -9,7 +9,11 @@ import {
   UploadCloud, 
   Check, 
   AlertCircle,
-  MapPin
+  MapPin,
+  Link as LinkIcon,
+  Phone,
+  Globe,
+  Mail
 } from "lucide-react";
 
 export default function ContenidoPage() {
@@ -17,6 +21,10 @@ export default function ContenidoPage() {
   const [aboutDescription, setAboutDescription] = useState("");
   const [aboutImageUrl, setAboutImageUrl] = useState("");
   const [address, setAddress] = useState("");
+  const [whatsapp, setWhatsapp] = useState("");
+  const [instagram, setInstagram] = useState("");
+  const [facebook, setFacebook] = useState("");
+  const [email, setEmail] = useState("");
 
   const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "success" | "error">("idle");
   const [saveError, setSaveError] = useState("");
@@ -25,7 +33,7 @@ export default function ContenidoPage() {
 
   // Query config keys from database
   const { data: configData, isLoading: configLoading, refetch } = api.siteConfig.get.useQuery({
-    keys: ["about_title", "about_description", "about_image", "address"],
+    keys: ["about_title", "about_description", "about_image", "address", "whatsapp_number", "instagram_url", "facebook_url", "email_address"],
   });
 
   const setConfigMany = api.siteConfig.setMany.useMutation({
@@ -46,6 +54,10 @@ export default function ContenidoPage() {
       setAboutDescription(configData.about_description || "");
       setAboutImageUrl(configData.about_image || "");
       setAddress(configData.address || "");
+      setWhatsapp(configData.whatsapp_number || "");
+      setInstagram(configData.instagram_url || "");
+      setFacebook(configData.facebook_url || "");
+      setEmail(configData.email_address || "");
     }
   }, [configData]);
 
@@ -76,6 +88,10 @@ export default function ContenidoPage() {
         { key: "about_description", value: aboutDescription },
         { key: "about_image", value: aboutImageUrl },
         { key: "address", value: address },
+        { key: "whatsapp_number", value: whatsapp },
+        { key: "instagram_url", value: instagram },
+        { key: "facebook_url", value: facebook },
+        { key: "email_address", value: email },
       ]
     });
   };
@@ -175,6 +191,65 @@ export default function ContenidoPage() {
                     className="w-full px-4 py-3 bg-white border border-cream rounded-xl font-body text-sm text-teal focus:outline-none resize-none"
                   />
                 </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Section: Contacto y Redes Sociales */}
+          <div className="bg-white rounded-3xl border border-cream/30 shadow-xs p-6 md:p-8 space-y-6">
+            <div className="flex items-center gap-2 border-b border-cream/20 pb-4">
+              <LinkIcon className="text-terracotta" size={20} />
+              <h2 className="font-title text-xl text-teal">Contacto y Redes Sociales</h2>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-1.5">
+                <label className="font-subtitle text-[10px] tracking-wider uppercase font-bold text-teal flex items-center gap-2">
+                  <Phone size={14} /> WhatsApp
+                </label>
+                <input
+                  type="text"
+                  value={whatsapp}
+                  onChange={(e) => setWhatsapp(e.target.value)}
+                  placeholder="+56912345678"
+                  className="w-full px-4 py-3 bg-white border border-cream rounded-xl font-body text-sm text-teal focus:outline-none"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <label className="font-subtitle text-[10px] tracking-wider uppercase font-bold text-teal flex items-center gap-2">
+                  <Globe size={14} /> Instagram URL
+                </label>
+                <input
+                  type="url"
+                  value={instagram}
+                  onChange={(e) => setInstagram(e.target.value)}
+                  placeholder="https://instagram.com/tu_cuenta"
+                  className="w-full px-4 py-3 bg-white border border-cream rounded-xl font-body text-sm text-teal focus:outline-none"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <label className="font-subtitle text-[10px] tracking-wider uppercase font-bold text-teal flex items-center gap-2">
+                  <Globe size={14} /> Facebook URL
+                </label>
+                <input
+                  type="url"
+                  value={facebook}
+                  onChange={(e) => setFacebook(e.target.value)}
+                  placeholder="https://facebook.com/tu_pagina"
+                  className="w-full px-4 py-3 bg-white border border-cream rounded-xl font-body text-sm text-teal focus:outline-none"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <label className="font-subtitle text-[10px] tracking-wider uppercase font-bold text-teal flex items-center gap-2">
+                  <Mail size={14} /> Correo Electrónico
+                </label>
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="correo@ejemplo.com"
+                  className="w-full px-4 py-3 bg-white border border-cream rounded-xl font-body text-sm text-teal focus:outline-none"
+                />
               </div>
             </div>
           </div>

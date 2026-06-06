@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import CalComEmbed, { type CalComPrefill } from "./CalComEmbed";
 
 type Step = "lookup" | "embed";
@@ -15,6 +16,8 @@ export default function BookingFlow({ calLink }: BookingFlowProps) {
   const [error, setError] = useState("");
   const [prefill, setPrefill] = useState<CalComPrefill>({});
   const [query, setQuery] = useState("");
+  const [acceptedPolicies, setAcceptedPolicies] = useState(false);
+  const [bookingSuccessData, setBookingSuccessData] = useState<any>(null);
 
   const cleanPhoneForCalcom = (phoneStr: string) => {
     // Normalizar: quitar espacios, guiones y paréntesis
@@ -72,10 +75,62 @@ export default function BookingFlow({ calLink }: BookingFlowProps) {
     setStep("embed");
   };
 
+  const handleBookingSuccess = (e: any) => {
+    // e.detail.data contains the booking info in cal.com v2
+    setBookingSuccessData(e?.detail?.data || e?.data || {});
+  };
+
   if (step === "embed") {
     return (
-      <div className="w-full">
-        <CalComEmbed calLink={calLink} prefill={prefill} />
+      <div className="w-full relative">
+        <CalComEmbed calLink={calLink} prefill={prefill} onSuccess={handleBookingSuccess} />
+        
+        {/* Modal de éxito sobre el embed */}
+        {bookingSuccessData && (
+          <div className="absolute inset-0 z-50 bg-white/95 backdrop-blur-sm flex flex-col items-center justify-center p-8 rounded-3xl animate-in fade-in zoom-in duration-300">
+            <div className="bg-teal/5 p-4 rounded-full mb-6">
+              <svg className="w-12 h-12 text-teal" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+              </svg>
+            </div>
+            <h2 className="text-3xl font-bold text-teal font-title mb-4 text-center">¡Reserva Confirmada!</h2>
+            <p className="text-slate-600 mb-8 text-center max-w-md leading-relaxed">
+              Tu hora ha sido agendada con éxito. Recibirás un correo con los detalles y el enlace (si aplica) en breve.
+            </p>
+            <div className="w-full max-w-sm bg-white p-6 rounded-2xl shadow-sm border border-slate-100 mb-8">
+              <div className="space-y-4">
+                {bookingSuccessData.date && (
+                  <div className="flex justify-between border-b border-slate-50 pb-3">
+                    <span className="text-slate-500 text-sm">Fecha y Hora</span>
+                    <span className="font-semibold text-slate-800 text-sm text-right">
+                      {new Date(bookingSuccessData.date).toLocaleString('es-CL', { 
+                        dateStyle: 'medium', 
+                        timeStyle: 'short' 
+                      })}
+                    </span>
+                  </div>
+                )}
+                {bookingSuccessData.title && (
+                  <div className="flex justify-between">
+                    <span className="text-slate-500 text-sm">Servicio</span>
+                    <span className="font-semibold text-slate-800 text-sm text-right">{bookingSuccessData.title}</span>
+                  </div>
+                )}
+              </div>
+            </div>
+            <button
+              onClick={() => {
+                setBookingSuccessData(null);
+                setStep("lookup");
+                setQuery("");
+                setAcceptedPolicies(false);
+              }}
+              className="bg-terracotta text-white px-8 py-3 rounded-full font-subtitle text-sm uppercase tracking-widest font-bold hover:bg-teal transition-colors shadow-sm"
+            >
+              Volver al inicio
+            </button>
+          </div>
+        )}
       </div>
     );
   }
@@ -110,7 +165,7 @@ export default function BookingFlow({ calLink }: BookingFlowProps) {
 
         <button
           type="submit"
-          disabled={loading}
+          disabled={loading || !acceptedPolicies}
           className="w-full bg-terracotta text-white p-3 rounded-full font-subtitle text-xs uppercase tracking-widest font-bold hover:bg-teal transition-colors disabled:opacity-50 shadow-sm"
         >
           {loading ? "Buscando..." : "Buscar Cuenta"}
@@ -133,10 +188,28 @@ export default function BookingFlow({ calLink }: BookingFlowProps) {
         <button
           type="button"
           onClick={handleDirectBooking}
-          className="w-full border border-terracotta/40 text-terracotta bg-white p-3 rounded-full font-subtitle text-xs uppercase tracking-widest font-bold hover:bg-terracotta/5 hover:border-terracotta transition-colors shadow-sm"
+          disabled={!acceptedPolicies}
+          className="w-full border border-terracotta/40 text-terracotta bg-white p-3 rounded-full font-subtitle text-xs uppercase tracking-widest font-bold hover:bg-terracotta/5 hover:border-terracotta transition-colors shadow-sm disabled:opacity-50 disabled:hover:bg-white disabled:hover:border-terracotta/40"
         >
           Primera vez, quiero reservar directamente 🌸
         </button>
+      </div>
+
+      <div className="mt-6 flex items-start gap-3 p-4 bg-slate-50 rounded-xl border border-slate-100">
+        <input
+          type="checkbox"
+          id="policies"
+          checked={acceptedPolicies}
+          onChange={(e) => setAcceptedPolicies(e.target.checked)}
+          className="mt-1 w-4 h-4 rounded border-slate-300 text-terracotta focus:ring-terracotta"
+        />
+        <label htmlFor="policies" className="text-xs text-slate-600 leading-relaxed">
+          He leído y acepto las{" "}
+          <Link href="/politicas-de-atencion" target="_blank" className="text-terracotta underline hover:text-terracotta/80">
+            Políticas de Atención
+          </Link>
+          {" "}y cancelación de la clínica.
+        </label>
       </div>
     </div>
   );

@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { cn } from "../utils";
 import { Menu, X } from "lucide-react";
 
-export function Navbar() {
+export function Navbar({ isAdmin = false }: { isAdmin?: boolean }) {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
@@ -21,8 +21,9 @@ export function Navbar() {
     { name: "Quién Soy", href: "/#quien-soy" },
     { name: "Servicios", href: "/#servicios" },
     { name: "Antes y Después", href: "/#galeria" },
-    { name: "Blog", href: "/#blog" },
-    { name: "Contáctanos", href: "/#contacto" },
+    { name: "Testimonios", href: "/#testimonios" },
+    { name: "Blog", href: "/blog" },
+    { name: "Buzón comunidad", href: "/#buzon" },
   ];
 
   return (
@@ -34,34 +35,43 @@ export function Navbar() {
           : "bg-transparent py-6"
       )}
     >
-      <div className="container mx-auto px-4 md:px-8 flex justify-between items-center">
+      <div className="container mx-auto px-4 lg:px-6 xl:px-8 flex justify-between items-center">
         {/* Logo Image for Navbar */}
         <a href="/" className="flex items-center space-x-3 group">
           <img
             src="/logo-editado.png"
             alt="Estudio Pélvico"
-            className="h-[60px] md:h-[72px] w-auto object-contain transition-transform group-hover:scale-105"
+            className="h-[56px] md:h-[64px] xl:h-[72px] w-auto object-contain transition-transform group-hover:scale-105"
           />
         </a>
 
         {/* Desktop Nav */}
-        <nav className="hidden lg:flex items-center space-x-8">
+        <nav className="hidden lg:flex items-center lg:space-x-4 xl:space-x-6 2xl:space-x-8">
           {navLinks.map((link) => (
             <a
               key={link.name}
               href={link.href}
-              className="font-subtitle text-[11px] uppercase tracking-widest font-bold text-offwhite/90 hover:text-terracotta transition-colors relative group"
+              className="font-subtitle lg:text-[12px] xl:text-[13px] uppercase lg:tracking-wider xl:tracking-widest font-bold text-offwhite/90 hover:text-terracotta transition-colors relative group"
             >
               {link.name}
               <span className="absolute -bottom-2 left-0 w-0 h-[2px] bg-terracotta transition-all group-hover:w-full"></span>
             </a>
           ))}
-          <a
-            href="#contacto"
-            className="px-6 py-2.5 bg-cream text-teal text-[10px] uppercase tracking-widest font-bold rounded-full hover:bg-white transition-all shadow-sm"
-          >
-            Agendar Hora
-          </a>
+          {isAdmin ? (
+            <a
+              href="/admin"
+              className="lg:px-4 xl:px-6 py-2.5 bg-terracotta text-white lg:text-[11px] xl:text-[12px] uppercase lg:tracking-wider xl:tracking-widest font-bold rounded-full hover:bg-terracotta/90 transition-all shadow-sm"
+            >
+              Panel Admin
+            </a>
+          ) : (
+            <a
+              href="/#servicios"
+              className="lg:px-4 xl:px-6 py-2.5 bg-cream text-teal lg:text-[11px] xl:text-[12px] uppercase lg:tracking-wider xl:tracking-widest font-bold rounded-full hover:bg-white transition-all shadow-sm"
+            >
+              Agendar Hora
+            </a>
+          )}
         </nav>
 
         {/* Mobile menu button */}
@@ -87,6 +97,15 @@ export function Navbar() {
                 {link.name}
               </a>
             ))}
+            {isAdmin && (
+              <a
+                href="/admin"
+                className="font-subtitle text-xs uppercase tracking-widest font-bold text-terracotta pb-3 border-b border-white/10"
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                Panel Admin
+              </a>
+            )}
           </nav>
         </div>
       )}
