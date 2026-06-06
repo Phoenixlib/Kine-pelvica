@@ -42,6 +42,14 @@ export default function NuevaCitaKineModal({
   const createMutation = api.appointment.create.useMutation();
   const createPatientMutation = api.patient.create.useMutation();
 
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  useEffect(() => {
+    setIsFullscreen(!!document.fullscreenElement);
+    const handleFs = () => setIsFullscreen(!!document.fullscreenElement);
+    document.addEventListener("fullscreenchange", handleFs);
+    return () => document.removeEventListener("fullscreenchange", handleFs);
+  }, []);
+
   // Debounce search query
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -57,12 +65,20 @@ export default function NuevaCitaKineModal({
 
   const { data: services = [] } = api.service.getAll.useQuery();
 
-  // Load day appointments to check for clashes
+  // Load day appointments to check for clashes (48h window to avoid TZ issues)
   const selectedDateObj = selectedDate ? new Date(`${selectedDate}T00:00:00`) : null;
   const { data: dayAppointments } = api.appointment.getAll.useQuery(
     {
-      startDate: selectedDateObj ? startOfDay(selectedDateObj) : undefined,
-      endDate: selectedDateObj ? endOfDay(selectedDateObj) : undefined,
+      startDate: selectedDateObj ? new Date(selectedDateObj.getTime() - 24 * 60 * 60 * 1000) : undefined,
+      endDate: selectedDateObj ? new Date(selectedDateObj.getTime() + 24 * 60 * 60 * 1000) : undefined,
+    },
+    { enabled: !!selectedDateObj && isOpen }
+  );
+
+  const { data: dayBlocks } = api.blockedSlot.getAll.useQuery(
+    {
+      startDate: selectedDateObj ? new Date(selectedDateObj.getTime() - 24 * 60 * 60 * 1000) : new Date(),
+      endDate: selectedDateObj ? new Date(selectedDateObj.getTime() + 24 * 60 * 60 * 1000) : new Date(),
     },
     { enabled: !!selectedDateObj && isOpen }
   );
@@ -87,21 +103,34 @@ export default function NuevaCitaKineModal({
 
   // Check clashes
   let hasClash = false;
-  if (selectedDate && selectedTime && selectedService && dayAppointments) {
+  if (selectedDate && selectedTime && selectedService && (dayAppointments || dayBlocks)) {
     const newStart = new Date(`${selectedDate}T${selectedTime}:00`);
     const newEnd = addMinutes(newStart, selectedService.duration);
 
-    hasClash = dayAppointments.appointments.some((appt) => {
+    const hasApptClash = dayAppointments?.appointments.some((appt) => {
       const apptStart = new Date(appt.date);
       const apptEnd = addMinutes(apptStart, appt.durationMinutes);
       // Overlap condition: start < endB AND end > startB
       return newStart < apptEnd && newEnd > apptStart && appt.status !== "CANCELLED";
-    });
+    }) ?? false;
+
+    const hasBlockClash = dayBlocks?.some((block) => {
+      const blockStart = new Date(block.startAt);
+      const blockEnd = new Date(block.endAt);
+      return newStart < blockEnd && newEnd > blockStart;
+    }) ?? false;
+
+    hasClash = hasApptClash || hasBlockClash;
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setCreateError(null);
+
+    if (hasClash) {
+      setCreateError("El horario seleccionado choca con otra cita existente o un bloqueo. Por favor elige un horario disponible.");
+      return;
+    }
 
     if (!selectedDate || !selectedTime || !selectedServiceId) {
       setCreateError("Faltan campos obligatorios.");
@@ -159,7 +188,7 @@ export default function NuevaCitaKineModal({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#0f3f3e]/40 backdrop-blur-sm animate-in fade-in duration-300">
+    <div className={`${isFullscreen ? "absolute" : "fixed"} inset-0 z-[99999] flex items-center justify-center p-4 bg-[#0f3f3e]/40 backdrop-blur-sm animate-in fade-in duration-300`}>
       <div className="relative bg-offwhite w-full max-w-2xl rounded-3xl shadow-2xl border-t-[8px] border-terracotta overflow-hidden max-h-[90vh] flex flex-col">
         {/* Header */}
         <div className="p-6 border-b border-cream/30 bg-white flex items-center justify-between flex-shrink-0">
@@ -211,7 +240,7 @@ export default function NuevaCitaKineModal({
             {hasClash && (
               <div className="bg-red-50 text-red-600 p-3 rounded-xl border border-red-100 text-xs font-bold flex items-center gap-2">
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
-                Precaución: El horario seleccionado choca con otra cita existente.
+                ⛔ El horario seleccionado está ocupado. Elige una hora distinta para continuar.
               </div>
             )}
 
@@ -388,7 +417,7 @@ export default function NuevaCitaKineModal({
           <button
             type="submit"
             form="new-appt-form"
-            disabled={createMutation.isPending || createPatientMutation.isPending}
+            disabled={createMutation.isPending || createPatientMutation.isPending || hasClash}
             className="px-8 py-2.5 bg-[#8b5cf6] hover:bg-[#7c3aed] text-white rounded-xl font-subtitle font-bold text-[11px] tracking-widest uppercase transition-all shadow-md disabled:opacity-50 flex items-center gap-2"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>

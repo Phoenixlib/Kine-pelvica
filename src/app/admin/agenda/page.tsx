@@ -23,6 +23,7 @@ import { es } from "date-fns/locale";
 import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Plus, RefreshCw, Maximize2, MoreVertical, X } from "lucide-react";
 import { STATUS_STYLES, AppointmentDetailModal } from "~/components/admin/AppointmentDetailModal";
 import NuevaCitaKineModal from "~/components/admin/NuevaCitaKineModal";
+import BloqueoHorasModal from "~/components/admin/BloqueoHorasModal";
 import type { Appointment } from "~/components/admin/AppointmentDetailModal";
 
 const HOURS = Array.from({ length: 13 }, (_, i) => i + 8); // 08:00 to 20:00
@@ -35,6 +36,11 @@ export default function AgendaPage() {
   const [selectedAppt, setSelectedAppt] = useState<Appointment | null>(null);
   const [showNewCitaModal, setShowNewCitaModal] = useState(false);
   const [initialNewCitaDate, setInitialNewCitaDate] = useState<string | null>(null);
+
+  // Bloqueo Horas state
+  const [showBlockModal, setShowBlockModal] = useState(false);
+  const [initialBlockDate, setInitialBlockDate] = useState<string | null>(null);
+  const [blockToDelete, setBlockToDelete] = useState<string | null>(null);
   
   // Context Menu State
   const [contextMenu, setContextMenu] = useState<{ x: number, y: number, dateStr: string } | null>(null);
@@ -126,18 +132,21 @@ export default function AgendaPage() {
 
   const handleActionBlockSlot = () => {
     if (contextMenu) {
-      const startAt = new Date(contextMenu.dateStr);
-      const endAt = new Date(startAt);
-      endAt.setHours(endAt.getHours() + 1); // Bloqueo de 1 hr por defecto
-      createBlockMutation.mutate({ startAt, endAt, reason: "Bloqueo manual" });
+      setInitialBlockDate(contextMenu.dateStr);
+      setShowBlockModal(true);
     }
     closeContextMenu();
   };
 
   const handleDeleteBlock = (e: React.MouseEvent, blockId: string) => {
     e.stopPropagation();
-    if (confirm("¿Eliminar este bloqueo? Se sincronizará con Cal.com.")) {
-      deleteBlockMutation.mutate({ id: blockId });
+    setBlockToDelete(blockId);
+  };
+
+  const confirmDeleteBlock = () => {
+    if (blockToDelete) {
+      deleteBlockMutation.mutate({ id: blockToDelete });
+      setBlockToDelete(null);
     }
   };
 
@@ -500,27 +509,62 @@ export default function AgendaPage() {
             </button>
           </div>
         )}
+        {/* Detail Modal */}
+        {selectedAppt && (
+          <AppointmentDetailModal
+            appt={selectedAppt}
+            onClose={() => setSelectedAppt(null)}
+            onUpdate={(data) => updateMutation.mutate(data)}
+            onDelete={(id) => deleteMutation.mutate({ id })}
+            isUpdating={updateMutation.isPending}
+          />
+        )}
 
-      </div>
-
-      {/* Detail Modal */}
-      {selectedAppt && (
-        <AppointmentDetailModal
-          appt={selectedAppt}
-          onClose={() => setSelectedAppt(null)}
-          onUpdate={(data) => updateMutation.mutate(data)}
-          onDelete={(id) => deleteMutation.mutate({ id })}
-          isUpdating={updateMutation.isPending}
+        {/* New Appointment Modal */}
+        <NuevaCitaKineModal
+          isOpen={showNewCitaModal}
+          onClose={() => setShowNewCitaModal(false)}
+          initialDateStr={initialNewCitaDate}
+          onSuccess={() => refetch()}
         />
-      )}
 
-      {/* New Appointment Modal */}
-      <NuevaCitaKineModal
-        isOpen={showNewCitaModal}
-        onClose={() => setShowNewCitaModal(false)}
-        initialDateStr={initialNewCitaDate}
-        onSuccess={() => refetch()}
-      />
+        {/* Bloqueo Horas Modal */}
+        <BloqueoHorasModal
+          isOpen={showBlockModal}
+          onClose={() => setShowBlockModal(false)}
+          initialDateStr={initialBlockDate}
+          onSuccess={() => {
+            utils.blockedSlot.getAll.invalidate();
+          }}
+        />
+
+        {/* Custom Confirmation Modal for Deletion */}
+        {blockToDelete && (
+          <div className={`${isFullscreen ? "absolute" : "fixed"} inset-0 z-[99999] flex items-center justify-center p-4 bg-[#0f3f3e]/40 backdrop-blur-sm animate-in fade-in duration-300`}>
+            <div className="bg-white w-full max-w-sm rounded-3xl shadow-2xl p-6 text-center border-t-4 border-red-500 font-body">
+              <h3 className="text-base font-bold text-teal mb-2">¿Eliminar bloqueo?</h3>
+              <p className="text-xs text-teal/60 mb-6 font-medium">
+                Esta acción eliminará el bloqueo tanto a nivel local como en Cal.com.
+              </p>
+              <div className="flex gap-3 justify-center">
+                <button
+                  onClick={() => setBlockToDelete(null)}
+                  className="px-4 py-2 bg-cream/20 hover:bg-cream/40 text-teal text-[10px] font-bold uppercase tracking-widest rounded-xl transition-all"
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={confirmDeleteBlock}
+                  disabled={deleteBlockMutation.isPending}
+                  className="px-4 py-2 bg-red-500 hover:bg-red-600 text-white text-[10px] font-bold uppercase tracking-widest rounded-xl transition-all disabled:opacity-50"
+                >
+                  {deleteBlockMutation.isPending ? "Eliminando..." : "Eliminar"}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

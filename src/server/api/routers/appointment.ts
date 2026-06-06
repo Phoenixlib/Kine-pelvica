@@ -2,6 +2,8 @@ import { z } from "zod";
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
 import { cancelCalComBooking, rescheduleCalComBooking, createCalComBooking } from "~/lib/calcom";
 import { env } from "~/env";
+import { TRPCError } from "@trpc/server";
+import { Prisma } from "../../../../generated/prisma";
 
 export const appointmentRouter = createTRPCRouter({
   getAll: protectedProcedure
@@ -20,16 +22,17 @@ export const appointmentRouter = createTRPCRouter({
       const limit = input?.limit ?? 20;
       const skip = (page - 1) * limit;
 
-      const whereClause: any = {};
+      const whereClause: Prisma.AppointmentWhereInput = {};
       
       if (input?.startDate || input?.endDate) {
-        whereClause.date = {};
+        const dateFilter: Prisma.DateTimeFilter = {};
         if (input.startDate) {
-          whereClause.date.gte = input.startDate;
+          dateFilter.gte = input.startDate;
         }
         if (input.endDate) {
-          whereClause.date.lte = input.endDate;
+          dateFilter.lte = input.endDate;
         }
+        whereClause.date = dateFilter;
       }
 
       if (input?.status) {
@@ -90,6 +93,61 @@ export const appointmentRouter = createTRPCRouter({
       })
     )
     .mutation(async ({ ctx, input }) => {
+      // Verificar conflicto de horario
+      const appointmentStart = input.date;
+      const appointmentEnd = new Date(appointmentStart.getTime() + input.durationMinutes * 60_000);
+
+      // Para evitar bugs de zona horaria (donde setHours en UTC no coincide con el día local),
+      // buscamos cualquier cita en una ventana de 24h alrededor de la nueva cita.
+      // Así garantizamos cargar todo posible cruce y luego lo filtramos exactamente en memoria.
+      const checkStart = new Date(appointmentStart.getTime() - 24 * 60 * 60 * 1000);
+      const checkEnd = new Date(appointmentStart.getTime() + 24 * 60 * 60 * 1000);
+
+      // Buscar citas en la ventana de 24 horas que no estén canceladas
+      const candidateAppointments = await ctx.db.appointment.findMany({
+        where: {
+          status: { notIn: ["CANCELLED"] },
+          date: {
+            gte: checkStart,
+            lte: checkEnd,
+          },
+        },
+        select: { id: true, date: true, durationMinutes: true },
+      });
+
+      // Post-filtro en JS: Comparación exacta usando los timestamps
+      const hasConflict = candidateAppointments.some((appt) => {
+        const existingStart = appt.date;
+        const existingEnd = new Date(existingStart.getTime() + appt.durationMinutes * 60_000);
+        return appointmentStart < existingEnd && appointmentEnd > existingStart;
+      });
+
+      // Buscar bloqueos en la misma ventana de 24 horas
+      const candidateBlocks = await ctx.db.blockedSlot.findMany({
+        where: {
+          startAt: {
+            lte: checkEnd,
+          },
+          endAt: {
+            gte: checkStart,
+          },
+        },
+        select: { id: true, startAt: true, endAt: true },
+      });
+
+      const hasBlockConflict = candidateBlocks.some((block) => {
+        const blockStart = block.startAt;
+        const blockEnd = block.endAt;
+        return appointmentStart < blockEnd && appointmentEnd > blockStart;
+      });
+
+      if (hasConflict || hasBlockConflict) {
+        throw new TRPCError({
+          code: "CONFLICT",
+          message: "Ya existe una cita o un bloqueo en ese horario. Por favor elige un horario disponible.",
+        });
+      }
+
       let calComEventId: string | null = null;
       let calComBookingId: string | null = null;
 
@@ -126,11 +184,11 @@ export const appointmentRouter = createTRPCRouter({
             console.error("[Cal.com] Booking creation failed:", errMsg);
             
             // Try fallback if env variable is set
-            if (env.CALCOM_FALLBACK_EVENT_TYPE_ID) {
+            if (process.env.CALCOM_FALLBACK_EVENT_TYPE_ID) {
               try {
-                console.log("[Cal.com] Attempting fallback overbooking on event type:", env.CALCOM_FALLBACK_EVENT_TYPE_ID);
+                console.log("[Cal.com] Attempting fallback overbooking on event type:", process.env.CALCOM_FALLBACK_EVENT_TYPE_ID);
                 const calFallbackRes = await createCalComBooking(
-                  Number(env.CALCOM_FALLBACK_EVENT_TYPE_ID),
+                  Number(process.env.CALCOM_FALLBACK_EVENT_TYPE_ID),
                   input.date.toISOString(),
                   `${patient.firstName} ${patient.lastName}`,
                   patient.email || `no_email_${Date.now()}@estudiopelvico.cl`,
@@ -145,12 +203,16 @@ export const appointmentRouter = createTRPCRouter({
               } catch (fallbackErr) {
                 const fallbackErrMsg = fallbackErr instanceof Error ? fallbackErr.message : String(fallbackErr);
                 console.error("[Cal.com] Fallback overbooking failed too:", fallbackErrMsg);
-                calComBookingId = `ERROR: Fallback also failed: ${fallbackErrMsg.substring(0, 150)}`;
+                throw new TRPCError({
+                  code: "CONFLICT",
+                  message: "No se pudo agendar en Cal.com ni con sobrecupo. Es posible que el horario esté ocupado o no disponible.",
+                });
               }
             } else {
-              // Store error in calComBookingId field for debugging via Prisma Studio
-              calComBookingId = `ERROR: ${errMsg.substring(0, 200)}`;
-              // We proceed with local creation even if Cal.com fails
+              throw new TRPCError({
+                code: "CONFLICT",
+                message: "No se pudo agendar en Cal.com. Es posible que el horario esté ocupado o fuera de disponibilidad.",
+              });
             }
           }
         }
@@ -196,6 +258,58 @@ export const appointmentRouter = createTRPCRouter({
         throw new Error("Appointment not found");
       }
 
+      // Si se cambia la fecha o duración, validar conflictos
+      if ((input.date && input.date.getTime() !== existing.date.getTime()) || (input.durationMinutes && input.durationMinutes !== existing.durationMinutes)) {
+        const newStart = input.date ?? existing.date;
+        const newDuration = input.durationMinutes ?? existing.durationMinutes;
+        const newEnd = new Date(newStart.getTime() + newDuration * 60_000);
+
+        // Buscar otras citas del mismo día que no estén canceladas y no sean la actual
+        const sameDayAppointments = await ctx.db.appointment.findMany({
+          where: {
+            id: { not: input.id },
+            status: { notIn: ["CANCELLED"] },
+            date: {
+              gte: new Date(new Date(newStart).setHours(0, 0, 0, 0)),
+              lte: new Date(new Date(newStart).setHours(23, 59, 59, 999)),
+            },
+          },
+          select: { id: true, date: true, durationMinutes: true },
+        });
+
+        const hasConflict = sameDayAppointments.some((appt) => {
+          const apptStart = appt.date;
+          const apptEnd = new Date(apptStart.getTime() + appt.durationMinutes * 60_000);
+          return newStart < apptEnd && newEnd > apptStart;
+        });
+
+        // Buscar bloqueos del mismo día
+        const sameDayBlocks = await ctx.db.blockedSlot.findMany({
+          where: {
+            startAt: {
+              lte: new Date(new Date(newStart).setHours(23, 59, 59, 999)),
+            },
+            endAt: {
+              gte: new Date(new Date(newStart).setHours(0, 0, 0, 0)),
+            },
+          },
+          select: { id: true, startAt: true, endAt: true },
+        });
+
+        const hasBlockConflict = sameDayBlocks.some((block) => {
+          const blockStart = block.startAt;
+          const blockEnd = block.endAt;
+          return newStart < blockEnd && newEnd > blockStart;
+        });
+
+        if (hasConflict || hasBlockConflict) {
+          throw new TRPCError({
+            code: "CONFLICT",
+            message: "Ya existe una cita o un bloqueo en ese horario. Por favor elige un horario disponible.",
+          });
+        }
+      }
+
       // Synchronize cancellation or reschedule back to Cal.com if linked
       if (existing.calComEventId) {
         try {
@@ -209,9 +323,11 @@ export const appointmentRouter = createTRPCRouter({
         }
       }
 
-      const updateData: any = {};
+      const updateData: Prisma.AppointmentUpdateInput = {};
       if (input.title !== undefined) updateData.title = input.title;
-      if (input.serviceId !== undefined) updateData.serviceId = input.serviceId;
+      if (input.serviceId !== undefined) {
+        updateData.service = input.serviceId ? { connect: { id: input.serviceId } } : { disconnect: true };
+      }
       if (input.date !== undefined) updateData.date = input.date;
       if (input.durationMinutes !== undefined) updateData.durationMinutes = input.durationMinutes;
       if (input.status !== undefined) updateData.status = input.status;

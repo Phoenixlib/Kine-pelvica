@@ -209,7 +209,8 @@ export async function createCalComEventType(
         slug,
         lengthInMinutes,
         description: description || "",
-        locations: address ? [{ type: "address", address, public: true }] : undefined,
+        locations: [{ type: "inPerson", address: address || "Benigno Posadas 1884, Iquique", public: true }],
+        scheduleId: env.CALCOM_SCHEDULE_ID ? Number(env.CALCOM_SCHEDULE_ID) : undefined,
         disableGuests: true,
         bookingFields: [
           {
@@ -290,7 +291,8 @@ export async function updateCalComEventType(
         slug,
         lengthInMinutes,
         description: description || "",
-        locations: address ? [{ type: "address", address, public: true }] : undefined,
+        locations: [{ type: "inPerson", address: address || "Benigno Posadas 1884, Iquique", public: true }],
+        scheduleId: env.CALCOM_SCHEDULE_ID ? Number(env.CALCOM_SCHEDULE_ID) : undefined,
         disableGuests: true,
         bookingFields: [
           { type: "name",     label: "Nombre completo",       required: true  },
@@ -388,14 +390,153 @@ export async function getCalComAvailableSlots(
   }
 }
 
-interface CalComOverrideResponse {
+interface CalComOverrideItem {
+  date: string;
+  startTime: string;
+  endTime: string;
+}
+
+interface CalComAvailabilityItem {
+  days: string[];
+  startTime: string;
+  endTime: string;
+}
+
+interface CalComScheduleData {
+  id: number;
+  name: string;
+  timeZone: string;
+  availability: CalComAvailabilityItem[];
+  isDefault: boolean;
+  overrides: CalComOverrideItem[];
+}
+
+interface CalComScheduleResponse {
   status: string;
-  data: { id: number };
+  data: CalComScheduleData;
+}
+
+function formatInSantiago(date: Date) {
+  const d = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "America/Santiago",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit"
+  }).format(date);
+
+  const t = new Intl.DateTimeFormat("en-GB", {
+    timeZone: "America/Santiago",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false
+  }).format(date);
+
+  return { date: d, time: t };
+}
+
+// --- Helpers Matemáticos para Sustracción de Disponibilidad ---
+function timeToMins(t: string): number {
+  const [h, m] = t.split(":").map(Number);
+  return (h || 0) * 60 + (m || 0);
+}
+
+function minsToTime(m: number): string {
+  const h = Math.floor(m / 60).toString().padStart(2, "0");
+  const min = (m % 60).toString().padStart(2, "0");
+  return `${h}:${min}`;
+}
+
+function getBaseAvailabilityForDate(dateStr: string, availability: CalComAvailabilityItem[]): {start: number, end: number}[] {
+  // Parsear fecha en UTC para extraer el día correcto de la semana (evita problemas de timezone)
+  const dateObj = new Date(`${dateStr}T12:00:00Z`);
+  const dayNames = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+  const dayOfWeek = dayNames[dateObj.getUTCDay()] as string;
+
+  const windows: {start: number, end: number}[] = [];
+  for (const rule of availability) {
+    if (rule.days.includes(dayOfWeek)) {
+      windows.push({ start: timeToMins(rule.startTime), end: timeToMins(rule.endTime) });
+    }
+  }
+
+  // Unir traslapes
+  windows.sort((a, b) => a.start - b.start);
+  const merged: {start: number, end: number}[] = [];
+  for (const w of windows) {
+    if (merged.length === 0) {
+      merged.push(w);
+    } else {
+      const last = merged[merged.length - 1];
+      if (w.start <= last.end) {
+        last.end = Math.max(last.end, w.end);
+      } else {
+        merged.push(w);
+      }
+    }
+  }
+  return merged;
+}
+
+function subtractBlock(windows: {start: number, end: number}[], bStart: number, bEnd: number): {start: number, end: number}[] {
+  const result: {start: number, end: number}[] = [];
+  for (const w of windows) {
+    if (bEnd <= w.start || bStart >= w.end) {
+      result.push(w);
+    } else {
+      if (bStart > w.start) result.push({ start: w.start, end: bStart });
+      if (bEnd < w.end) result.push({ start: bEnd, end: w.end });
+    }
+  }
+  return result;
+}
+
+function addBlock(windows: {start: number, end: number}[], bStart: number, bEnd: number): {start: number, end: number}[] {
+  const merged = [...windows, { start: bStart, end: bEnd }];
+  merged.sort((a, b) => a.start - b.start);
+  
+  const result: {start: number, end: number}[] = [];
+  for (const w of merged) {
+    if (result.length === 0) {
+      result.push(w);
+    } else {
+      const last = result[result.length - 1];
+      if (w.start <= last.end) {
+        last.end = Math.max(last.end, w.end);
+      } else {
+        result.push(w);
+      }
+    }
+  }
+  return result;
+}
+
+function isSameWindows(a: {start: number, end: number}[], b: {start: number, end: number}[]): boolean {
+  if (a.length !== b.length) return false;
+  for (let i=0; i<a.length; i++) {
+    if (a[i].start !== b[i].start || a[i].end !== b[i].end) return false;
+  }
+  return true;
+}
+
+async function updateCalComOverrides(scheduleId: string, overrides: CalComOverrideItem[]) {
+  const patchUrl = `${env.CALCOM_API_URL ?? "https://api.cal.com/v2"}/schedules/${scheduleId}`;
+  const res = await fetch(patchUrl, {
+    method: "PATCH",
+    headers: {
+      "Authorization": `Bearer ${env.CALCOM_API_KEY}`,
+      "Content-Type": "application/json",
+      "cal-api-version": "2024-06-11",
+    },
+    body: JSON.stringify({ overrides }),
+  });
+  if (!res.ok) {
+    const errText = await res.text();
+    throw new Error(`Cal.com patch error: ${res.statusText} (${errText})`);
+  }
 }
 
 /**
- * Crea un Schedule Override en Cal.com (bloquea un rango de tiempo).
- * Retorna el ID del override creado para poder eliminarlo luego.
+ * Crea un Schedule Override en Cal.com (sustrayendo el rango de tiempo).
  */
 export async function createCalComScheduleOverride(
   scheduleId: string,
@@ -404,55 +545,117 @@ export async function createCalComScheduleOverride(
 ): Promise<number | null> {
   if (!env.CALCOM_API_KEY) return null;
 
-  const baseUrl = env.CALCOM_API_URL ?? "https://api.cal.com/v2";
-  const url = `${baseUrl}/schedules/${scheduleId}/overrides`;
+  const getUrl = `${env.CALCOM_API_URL ?? "https://api.cal.com/v2"}/schedules/${scheduleId}`;
 
   try {
-    const res = await fetch(url, {
-      method: "POST",
+    const getRes = await fetch(getUrl, {
       headers: {
         "Authorization": `Bearer ${env.CALCOM_API_KEY}`,
-        "Content-Type": "application/json",
-        "cal-api-version": "2024-09-04",
+        "cal-api-version": "2024-06-11",
       },
-      body: JSON.stringify({
-        start: startAt.toISOString(),
-        end:   endAt.toISOString(),
-      }),
     });
-    if (!res.ok) {
-      console.error("Cal.com override error:", await res.text());
-      return null;
+
+    if (!getRes.ok) throw new Error(await getRes.text());
+    const getJson = await getRes.json() as CalComScheduleResponse;
+    
+    const startSantiago = formatInSantiago(startAt);
+    const endSantiago = formatInSantiago(endAt);
+    const targetDate = startSantiago.date;
+
+    const currentOverrides = getJson.data?.overrides || [];
+    const targetDateOverrides = currentOverrides.filter(o => o.date === targetDate);
+    const otherOverrides = currentOverrides.filter(o => o.date !== targetDate);
+
+    const baseAvail = getBaseAvailabilityForDate(targetDate, getJson.data.availability || []);
+    let currentWindows: {start: number, end: number}[] = [];
+
+    if (targetDateOverrides.length > 0) {
+      if (targetDateOverrides.length === 1 && targetDateOverrides[0].startTime === "00:00" && targetDateOverrides[0].endTime === "00:00") {
+        currentWindows = [];
+      } else {
+        currentWindows = targetDateOverrides.map(o => ({ start: timeToMins(o.startTime), end: timeToMins(o.endTime) }));
+      }
+    } else {
+      currentWindows = [...baseAvail];
     }
-    const json = await res.json() as CalComOverrideResponse;
-    return json.data?.id ?? null;
+
+    const newWindows = subtractBlock(currentWindows, timeToMins(startSantiago.time), timeToMins(endSantiago.time));
+
+    let newDateOverrides: CalComOverrideItem[] = [];
+    if (newWindows.length === 0) {
+      newDateOverrides.push({ date: targetDate, startTime: "00:00", endTime: "00:00" });
+    } else {
+      newDateOverrides = newWindows.map(w => ({
+        date: targetDate,
+        startTime: minsToTime(w.start),
+        endTime: minsToTime(w.end)
+      }));
+    }
+
+    await updateCalComOverrides(scheduleId, [...otherOverrides, ...newDateOverrides]);
+    return Math.floor(startAt.getTime() / 1000);
   } catch (err) {
     console.error("createCalComScheduleOverride error:", err);
-    return null;
+    throw err;
   }
 }
 
 /**
- * Elimina un Schedule Override en Cal.com (desbloquea el rango).
+ * Elimina un Schedule Override en Cal.com (añadiendo de vuelta la disponibilidad).
  */
 export async function deleteCalComScheduleOverride(
   scheduleId: string,
-  overrideId: number,
+  startAt: Date,
+  endAt: Date,
 ): Promise<void> {
   if (!env.CALCOM_API_KEY) return;
 
-  const baseUrl = env.CALCOM_API_URL ?? "https://api.cal.com/v2";
-  const url = `${baseUrl}/schedules/${scheduleId}/overrides/${overrideId}`;
+  const getUrl = `${env.CALCOM_API_URL ?? "https://api.cal.com/v2"}/schedules/${scheduleId}`;
 
   try {
-    await fetch(url, {
-      method: "DELETE",
+    const getRes = await fetch(getUrl, {
       headers: {
         "Authorization": `Bearer ${env.CALCOM_API_KEY}`,
-        "cal-api-version": "2024-09-04",
+        "cal-api-version": "2024-06-11",
       },
     });
+
+    if (!getRes.ok) throw new Error(await getRes.text());
+    const getJson = await getRes.json() as CalComScheduleResponse;
+    
+    const startSantiago = formatInSantiago(startAt);
+    const endSantiago = formatInSantiago(endAt);
+    const targetDate = startSantiago.date;
+
+    const currentOverrides = getJson.data?.overrides || [];
+    const targetDateOverrides = currentOverrides.filter(o => o.date === targetDate);
+    const otherOverrides = currentOverrides.filter(o => o.date !== targetDate);
+
+    // Si no hay overrides para este día, no hay nada que deshacer
+    if (targetDateOverrides.length === 0) return;
+
+    const baseAvail = getBaseAvailabilityForDate(targetDate, getJson.data.availability || []);
+    let currentWindows: {start: number, end: number}[] = [];
+
+    if (!(targetDateOverrides.length === 1 && targetDateOverrides[0].startTime === "00:00" && targetDateOverrides[0].endTime === "00:00")) {
+      currentWindows = targetDateOverrides.map(o => ({ start: timeToMins(o.startTime), end: timeToMins(o.endTime) }));
+    }
+
+    const newWindows = addBlock(currentWindows, timeToMins(startSantiago.time), timeToMins(endSantiago.time));
+
+    let newDateOverrides: CalComOverrideItem[] = [];
+    if (!isSameWindows(newWindows, baseAvail)) {
+      newDateOverrides = newWindows.map(w => ({
+        date: targetDate,
+        startTime: minsToTime(w.start),
+        endTime: minsToTime(w.end)
+      }));
+    }
+
+    await updateCalComOverrides(scheduleId, [...otherOverrides, ...newDateOverrides]);
   } catch (err) {
     console.error("deleteCalComScheduleOverride error:", err);
+    throw err;
   }
 }
+

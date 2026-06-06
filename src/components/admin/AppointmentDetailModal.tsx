@@ -145,8 +145,16 @@ export function AppointmentDetailModal({
   const waMessage = `Hola ${appt.patient.firstName}, te escribo de Kinesiología Pélvica Camila Ortiz para recordarte tu cita de ${serviceName} el día ${formattedDateStr} a las ${formattedTimeStr} hrs. Por favor, confírmanos tu asistencia. ¡Que tengas un excelente día!`;
   const waLink = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(waMessage)}`;
 
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  useEffect(() => {
+    setIsFullscreen(!!document.fullscreenElement);
+    const handleFs = () => setIsFullscreen(!!document.fullscreenElement);
+    document.addEventListener("fullscreenchange", handleFs);
+    return () => document.removeEventListener("fullscreenchange", handleFs);
+  }, []);
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#0f3f3e]/40 backdrop-blur-xs animate-in fade-in duration-300">
+    <div className={`${isFullscreen ? "absolute" : "fixed"} inset-0 z-[99999] flex items-center justify-center p-4 bg-[#0f3f3e]/40 backdrop-blur-sm animate-in fade-in duration-300`}>
       <div className="relative bg-offwhite w-full max-w-lg rounded-3xl shadow-2xl border-t-[8px] border-terracotta overflow-hidden max-h-[90vh] flex flex-col">
         {/* Header */}
         <div className="p-6 border-b border-cream/30 bg-white flex items-center justify-between flex-shrink-0">
@@ -392,7 +400,7 @@ export function NotesModal({
   onClose: () => void;
 }) {
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#0f3f3e]/40 backdrop-blur-xs animate-in fade-in duration-300">
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-[#0f3f3e]/40 backdrop-blur-xs animate-in fade-in duration-300">
       <div className="relative bg-offwhite w-full max-w-md rounded-3xl shadow-2xl border-t-[8px] border-amber-500 overflow-hidden flex flex-col">
         {/* Header */}
         <div className="p-6 border-b border-cream/30 bg-white flex items-center justify-between">
@@ -454,7 +462,7 @@ export function CancelReasonModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#0f3f3e]/40 backdrop-blur-xs animate-in fade-in duration-300">
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-[#0f3f3e]/40 backdrop-blur-xs animate-in fade-in duration-300">
       <div className="relative bg-offwhite w-full max-w-md rounded-3xl shadow-2xl border-t-[8px] border-red-500 overflow-hidden flex flex-col">
         {/* Header */}
         <div className="p-6 border-b border-cream/30 bg-white flex items-center justify-between">
