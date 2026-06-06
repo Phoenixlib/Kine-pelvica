@@ -11,17 +11,32 @@ const __dirname = path.dirname(__filename);
 
 /** @type {import("next").NextConfig} */
 const config = {
-  webpack: (config) => {
-    config.module.rules.push({
-      test: /\.(js|mjs|jsx|ts|tsx)$/,
-      use: [
-        {
-          loader: path.resolve(__dirname, "scripts/useEffectEvent-loader.cjs"),
-        },
-      ],
-    });
+  // Configure alias for Turbopack (development)
+  turbopack: {
+    resolveAlias: {
+      react: "./src/sanity/react-shim.js",
+    },
+  },
+  webpack: (config, { webpack }) => {
+    config.plugins.push(
+      new webpack.NormalModuleReplacementPlugin(
+        /^react$/,
+        /** @param {any} resource */
+        (resource) => {
+          if (
+            resource.context &&
+            (resource.context.includes("node_modules/sanity") ||
+              resource.context.includes("node_modules/@sanity") ||
+              resource.context.includes("node_modules/@portabletext"))
+          ) {
+            resource.request = path.resolve(__dirname, "src/sanity/react-shim.js");
+          }
+        }
+      )
+    );
     return config;
   },
 };
 
 export default config;
+

@@ -1,6 +1,5 @@
 "use client";
 
-import "~/sanity/useEffectEvent-polyfill";
 import { NextStudio } from "next-sanity/studio";
 import config from "../../../../../sanity.config";
 
@@ -11,4 +10,5 @@ export default function BlogStudioPage() {
     </div>
   );
 }
+
 
