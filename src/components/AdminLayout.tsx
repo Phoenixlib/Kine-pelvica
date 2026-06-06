@@ -19,7 +19,8 @@ import {
   Settings,
   Camera,
   MessageSquare,
-  UserCog
+  UserCog,
+  BookOpen
 } from "lucide-react";
 
 interface AdminLayoutProps {
@@ -43,6 +44,7 @@ export function AdminLayout({ children, user }: AdminLayoutProps) {
     { href: "/admin/contenido", label: "Contenido Sitio", icon: Home },
     { href: "/admin/galeria", label: "Galería de Fotos", icon: Camera },
     { href: "/admin/buzon", label: "Buzón de Comunidad", icon: MessageSquare },
+    { href: "/admin/blog-studio", label: "Blog (Sanity)", icon: BookOpen },
     { href: "/admin/configuracion", label: "Configuración", icon: UserCog },
   ];
 

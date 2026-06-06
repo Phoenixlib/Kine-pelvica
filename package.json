@@ -45,10 +45,13 @@
     "lucide-react": "^1.16.0",
     "next": "^15.2.3",
     "next-auth": "5.0.0-beta.25",
+    "next-sanity": "^13.0.11",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "recharts": "^3.8.1",
+    "sanity": "^5.30.0",
     "server-only": "^0.0.1",
+    "styled-components": "^6.4.2",
     "superjson": "^2.2.1",
     "tailwind-merge": "^3.6.0",
     "zod": "^3.24.2"
