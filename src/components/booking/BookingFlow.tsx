@@ -8,9 +8,10 @@ type Step = "lookup" | "embed";
 
 interface BookingFlowProps {
   calLink: string; // e.g. "camila-ortiz/evaluacion-pelvica"
+  onClose?: () => void;
 }
 
-export default function BookingFlow({ calLink }: BookingFlowProps) {
+export default function BookingFlow({ calLink, onClose }: BookingFlowProps) {
   const [step, setStep] = useState<Step>("lookup");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -19,15 +20,15 @@ export default function BookingFlow({ calLink }: BookingFlowProps) {
   const [acceptedPolicies, setAcceptedPolicies] = useState(false);
   const [bookingSuccessData, setBookingSuccessData] = useState<any>(null);
 
-  const cleanPhoneForCalcom = (phoneStr: string) => {
+  const formatPhoneForCalcom = (phoneStr: string) => {
     // Normalizar: quitar espacios, guiones y paréntesis
     let cleaned = phoneStr.replace(/[\s-()]/g, "").trim();
     if (cleaned.startsWith("+56")) {
-      cleaned = cleaned.substring(3);
+      return cleaned;
     } else if (cleaned.startsWith("56") && cleaned.length > 9) {
-      cleaned = cleaned.substring(2);
+      return "+" + cleaned;
     }
-    return cleaned;
+    return "+56" + cleaned;
   };
 
   const handleLookup = async (e: React.FormEvent) => {
@@ -53,7 +54,7 @@ export default function BookingFlow({ calLink }: BookingFlowProps) {
         setPrefill({
           name: `${data.patient.firstName} ${data.patient.lastName}`.trim(),
           email: data.patient.email ?? "",
-          attendeePhoneNumber: cleanPhoneForCalcom(data.patient.phone),
+          attendeePhoneNumber: formatPhoneForCalcom(data.patient.phone),
         });
         setStep("embed");
       } else {
@@ -70,8 +71,8 @@ export default function BookingFlow({ calLink }: BookingFlowProps) {
   };
 
   const handleDirectBooking = () => {
-    // Primera vez → abrir embed vacío
-    setPrefill({});
+    // Primera vez → abrir embed con prefijo +56 por defecto
+    setPrefill({ attendeePhoneNumber: "+56" });
     setStep("embed");
   };
 
@@ -124,6 +125,7 @@ export default function BookingFlow({ calLink }: BookingFlowProps) {
                 setStep("lookup");
                 setQuery("");
                 setAcceptedPolicies(false);
+                onClose?.();
               }}
               className="bg-terracotta text-white px-8 py-3 rounded-full font-subtitle text-sm uppercase tracking-widest font-bold hover:bg-teal transition-colors shadow-sm"
             >

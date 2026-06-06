@@ -42,24 +42,24 @@ export default function CalComEmbed({ calLink, prefill, onSuccess }: CalComEmbed
     })();
   }, [onSuccess]);
 
-  // Construir link con parámetros de prefill
-  let finalCalLink = calLink;
+  // Preparar la configuración del embed
+  const embedConfig: any = { layout: "month_view" };
+  
   if (prefill) {
-    const params = new URLSearchParams();
-    if (prefill.name) params.append("name", prefill.name);
-    if (prefill.email) params.append("email", prefill.email);
-    if (prefill.attendeePhoneNumber)
-      params.append("attendeePhoneNumber", prefill.attendeePhoneNumber);
-    const qs = params.toString();
-    if (qs) finalCalLink = `${calLink}?${qs}`;
+    if (prefill.name) embedConfig.name = prefill.name;
+    if (prefill.email) embedConfig.email = prefill.email;
+    if (prefill.attendeePhoneNumber) {
+      embedConfig.attendeePhoneNumber = prefill.attendeePhoneNumber;
+      embedConfig.phone = prefill.attendeePhoneNumber;
+    }
   }
 
   return (
     <div className="w-full min-h-[750px]">
       <Cal
-        calLink={finalCalLink}
+        calLink={calLink}
         style={{ width: "100%", height: "100%", minHeight: "750px" }}
-        config={{ layout: "month_view" }}
+        config={embedConfig}
       />
     </div>
   );

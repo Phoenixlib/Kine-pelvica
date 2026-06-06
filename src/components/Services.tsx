@@ -176,7 +176,10 @@ export function Services({ initialCategories }: ServicesProps) {
             >
               <X size={16} className="text-charcoal" />
             </button>
-            <BookingFlow calLink={bookingModal.calLink} />
+            <BookingFlow 
+              calLink={bookingModal.calLink} 
+              onClose={() => setBookingModal({ open: false, calLink: "" })} 
+            />
           </div>
         </div>
       )}
