@@ -1,63 +1,165 @@
-import React from 'react';
-import Link from 'next/link';
-import { ArrowLeft } from 'lucide-react';
+import React from "react";
+import Link from "next/link";
+import {
+  ArrowLeft,
+  Clock,
+  Calendar,
+  CheckCircle2,
+  ShieldAlert,
+  AlertCircle,
+  MessageSquare,
+} from "lucide-react";
+import { Navbar } from "~/components/Navbar";
+import { Footer } from "~/components/Footer";
 
 export const metadata = {
-  title: "Políticas de Atención | Estudio Pélvico",
-  description: "Políticas de atención, cancelación y reembolso para pacientes de Estudio Pélvico.",
+  title: "Políticas y Condiciones de Atención | Estudio Pélvico",
+  description:
+    "Políticas y condiciones de reserva, modificaciones, inasistencias y atención para pacientes de Estudio Pélvico.",
 };
 
 export default function PoliticasAtencionPage() {
   return (
-    <div className="min-h-screen bg-slate-50 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-3xl mx-auto bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
-        <div className="p-8 sm:p-10">
-          <Link href="/" className="inline-flex items-center text-sm text-slate-500 hover:text-slate-900 mb-8 transition-colors">
-            <ArrowLeft className="w-4 h-4 mr-2" />
+    <>
+      <Navbar forceSolid={true} />
+
+      <main className="min-h-screen bg-offwhite pt-32 pb-24 font-body text-teal">
+        <div className="container mx-auto px-4 max-w-4xl">
+          {/* Volver */}
+          <Link
+            href="/"
+            className="inline-flex items-center text-teal hover:text-terracotta font-subtitle text-xs uppercase tracking-widest font-bold mb-10 transition-colors gap-2"
+          >
+            <ArrowLeft className="w-4 h-4" />
             Volver al inicio
           </Link>
-          
-          <h1 className="text-3xl font-bold text-slate-900 mb-6">Políticas de Atención</h1>
-          
-          <div className="prose prose-slate max-w-none">
-            <p className="text-slate-600 mb-6">
-              Bienvenido(a) a Estudio Pélvico. Para asegurar la mejor experiencia y calidad de atención para todos nuestros pacientes, te pedimos leer cuidadosamente nuestras políticas.
-            </p>
 
-            <h2 className="text-xl font-semibold text-slate-900 mt-8 mb-4">1. Llegada y Puntualidad</h2>
-            <p className="text-slate-600 mb-4">
-              Se solicita llegar con 5 a 10 minutos de anticipación a tu hora agendada. El tiempo de retraso se descontará del tiempo total de la sesión para respetar a los pacientes que vienen a continuación. Un retraso mayor a 15 minutos sin previo aviso podría considerarse como inasistencia.
-            </p>
+          {/* Contenedor Principal */}
+          <div className="bg-white rounded-3xl border border-cream/50 shadow-sm overflow-hidden p-8 md:p-12">
+            <header className="border-b border-cream/50 pb-8 mb-10 text-center md:text-left">
+              <h1 className="font-title text-3xl md:text-4xl text-teal mb-4 leading-tight">
+                Políticas y Condiciones de Atención
+              </h1>
+              <p className="font-body text-sm md:text-base text-teal/70 max-w-2xl">
+                Al agendar una hora, el/la paciente declara haber leído y
+                aceptado las siguientes condiciones generales para asegurar una
+                atención de excelencia.
+              </p>
+            </header>
 
-            <h2 className="text-xl font-semibold text-slate-900 mt-8 mb-4">2. Cancelaciones y Reprogramaciones</h2>
-            <p className="text-slate-600 mb-4">
-              Entendemos que pueden surgir imprevistos. Si necesitas cancelar o reprogramar tu cita, te pedimos hacerlo con al menos 24 horas de anticipación. Esto nos permite ofrecer ese horario a otro paciente que lo necesite.
-            </p>
-            <p className="text-slate-600 mb-4">
-              Las cancelaciones con menos de 24 horas de aviso o las inasistencias sin previo aviso podrían estar sujetas al cobro parcial o total del valor de la sesión.
-            </p>
+            <div className="space-y-8">
+              {/* Sección 1 */}
+              <div className="flex items-start gap-4">
+                <div className="w-10 h-10 rounded-xl bg-cream/30 text-terracotta flex items-center justify-center shrink-0">
+                  <Calendar size={20} />
+                </div>
+                <div className="space-y-1">
+                  <h2 className="font-title text-xl text-teal">
+                    1. Reserva y confirmación de hora
+                  </h2>
+                  <p className="font-body text-sm text-teal/80 leading-relaxed">
+                    La hora se considera confirmada únicamente una vez realizada
+                    la reserva a través de **AgendaPro** y/o el pago
+                    correspondiente, según se indique en el flujo de
+                    agendamiento.
+                  </p>
+                </div>
+              </div>
 
-            <h2 className="text-xl font-semibold text-slate-900 mt-8 mb-4">3. Pagos y Reembolsos</h2>
-            <p className="text-slate-600 mb-4">
-              El pago de la sesión debe realizarse al finalizar la misma, o de forma anticipada si así se ha acordado. Los servicios prestados no están sujetos a reembolso. En caso de paquetes de sesiones, estos tienen una vigencia específica que será informada al momento de la compra.
-            </p>
+              {/* Sección 2 */}
+              <div className="flex items-start gap-4">
+                <div className="w-10 h-10 rounded-xl bg-cream/30 text-terracotta flex items-center justify-center shrink-0">
+                  <Clock size={20} />
+                </div>
+                <div className="space-y-1">
+                  <h2 className="font-title text-xl text-teal">
+                    2. Modificaciones y cancelaciones
+                  </h2>
+                  <p className="font-body text-sm text-teal/80 leading-relaxed">
+                    Las horas pueden ser modificadas o canceladas libremente
+                    **hasta las 18:00 hrs del día hábil anterior a la cita**.
+                    Posterior a ese horario, no se permiten cambios ni
+                    cancelaciones bajo la modalidad regular.
+                  </p>
+                </div>
+              </div>
 
-            <h2 className="text-xl font-semibold text-slate-900 mt-8 mb-4">4. Confidencialidad</h2>
-            <p className="text-slate-600 mb-4">
-              Toda la información compartida durante la sesión, así como tu ficha clínica, es estrictamente confidencial y se maneja bajo los más altos estándares de privacidad profesional.
-            </p>
+              {/* Sección 3 */}
+              <div className="flex items-start gap-4">
+                <div className="w-10 h-10 rounded-xl bg-cream/30 text-terracotta flex items-center justify-center shrink-0">
+                  <ShieldAlert size={20} />
+                </div>
+                <div className="space-y-1">
+                  <h2 className="font-title text-xl text-teal">
+                    3. Inasistencia y cancelaciones tardías
+                  </h2>
+                  <p className="font-body text-sm text-teal/80 leading-relaxed">
+                    En caso de no asistir a la cita acordada o de solicitar
+                    modificaciones/cancelaciones fuera del plazo estipulado,
+                    **la sesión se considerará realizada**, sin derecho a
+                    reembolsos ni devoluciones de ningún tipo.
+                  </p>
+                </div>
+              </div>
 
-            <h2 className="text-xl font-semibold text-slate-900 mt-8 mb-4">5. Comunicación</h2>
-            <p className="text-slate-600 mb-8">
-              Cualquier consulta sobre tu tratamiento o cambios en tu agendamiento deben realizarse por nuestros canales oficiales de contacto durante el horario de atención.
-            </p>
+              {/* Sección 4 */}
+              <div className="flex items-start gap-4">
+                <div className="w-10 h-10 rounded-xl bg-cream/30 text-terracotta flex items-center justify-center shrink-0">
+                  <AlertCircle size={20} />
+                </div>
+                <div className="space-y-1">
+                  <h2 className="font-title text-xl text-teal">
+                    4. Excepciones por urgencia médica
+                  </h2>
+                  <p className="font-body text-sm text-teal/80 leading-relaxed">
+                    En caso de verse afectado(a) por una **urgencia médica
+                    real** (accidente o enfermedad aguda imprevista), se podrá
+                    evaluar individualmente la reprogramación de la hora. Para
+                    ello, es indispensable presentar el respaldo correspondiente
+                    (ej: certificado médico emitido o comprobante de urgencia).
+                    Estas situaciones serán analizadas y consideradas de manera
+                    estrictamente excepcional.
+                  </p>
+                </div>
+              </div>
 
-            <div className="bg-slate-50 p-6 rounded-xl text-sm text-slate-500 border border-slate-100">
-              <p>Última actualización: Junio 2026</p>
+              {/* Sección 5 */}
+              <div className="flex items-start gap-4">
+                <div className="w-10 h-10 rounded-xl bg-cream/30 text-terracotta flex items-center justify-center shrink-0">
+                  <MessageSquare size={20} />
+                </div>
+                <div className="space-y-1">
+                  <h2 className="font-title text-xl text-teal">
+                    5. Medio de contacto
+                  </h2>
+                  <p className="font-body text-sm text-teal/80 leading-relaxed">
+                    Todas las coordinaciones, consultas u orientaciones clínicas
+                    se realizan **exclusivamente dentro del horario de atención
+                    presencial**. Los mensajes recibidos fuera de este horario
+                    laboral serán respondidos en el siguiente bloque disponible.
+                  </p>
+                </div>
+              </div>
             </div>
+
+            {/* Aceptación final */}
+            <div className="mt-12 p-6 bg-[#f7f3ef] border border-cream/50 rounded-2xl flex items-center gap-3">
+              <CheckCircle2 size={24} className="text-terracotta shrink-0" />
+              <p className="font-subtitle text-xs font-bold uppercase tracking-wider text-teal">
+                Al agendar su hora en el Estudio, usted declara aceptar
+                íntegramente estas políticas de atención.
+              </p>
+            </div>
+
+            <footer className="mt-10 border-t border-cream/20 pt-6 flex justify-between items-center text-[11px] font-subtitle uppercase tracking-widest text-[#0f3f3e]/40 font-bold">
+              <span>Última actualización: Junio 2026</span>
+              <span>Estudio Pélvico Camila Ortiz</span>
+            </footer>
           </div>
         </div>
-      </div>
-    </div>
+      </main>
+
+      <Footer />
+    </>
   );
 }

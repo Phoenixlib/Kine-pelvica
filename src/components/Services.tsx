@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import BookingFlow from "./booking/BookingFlow";
 import { X } from "lucide-react";
 
@@ -28,6 +28,17 @@ export function Services({ initialCategories }: ServicesProps) {
     calLink: "",
   });
   const [selectedService, setSelectedService] = useState<Service | null>(null);
+
+  useEffect(() => {
+    if (bookingModal.open || selectedService) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "unset";
+    }
+    return () => {
+      document.body.style.overflow = "unset";
+    };
+  }, [bookingModal.open, selectedService]);
 
   const fallbackCategories: ServiceCategory[] = [
     {
@@ -169,7 +180,7 @@ export function Services({ initialCategories }: ServicesProps) {
       {/* Modal overlay */}
       {bookingModal.open && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-charcoal/60 backdrop-blur-sm p-4">
-          <div className="relative w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+          <div className="relative w-full max-w-2xl max-h-[90vh] overflow-y-auto [&::-webkit-scrollbar]:hidden sm:[&::-webkit-scrollbar]:block [-ms-overflow-style:none] sm:[-ms-overflow-style:auto] [scrollbar-width:none] sm:[scrollbar-width:auto]">
             <button
               onClick={() => setBookingModal({ open: false, calLink: "" })}
               className="absolute top-4 right-4 z-10 p-2 bg-white rounded-full shadow hover:bg-offwhite transition"

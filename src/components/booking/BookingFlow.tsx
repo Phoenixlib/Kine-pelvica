@@ -20,6 +20,8 @@ export default function BookingFlow({ calLink, onClose }: BookingFlowProps) {
   const [acceptedPolicies, setAcceptedPolicies] = useState(false);
   const [bookingSuccessData, setBookingSuccessData] = useState<any>(null);
 
+  const [copiedField, setCopiedField] = useState<string | null>(null);
+
   const formatPhoneForCalcom = (phoneStr: string) => {
     // Normalizar: quitar espacios, guiones y paréntesis
     let cleaned = phoneStr.replace(/[\s-()]/g, "").trim();
@@ -44,9 +46,14 @@ export default function BookingFlow({ calLink, onClose }: BookingFlowProps) {
       const url = new URL("/api/pacientes/lookup", window.location.origin);
       url.searchParams.append("query", query.trim());
       const res = await fetch(url.toString());
-      const data = await res.json() as { 
-        found: boolean; 
-        patient?: { firstName: string; lastName: string; email: string | null; phone: string } 
+      const data = (await res.json()) as {
+        found: boolean;
+        patient?: {
+          firstName: string;
+          lastName: string;
+          email: string | null;
+          phone: string;
+        };
       };
 
       if (data.found && data.patient) {
@@ -60,11 +67,13 @@ export default function BookingFlow({ calLink, onClose }: BookingFlowProps) {
       } else {
         // No se encontró el paciente
         setError(
-          "No encontramos a un cliente con estos datos. Verifica si hay algún error en tu nombre o teléfono, o si es tu primera vez en Estudio Pelvico por favor vuelve e ingresa por la opción de nuevo cliente."
+          "No encontramos a un cliente con estos datos. Verifica si hay algún error en tu nombre o teléfono, o si es tu primera vez en Estudio Pelvico por favor vuelve e ingresa por la opción de nuevo cliente.",
         );
       }
     } catch {
-      setError("Ocurrió un error al buscar tus datos. Por favor intenta de nuevo.");
+      setError(
+        "Ocurrió un error al buscar tus datos. Por favor intenta de nuevo.",
+      );
     } finally {
       setLoading(false);
     }
@@ -81,58 +90,358 @@ export default function BookingFlow({ calLink, onClose }: BookingFlowProps) {
     setBookingSuccessData(e?.detail?.data || e?.data || {});
   };
 
+  const copyToClipboard = (text: string, label: string) => {
+    void navigator.clipboard.writeText(text);
+    setCopiedField(label);
+    setTimeout(() => setCopiedField(null), 2000);
+  };
+
+  if (bookingSuccessData) {
+    // Calcular fecha del booking
+    const bookingDate = bookingSuccessData?.date
+      ? new Date(bookingSuccessData.date)
+      : bookingSuccessData?.startTime
+        ? new Date(bookingSuccessData.startTime)
+        : null;
+
+    const formattedDateString = bookingDate
+      ? bookingDate.toLocaleDateString("es-CL", {
+          weekday: "long",
+          day: "numeric",
+          month: "long",
+        }) +
+        " - " +
+        bookingDate
+          .toLocaleTimeString("es-CL", {
+            hour: "2-digit",
+            minute: "2-digit",
+            hour12: true,
+          })
+          .replace("a. m.", "am")
+          .replace("p. m.", "pm")
+      : "";
+
+    // Obtener nombres de los asistentes
+    const attendeeName =
+      bookingSuccessData?.attendees?.[0]?.name || prefill?.name || "";
+
+    return (
+      <div className="w-full bg-white p-6 md:p-8 rounded-3xl animate-in fade-in zoom-in duration-300 flex flex-col items-center">
+        {/* Ícono de Visto Verde */}
+        <div className="flex items-center justify-center mb-4">
+          <div className="w-16 h-16 rounded-full border-4 border-redbrown/80 flex items-center justify-center">
+            <svg
+              className="w-8 h-8 text-redbrown"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth={3}
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M5 13l4 4L19 7"
+              />
+            </svg>
+          </div>
+        </div>
+
+        {/* Mensaje de Gratitud Personalizado */}
+        <h2 className="text-lg md:text-xl font-subtitle font-bold text-teal text-center mb-6 leading-relaxed max-w-lg">
+          ¡Gracias {attendeeName} por agendar en Estudio Pélvico Camila Ortiz!
+        </h2>
+
+        {/* Caja de Información Importante */}
+        <div className="w-full bg-[#f7f3ef] border border-cream/50 rounded-2xl p-5 mb-6 text-sm text-teal leading-relaxed space-y-4 shadow-xs">
+          <h3 className="font-subtitle font-bold text-xs uppercase tracking-wider text-terracotta flex items-center gap-1.5">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <circle cx="12" cy="12" r="10" />
+              <line x1="12" y1="16" x2="12" y2="12" />
+              <line x1="12" y1="8" x2="12.01" y2="8" />
+            </svg>
+            Información importante para su cita
+          </h3>
+          <p className="font-body text-sm md:text-[15px] leading-relaxed text-teal/90">
+            El día previo a su atención se enviará un recordatorio vía
+            WhatsApp (asegúrese de haber escrito correctamente su número de
+            contacto), donde podrá confirmar su asistencia adjuntando el
+            comprobante de pago.
+          </p>
+          <p className="font-body text-sm md:text-[15px] leading-relaxed text-teal/90">
+            Para mantener su hora, es necesario enviar el comprobante de
+            pago antes de las 18:00 hrs del día hábil anterior. De lo
+            contrario, el cupo será liberado automáticamente.
+          </p>
+          <p className="font-body text-sm md:text-[15px] leading-relaxed text-teal/90">
+            Las citas pueden modificarse o cancelarse hasta las 18:00 hrs
+            del día hábil anterior. Posterior a ese horario, la sesión se
+            considera realizada, sin derecho a reembolso. En caso de
+            urgencia médica real, se podrá evaluar la reprogramación
+            presentando el respaldo correspondiente. Agradecemos su
+            comprensión y el respeto por el tiempo de todos.
+          </p>
+
+          <div className="border-t border-cream/40 pt-4">
+            <h4 className="font-subtitle font-bold text-xs uppercase tracking-wider text-[#0f3f3e] mb-3">
+              Datos de Transferencia Bancaria:
+            </h4>
+            <div className="bg-white rounded-xl p-4 border border-cream/30 space-y-2.5 font-body text-xs text-teal relative">
+              <div className="flex justify-between items-center py-1 border-b border-offwhite">
+                <span>
+                  Nombre:{" "}
+                  <strong className="font-subtitle font-bold text-teal">
+                    Camila Ortiz
+                  </strong>
+                </span>
+              </div>
+              <div className="flex justify-between items-center py-1 border-b border-offwhite">
+                <span>
+                  Rut:{" "}
+                  <strong className="font-subtitle font-bold text-teal">
+                    17.798.781-6
+                  </strong>
+                </span>
+              </div>
+              <div className="flex justify-between items-center py-1 border-b border-offwhite">
+                <span>
+                  Banco:{" "}
+                  <strong className="font-subtitle font-bold text-teal">
+                    Banco de Chile
+                  </strong>
+                </span>
+              </div>
+              <div className="flex justify-between items-center py-1 border-b border-offwhite">
+                <span>
+                  Tipo Cuenta:{" "}
+                  <strong className="font-subtitle font-bold text-teal">
+                    Cuenta Corriente
+                  </strong>
+                </span>
+              </div>
+              <div className="flex justify-between items-center py-1 border-b border-offwhite">
+                <span>
+                  Nº Cuenta:{" "}
+                  <strong className="font-subtitle font-bold text-teal">
+                    00-1 07-24890-05
+                  </strong>
+                </span>
+              </div>
+              <div className="flex justify-between items-center py-1">
+                <span>
+                  Email:{" "}
+                  <strong className="font-subtitle font-bold text-teal">
+                    Camilaortiz.kine@gmail.com
+                  </strong>
+                </span>
+              </div>
+
+              {/* Botón único para copiar todos los datos de transferencia */}
+              <button
+                type="button"
+                onClick={() => {
+                  const allDetails = `Datos de Transferencia Bancaria - Estudio Pélvico:\nNombre: Camila Ortiz\nRut: 17.798.781-6\nBanco: Banco de Chile\nTipo Cuenta: Cuenta Corriente\nNº Cuenta: 00-1 07-24890-05\nEmail: Camilaortiz.kine@gmail.com`;
+                  copyToClipboard(allDetails, "transferencia");
+                }}
+                className="w-full flex items-center justify-center gap-2 mt-3 bg-[#e6ded9] hover:bg-[#ded5ce] text-[#0f3f3e] font-subtitle uppercase tracking-widest font-bold text-[10px] py-2.5 px-4 rounded-xl transition duration-200"
+              >
+                {copiedField === "transferencia" ? (
+                  <>
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="14"
+                      height="14"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2.5"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      className="text-emerald-700 animate-bounce"
+                    >
+                      <polyline points="20 6 9 17 4 12" />
+                    </svg>
+                    ¡Datos Copiados!
+                  </>
+                ) : (
+                  <>
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="14"
+                      height="14"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+                      <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+                    </svg>
+                    Copiar Datos de Transferencia
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Detalle de Cita de la Imagen */}
+        <div className="w-full max-w-md bg-white border border-cream rounded-2xl p-5 md:p-6 mb-8 text-teal font-body shadow-sm">
+          <div className="divide-y divide-offwhite space-y-4">
+            {/* Servicio */}
+            <div className="flex items-start gap-4 pb-4">
+              <div className="pt-0.5 text-teal/60">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z" />
+                </svg>
+              </div>
+              <div className="space-y-1 min-w-0">
+                <span className="text-teal/50 font-subtitle text-[11px] uppercase tracking-wider block">
+                  Servicio
+                </span>
+                <span className="font-subtitle font-medium text-sm text-teal block truncate">
+                  {bookingSuccessData?.title ||
+                    bookingSuccessData?.eventType?.title ||
+                    "Evaluación pélvica"}
+                </span>
+              </div>
+            </div>
+
+            {/* Fecha y Hora  */}
+            <div className="flex items-start gap-4 py-4">
+              <div className="pt-0.5 text-teal/60">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+                  <line x1="16" y1="2" x2="16" y2="6" />
+                  <line x1="8" y1="2" x2="8" y2="6" />
+                  <line x1="3" y1="10" x2="21" y2="10" />
+                </svg>
+              </div>
+              <div className="space-y-1 min-w-0">
+                <span className="text-teal/50 font-subtitle text-[11px] uppercase tracking-wider block">
+                  Fecha y hora
+                </span>
+                <span className="font-subtitle font-medium text-sm text-teal block capitalize">
+                  {formattedDateString || "Pendiente"}
+                </span>
+              </div>
+            </div>
+
+            {/* Ubicación */}
+            <div className="flex items-start gap-4 py-4">
+              <div className="pt-0.5 text-teal/60">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+                  <polyline points="9 22 9 12 15 12 15 22" />
+                </svg>
+              </div>
+              <div className="space-y-1 min-w-0">
+                <span className="text-teal/50 font-subtitle text-[11px] uppercase tracking-wider block">
+                  Ubicación
+                </span>
+                <span className="font-subtitle font-medium text-sm text-teal block leading-relaxed text-balance">
+                  {bookingSuccessData?.location ||
+                    "Estudio Pélvico Camila Ortiz, Benigno Posadas 1884, Iquique, Chile"}
+                </span>
+              </div>
+            </div>
+
+            {/* Precio */}
+            <div className="flex items-start gap-4 pt-4">
+              <div className="pt-0.5 text-teal/60">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <line x1="12" y1="1" x2="12" y2="23" />
+                  <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
+                </svg>
+              </div>
+              <div className="space-y-1 min-w-0">
+                <span className="text-teal/50 font-subtitle text-[11px] uppercase tracking-wider block">
+                  Precio
+                </span>
+                <span className="font-subtitle font-bold text-sm text-redbrown block">
+                  $35.000
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Acción de Cerrar */}
+        <button
+          onClick={() => {
+            setBookingSuccessData(null);
+            setStep("lookup");
+            setQuery("");
+            setAcceptedPolicies(false);
+            onClose?.();
+          }}
+          className="bg-[#0f3f3e] text-white px-8 py-3 rounded-full font-subtitle text-xs uppercase tracking-widest font-bold hover:bg-terracotta transition-colors shadow-sm"
+        >
+          Cerrar y Volver
+        </button>
+      </div>
+    );
+  }
+
   if (step === "embed") {
     return (
       <div className="w-full relative">
-        <CalComEmbed calLink={calLink} prefill={prefill} onSuccess={handleBookingSuccess} />
-        
-        {/* Modal de éxito sobre el embed */}
-        {bookingSuccessData && (
-          <div className="absolute inset-0 z-50 bg-white/95 backdrop-blur-sm flex flex-col items-center justify-center p-8 rounded-3xl animate-in fade-in zoom-in duration-300">
-            <div className="bg-teal/5 p-4 rounded-full mb-6">
-              <svg className="w-12 h-12 text-teal" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-              </svg>
-            </div>
-            <h2 className="text-3xl font-bold text-teal font-title mb-4 text-center">¡Reserva Confirmada!</h2>
-            <p className="text-slate-600 mb-8 text-center max-w-md leading-relaxed">
-              Tu hora ha sido agendada con éxito. Recibirás un correo con los detalles y el enlace (si aplica) en breve.
-            </p>
-            <div className="w-full max-w-sm bg-white p-6 rounded-2xl shadow-sm border border-slate-100 mb-8">
-              <div className="space-y-4">
-                {bookingSuccessData.date && (
-                  <div className="flex justify-between border-b border-slate-50 pb-3">
-                    <span className="text-slate-500 text-sm">Fecha y Hora</span>
-                    <span className="font-semibold text-slate-800 text-sm text-right">
-                      {new Date(bookingSuccessData.date).toLocaleString('es-CL', { 
-                        dateStyle: 'medium', 
-                        timeStyle: 'short' 
-                      })}
-                    </span>
-                  </div>
-                )}
-                {bookingSuccessData.title && (
-                  <div className="flex justify-between">
-                    <span className="text-slate-500 text-sm">Servicio</span>
-                    <span className="font-semibold text-slate-800 text-sm text-right">{bookingSuccessData.title}</span>
-                  </div>
-                )}
-              </div>
-            </div>
-            <button
-              onClick={() => {
-                setBookingSuccessData(null);
-                setStep("lookup");
-                setQuery("");
-                setAcceptedPolicies(false);
-                onClose?.();
-              }}
-              className="bg-terracotta text-white px-8 py-3 rounded-full font-subtitle text-sm uppercase tracking-widest font-bold hover:bg-teal transition-colors shadow-sm"
-            >
-              Volver al inicio
-            </button>
-          </div>
-        )}
+        <CalComEmbed
+          calLink={calLink}
+          prefill={prefill}
+          onSuccess={handleBookingSuccess}
+        />
       </div>
     );
   }
@@ -143,7 +452,8 @@ export default function BookingFlow({ calLink, onClose }: BookingFlowProps) {
         ¿Ya eres paciente de Estudio Pélvico?
       </h2>
       <p className="text-sm text-teal/70 text-center mb-6">
-        Ingresa tu nombre o teléfono para buscar tu ficha y agilizar tu reserva con tus datos.
+        Ingresa tu nombre o teléfono para buscar tu ficha y agilizar tu reserva
+        con tus datos.
       </p>
 
       <form onSubmit={handleLookup} className="space-y-4">
@@ -158,7 +468,7 @@ export default function BookingFlow({ calLink, onClose }: BookingFlowProps) {
             required
           />
         </div>
-        
+
         {error && (
           <div className="p-3 bg-red-50 rounded-xl border border-red-100 text-xs text-red-600 leading-relaxed text-center">
             {error}
@@ -179,7 +489,9 @@ export default function BookingFlow({ calLink, onClose }: BookingFlowProps) {
           <div className="w-full border-t border-cream"></div>
         </div>
         <div className="relative flex justify-center text-xs uppercase">
-          <span className="bg-white px-2 text-teal/40 font-subtitle tracking-wider">o también</span>
+          <span className="bg-white px-2 text-teal/40 font-subtitle tracking-wider">
+            o también
+          </span>
         </div>
       </div>
 
@@ -205,12 +517,19 @@ export default function BookingFlow({ calLink, onClose }: BookingFlowProps) {
           onChange={(e) => setAcceptedPolicies(e.target.checked)}
           className="mt-1 w-4 h-4 rounded border-slate-300 text-terracotta focus:ring-terracotta"
         />
-        <label htmlFor="policies" className="text-xs text-slate-600 leading-relaxed">
+        <label
+          htmlFor="policies"
+          className="text-xs text-slate-600 leading-relaxed"
+        >
           He leído y acepto las{" "}
-          <Link href="/politicas-de-atencion" target="_blank" className="text-terracotta underline hover:text-terracotta/80">
+          <Link
+            href="/politicas-de-atencion"
+            target="_blank"
+            className="text-terracotta underline hover:text-terracotta/80"
+          >
             Políticas de Atención
-          </Link>
-          {" "}y cancelación de la clínica.
+          </Link>{" "}
+          y cancelación de la clínica.
         </label>
       </div>
     </div>
