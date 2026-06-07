@@ -209,7 +209,7 @@ export async function createCalComEventType(
         slug,
         lengthInMinutes,
         description: description || "",
-        locations: [{ type: "inPerson", address: address || "Benigno Posadas 1884, Iquique", public: true }],
+        locations: [{ type: "address", address: address || "Benigno Posadas 1884, Iquique", public: true }],
         scheduleId: env.CALCOM_SCHEDULE_ID ? Number(env.CALCOM_SCHEDULE_ID) : undefined,
         disableGuests: true,
         bookingFields: [
@@ -291,7 +291,7 @@ export async function updateCalComEventType(
         slug,
         lengthInMinutes,
         description: description || "",
-        locations: [{ type: "inPerson", address: address || "Benigno Posadas 1884, Iquique", public: true }],
+        locations: [{ type: "address", address: address || "Benigno Posadas 1884, Iquique", public: true }],
         scheduleId: env.CALCOM_SCHEDULE_ID ? Number(env.CALCOM_SCHEDULE_ID) : undefined,
         disableGuests: true,
         bookingFields: [

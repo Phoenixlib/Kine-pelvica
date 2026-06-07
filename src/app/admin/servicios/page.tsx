@@ -400,6 +400,9 @@ export default function ServiciosPage() {
     type: "service" | "category";
   } | null>(null);
 
+  // State for error messages (instead of alert)
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
   // Drag and Drop Local States
   const [localServices, setLocalServices] = useState<Service[]>([]);
   const [localCategories, setLocalCategories] = useState<Category[]>([]);
@@ -433,11 +436,17 @@ export default function ServiciosPage() {
     onSuccess: async () => {
       await utils.service.getAllAdmin.invalidate();
     },
+    onError: (err) => {
+      console.error(`Error al reordenar servicios:`, err.message);
+    },
   });
 
   const reorderCategories = api.service.reorderCategories.useMutation({
     onSuccess: async () => {
       await utils.service.getCategories.invalidate();
+    },
+    onError: (err) => {
+      console.error(`Error al reordenar categorías:`, err.message);
     },
   });
 
@@ -552,6 +561,10 @@ export default function ServiciosPage() {
       setIsServiceModalOpen(false);
       resetServiceForm();
     },
+    onError: (err) => {
+      console.error(`Error al crear el servicio:`, err.message);
+      setErrorMessage(`Ocurrió un error inesperado. Por favor avisa al desarrollador.`);
+    },
   });
 
   const updateService = api.service.updateService.useMutation({
@@ -560,6 +573,10 @@ export default function ServiciosPage() {
       setIsServiceModalOpen(false);
       resetServiceForm();
     },
+    onError: (err) => {
+      console.error(`Error al actualizar el servicio:`, err.message);
+      setErrorMessage(`Ocurrió un error inesperado. Por favor avisa al desarrollador.`);
+    },
   });
 
   const deleteService = api.service.deleteService.useMutation({
@@ -567,6 +584,11 @@ export default function ServiciosPage() {
       await utils.service.getAllAdmin.invalidate();
       setIsDeleteModalOpen(false);
       setItemToDelete(null);
+      setErrorMessage(null);
+    },
+    onError: (err) => {
+      console.error(`Error al eliminar el servicio:`, err.message);
+      setErrorMessage(`Ocurrió un error inesperado. Por favor avisa al desarrollador.`);
     },
   });
 
@@ -575,6 +597,10 @@ export default function ServiciosPage() {
       await utils.service.getCategories.invalidate();
       setIsCategoryModalOpen(false);
       resetCategoryForm();
+    },
+    onError: (err) => {
+      console.error(`Error al crear la categoría:`, err.message);
+      setErrorMessage(`Ocurrió un error inesperado. Por favor avisa al desarrollador.`);
     },
   });
 
@@ -585,6 +611,10 @@ export default function ServiciosPage() {
       setIsCategoryModalOpen(false);
       resetCategoryForm();
     },
+    onError: (err) => {
+      console.error(`Error al actualizar la categoría:`, err.message);
+      setErrorMessage(`Ocurrió un error inesperado. Por favor avisa al desarrollador.`);
+    },
   });
 
   const deleteCategory = api.service.deleteCategory.useMutation({
@@ -593,6 +623,11 @@ export default function ServiciosPage() {
       await utils.service.getAllAdmin.invalidate();
       setIsDeleteModalOpen(false);
       setItemToDelete(null);
+      setErrorMessage(null);
+    },
+    onError: (err) => {
+      console.error(`Error al eliminar la categoría:`, err.message);
+      setErrorMessage(`Ocurrió un error inesperado. Por favor avisa al desarrollador.`);
     },
   });
 
@@ -604,12 +639,14 @@ export default function ServiciosPage() {
     setServiceDescription("");
     setServiceCategoryId("");
     setServiceIsActive(true);
+    setErrorMessage(null);
   };
 
   const resetCategoryForm = () => {
     setEditingCategory(null);
     setCategoryName("");
     setCategoryIsActive(true);
+    setErrorMessage(null);
   };
 
   const handleEditServiceClick = (service: Service) => {
@@ -620,6 +657,7 @@ export default function ServiciosPage() {
     setServiceDescription(service.description || "");
     setServiceCategoryId(service.categoryId || "");
     setServiceIsActive(service.isActive);
+    setErrorMessage(null);
     setIsServiceModalOpen(true);
   };
 
@@ -657,6 +695,7 @@ export default function ServiciosPage() {
 
   const handleDeleteService = (id: string) => {
     setItemToDelete({ id, type: "service" });
+    setErrorMessage(null);
     setIsDeleteModalOpen(true);
   };
 
@@ -664,6 +703,7 @@ export default function ServiciosPage() {
     setEditingCategory(category);
     setCategoryName(category.name);
     setCategoryIsActive(category.isActive);
+    setErrorMessage(null);
     setIsCategoryModalOpen(true);
   };
 
@@ -686,6 +726,7 @@ export default function ServiciosPage() {
 
   const handleDeleteCategory = (id: string) => {
     setItemToDelete({ id, type: "category" });
+    setErrorMessage(null);
     setIsDeleteModalOpen(true);
   };
 
@@ -815,7 +856,10 @@ export default function ServiciosPage() {
                 </h3>
               </div>
               <button
-                onClick={() => setIsServiceModalOpen(false)}
+                onClick={() => {
+                  setIsServiceModalOpen(false);
+                  setErrorMessage(null);
+                }}
                 className="p-1.5 hover:bg-offwhite rounded-xl text-teal/50"
               >
                 <X size={18} />
@@ -827,6 +871,11 @@ export default function ServiciosPage() {
               onSubmit={handleServiceSubmit}
               className="flex-1 overflow-y-auto p-6 space-y-5"
             >
+              {errorMessage && (
+                <div className="p-3.5 bg-redbrown/10 text-redbrown border border-redbrown/20 rounded-2xl text-xs font-body">
+                  {errorMessage}
+                </div>
+              )}
               {/* Name */}
               <div className="space-y-1.5">
                 <label className="font-subtitle text-[10px] tracking-wider uppercase font-bold text-teal block">
@@ -932,7 +981,10 @@ export default function ServiciosPage() {
               <div className="pt-2 flex gap-3">
                 <button
                   type="button"
-                  onClick={() => setIsServiceModalOpen(false)}
+                  onClick={() => {
+                    setIsServiceModalOpen(false);
+                    setErrorMessage(null);
+                  }}
                   className="flex-1 py-3.5 border border-cream rounded-xl font-subtitle font-bold text-[10px] tracking-widest uppercase hover:bg-cream/10 text-teal transition-all"
                 >
                   Cancelar
@@ -965,7 +1017,10 @@ export default function ServiciosPage() {
                 </h3>
               </div>
               <button
-                onClick={() => setIsCategoryModalOpen(false)}
+                onClick={() => {
+                  setIsCategoryModalOpen(false);
+                  setErrorMessage(null);
+                }}
                 className="p-1.5 hover:bg-offwhite rounded-xl text-teal/50"
               >
                 <X size={18} />
@@ -977,6 +1032,11 @@ export default function ServiciosPage() {
               onSubmit={handleCategorySubmit}
               className="flex-1 overflow-y-auto p-6 space-y-5"
             >
+              {errorMessage && (
+                <div className="p-3.5 bg-redbrown/10 text-redbrown border border-redbrown/20 rounded-2xl text-xs font-body">
+                  {errorMessage}
+                </div>
+              )}
               {/* Name */}
               <div className="space-y-1.5">
                 <label className="font-subtitle text-[10px] tracking-wider uppercase font-bold text-teal block">
@@ -1011,7 +1071,10 @@ export default function ServiciosPage() {
               <div className="pt-2 flex gap-3">
                 <button
                   type="button"
-                  onClick={() => setIsCategoryModalOpen(false)}
+                  onClick={() => {
+                    setIsCategoryModalOpen(false);
+                    setErrorMessage(null);
+                  }}
                   className="flex-1 py-3.5 border border-cream rounded-xl font-subtitle font-bold text-[10px] tracking-widest uppercase hover:bg-cream/10 text-teal transition-all"
                 >
                   Cancelar
@@ -1054,11 +1117,17 @@ export default function ServiciosPage() {
                 </p>
               </div>
             </div>
+            {errorMessage && (
+              <div className="mx-6 mb-4 p-3.5 bg-redbrown/10 text-redbrown border border-redbrown/20 rounded-2xl text-xs font-body">
+                {errorMessage}
+              </div>
+            )}
             <div className="p-4 bg-offwhite/50 border-t border-cream flex gap-3">
               <button
                 onClick={() => {
                   setIsDeleteModalOpen(false);
                   setItemToDelete(null);
+                  setErrorMessage(null);
                 }}
                 disabled={deleteService.isPending || deleteCategory.isPending}
                 className="flex-1 px-4 py-2.5 border border-cream text-teal rounded-xl font-subtitle text-[10px] uppercase tracking-wider font-bold hover:bg-cream/50 transition disabled:opacity-50"
