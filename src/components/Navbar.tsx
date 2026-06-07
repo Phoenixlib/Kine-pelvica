@@ -4,7 +4,13 @@ import { useState, useEffect } from "react";
 import { cn } from "../utils";
 import { Menu, X } from "lucide-react";
 
-export function Navbar({ isAdmin = false }: { isAdmin?: boolean }) {
+export function Navbar({
+  isAdmin = false,
+  forceSolid = false,
+}: {
+  isAdmin?: boolean;
+  forceSolid?: boolean;
+}) {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
@@ -30,9 +36,9 @@ export function Navbar({ isAdmin = false }: { isAdmin?: boolean }) {
     <header
       className={cn(
         "fixed top-0 inset-x-0 z-50 transition-all duration-300",
-        isScrolled
-          ? "bg-teal/95 backdrop-blur-md shadow-md py-4 border-b border-teal"
-          : "bg-transparent py-6"
+        isScrolled || forceSolid
+          ? "bg-teal/95 backdrop-blur-md shadow-md py-4 border-b border-[#0f3f3e]"
+          : "bg-transparent py-6",
       )}
     >
       <div className="container mx-auto px-4 lg:px-6 xl:px-8 flex justify-between items-center">

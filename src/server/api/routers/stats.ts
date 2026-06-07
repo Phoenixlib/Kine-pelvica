@@ -1,6 +1,5 @@
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
 import { startOfDay, endOfDay, subDays } from "date-fns";
-import { sanityClient } from "~/lib/sanity";
 
 export const statsRouter = createTRPCRouter({
   getDashboardStats: protectedProcedure.query(async ({ ctx }) => {
@@ -26,14 +25,12 @@ export const statsRouter = createTRPCRouter({
       },
     });
 
-    // 3. Blog Articles Count from Sanity
+    // 3. Blog Articles Count from DB
     let blogArticlesCount = 0;
     try {
-      if (process.env.NEXT_PUBLIC_SANITY_PROJECT_ID && process.env.NEXT_PUBLIC_SANITY_PROJECT_ID !== "placeholder") {
-        blogArticlesCount = await sanityClient.fetch<number>('count(*[_type == "post"])');
-      }
+      blogArticlesCount = await ctx.db.blogPost.count();
     } catch (error) {
-      console.error("Error fetching blog post count from Sanity:", error);
+      console.error("Error fetching blog post count from DB:", error);
     }
 
     // 4. Attendance vs Cancellation Rate (Last 30 days)

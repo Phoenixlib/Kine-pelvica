@@ -5,22 +5,22 @@ import { usePathname } from "next/navigation";
 import { signOut } from "next-auth/react";
 import Link from "next/link";
 
-import { 
-  LayoutDashboard, 
-  Calendar, 
-  Users, 
-  FileText, 
-  LogOut, 
-  Menu, 
-  X, 
-  Bell, 
-  User as UserIcon, 
+import {
+  LayoutDashboard,
+  Calendar,
+  Users,
+  FileText,
+  LogOut,
+  Menu,
+  X,
+  Bell,
+  User as UserIcon,
   Home,
   Settings,
   Camera,
   MessageSquare,
   UserCog,
-  BookOpen
+  BookOpen,
 } from "lucide-react";
 
 interface AdminLayoutProps {
@@ -44,7 +44,7 @@ export function AdminLayout({ children, user }: AdminLayoutProps) {
     { href: "/admin/contenido", label: "Contenido Sitio", icon: Home },
     { href: "/admin/galeria", label: "Galería de Fotos", icon: Camera },
     { href: "/admin/buzon", label: "Buzón de Comunidad", icon: MessageSquare },
-    { href: "/admin/blog-studio", label: "Blog (Sanity)", icon: BookOpen },
+    { href: "/admin/blog", label: "Blog", icon: BookOpen },
     { href: "/admin/configuracion", label: "Configuración", icon: UserCog },
   ];
 
@@ -58,10 +58,13 @@ export function AdminLayout({ children, user }: AdminLayoutProps) {
       <aside className="hidden md:flex flex-col w-64 border-r border-cream/40 bg-white shrink-0 h-screen sticky top-0">
         {/* Brand header */}
         <div className="h-24 flex items-center justify-center px-6 border-b border-cream/40 bg-[#0f3f3e]">
-          <a href="/" className="flex items-center justify-center w-full group py-2">
-            <img 
-              src="/logo-editado.png" 
-              alt="Estudio Pélvico" 
+          <a
+            href="/"
+            className="flex items-center justify-center w-full group py-2"
+          >
+            <img
+              src="/logo-editado.png"
+              alt="Estudio Pélvico"
               className="h-16 w-auto object-contain transition-transform group-hover:scale-105"
             />
           </a>
@@ -96,8 +99,12 @@ export function AdminLayout({ children, user }: AdminLayoutProps) {
               {user.name ? user.name.slice(0, 2).toUpperCase() : "CO"}
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-xs font-bold text-teal truncate">{user.name || "Camila Ortiz"}</p>
-              <p className="text-[10px] text-teal/55 truncate font-medium">{user.email}</p>
+              <p className="text-xs font-bold text-teal truncate">
+                {user.name || "Camila Ortiz"}
+              </p>
+              <p className="text-[10px] text-teal/55 truncate font-medium">
+                {user.email}
+              </p>
             </div>
           </div>
 
@@ -122,7 +129,8 @@ export function AdminLayout({ children, user }: AdminLayoutProps) {
               <Menu size={20} />
             </button>
             <h2 className="text-lg font-subtitle font-bold uppercase tracking-wider text-[#0f3f3e] hidden md:block">
-              {navItems.find(item => item.href === pathname)?.label || "Administración"}
+              {navItems.find((item) => item.href === pathname)?.label ||
+                "Administración"}
             </h2>
           </div>
 
@@ -134,7 +142,7 @@ export function AdminLayout({ children, user }: AdminLayoutProps) {
             >
               <Home size={18} />
             </a>
-            
+
             <button
               className="p-2.5 text-teal/70 hover:text-teal hover:bg-[#f7f3ef] rounded-full transition relative"
               title="Notificaciones"
@@ -165,17 +173,20 @@ export function AdminLayout({ children, user }: AdminLayoutProps) {
       {/* Mobile Drawer */}
       {isMobileOpen && (
         <div className="fixed inset-0 z-50 flex md:hidden bg-[#0f3f3e]/40 backdrop-blur-xs">
-          <div 
-            className="fixed inset-0" 
+          <div
+            className="fixed inset-0"
             onClick={() => setIsMobileOpen(false)}
           ></div>
           <div className="relative w-72 bg-white h-full shadow-2xl flex flex-col animate-in slide-in-from-left duration-300">
             {/* Header */}
             <div className="h-24 flex items-center justify-between px-6 border-b border-cream/40 bg-[#0f3f3e]">
-              <a href="/" className="flex items-center justify-start group py-2">
-                <img 
-                  src="/logo-editado.png" 
-                  alt="Estudio Pélvico" 
+              <a
+                href="/"
+                className="flex items-center justify-start group py-2"
+              >
+                <img
+                  src="/logo-editado.png"
+                  alt="Estudio Pélvico"
                   className="h-16 w-auto object-contain transition-transform group-hover:scale-105"
                 />
               </a>
@@ -217,8 +228,12 @@ export function AdminLayout({ children, user }: AdminLayoutProps) {
                   CO
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-xs font-bold text-teal truncate">{user.name || "Camila Ortiz"}</p>
-                  <p className="text-[10px] text-teal/55 truncate font-medium">{user.email}</p>
+                  <p className="text-xs font-bold text-teal truncate">
+                    {user.name || "Camila Ortiz"}
+                  </p>
+                  <p className="text-[10px] text-teal/55 truncate font-medium">
+                    {user.email}
+                  </p>
                 </div>
               </div>
 

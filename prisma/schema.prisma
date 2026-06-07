@@ -155,3 +155,32 @@ model BlockedSlot {
   calComOverrideId  Int?     // ID del override en Cal.com (null si no se sincronizó)
   createdAt         DateTime @default(now())
 }
+
+// --- Blog ---
+model BlogCategory {
+  id        String      @id @default(cuid())
+  name      String
+  slug      String      @unique
+  createdAt DateTime    @default(now())
+  posts     BlogPost[]
+}
+
+model BlogPost {
+  id          String         @id @default(cuid())
+  title       String
+  slug        String         @unique
+  description String         @db.VarChar(200)
+  body        Json           // Tiptap JSON
+  mainImage   String?        // Cloudinary URL
+  status      BlogPostStatus @default(DRAFT)
+  publishedAt DateTime?
+  categoryId  String?
+  category    BlogCategory?  @relation(fields: [categoryId], references: [id])
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+}
+
+enum BlogPostStatus {
+  DRAFT
+  PUBLISHED
+}

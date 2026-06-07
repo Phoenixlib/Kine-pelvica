@@ -3,17 +3,17 @@
 import { useState, useEffect } from "react";
 import { api } from "~/trpc/react";
 import { useCloudinaryUpload } from "~/hooks/useCloudinaryUpload";
-import { 
-  FileText, 
-  Image as ImageIcon, 
-  UploadCloud, 
-  Check, 
+import {
+  FileText,
+  Image as ImageIcon,
+  UploadCloud,
+  Check,
   AlertCircle,
   MapPin,
   Link as LinkIcon,
   Phone,
   Globe,
-  Mail
+  Mail,
 } from "lucide-react";
 
 export default function ContenidoPage() {
@@ -26,14 +26,29 @@ export default function ContenidoPage() {
   const [facebook, setFacebook] = useState("");
   const [email, setEmail] = useState("");
 
-  const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "success" | "error">("idle");
+  const [saveStatus, setSaveStatus] = useState<
+    "idle" | "saving" | "success" | "error"
+  >("idle");
   const [saveError, setSaveError] = useState("");
 
   const { uploadFiles, uploading: imageUploading } = useCloudinaryUpload();
 
   // Query config keys from database
-  const { data: configData, isLoading: configLoading, refetch } = api.siteConfig.get.useQuery({
-    keys: ["about_title", "about_description", "about_image", "address", "whatsapp_number", "instagram_url", "facebook_url", "email_address"],
+  const {
+    data: configData,
+    isLoading: configLoading,
+    refetch,
+  } = api.siteConfig.get.useQuery({
+    keys: [
+      "about_title",
+      "about_description",
+      "about_image",
+      "address",
+      "whatsapp_number",
+      "instagram_url",
+      "facebook_url",
+      "email_address",
+    ],
   });
 
   const setConfigMany = api.siteConfig.setMany.useMutation({
@@ -45,7 +60,7 @@ export default function ContenidoPage() {
     onError: (err) => {
       setSaveStatus("error");
       setSaveError(err.message || "Error al guardar el contenido.");
-    }
+    },
   });
 
   useEffect(() => {
@@ -82,6 +97,19 @@ export default function ContenidoPage() {
     e.preventDefault();
     setSaveStatus("saving");
 
+    // Formatear automáticamente URLs de redes sociales agregando "https://" si el usuario no lo ingresó
+    const formatSocialUrl = (url: string) => {
+      const trimmed = url.trim();
+      if (!trimmed) return "";
+      if (/^(https?:\/\/)/i.test(trimmed)) {
+        return trimmed;
+      }
+      return `https://${trimmed}`;
+    };
+
+    const formattedInstagram = formatSocialUrl(instagram);
+    const formattedFacebook = formatSocialUrl(facebook);
+
     setConfigMany.mutate({
       configs: [
         { key: "about_title", value: aboutTitle },
@@ -89,10 +117,10 @@ export default function ContenidoPage() {
         { key: "about_image", value: aboutImageUrl },
         { key: "address", value: address },
         { key: "whatsapp_number", value: whatsapp },
-        { key: "instagram_url", value: instagram },
-        { key: "facebook_url", value: facebook },
+        { key: "instagram_url", value: formattedInstagram },
+        { key: "facebook_url", value: formattedFacebook },
         { key: "email_address", value: email },
-      ]
+      ],
     });
   };
 
@@ -102,7 +130,8 @@ export default function ContenidoPage() {
       <div>
         <h1 className="font-title text-3xl text-teal">Contenido del Sitio</h1>
         <p className="font-body text-sm text-teal/70 mt-1">
-          Edita dinámicamente las secciones, biografía y textos públicos de tu sitio web.
+          Edita dinámicamente las secciones, biografía y textos públicos de tu
+          sitio web.
         </p>
       </div>
 
@@ -117,7 +146,9 @@ export default function ContenidoPage() {
           <div className="bg-white rounded-3xl border border-cream/30 shadow-xs p-6 md:p-8 space-y-6">
             <div className="flex items-center gap-2 border-b border-cream/20 pb-4">
               <FileText className="text-terracotta" size={20} />
-              <h2 className="font-title text-xl text-teal">Sección "Quién Soy"</h2>
+              <h2 className="font-title text-xl text-teal">
+                Sección "Quién Soy"
+              </h2>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -129,15 +160,17 @@ export default function ContenidoPage() {
 
                 <div className="relative w-48 h-48 rounded-full overflow-hidden bg-offwhite border border-cream flex items-center justify-center group shadow-inner">
                   {aboutImageUrl ? (
-                    <img 
-                      src={aboutImageUrl} 
-                      alt="Perfil" 
+                    <img
+                      src={aboutImageUrl}
+                      alt="Perfil"
                       className="w-full h-full object-cover"
                     />
                   ) : (
                     <div className="text-teal/30 flex flex-col items-center">
                       <ImageIcon size={32} />
-                      <span className="text-[10px] font-semibold mt-1">Sin foto</span>
+                      <span className="text-[10px] font-semibold mt-1">
+                        Sin foto
+                      </span>
                     </div>
                   )}
 
@@ -152,11 +185,11 @@ export default function ContenidoPage() {
                   <label className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-offwhite hover:bg-cream/10 border border-cream text-teal rounded-xl text-xs font-subtitle uppercase tracking-widest font-bold cursor-pointer transition">
                     <UploadCloud size={14} className="text-terracotta" />
                     <span>{aboutImageUrl ? "Cambiar Foto" : "Subir Foto"}</span>
-                    <input 
-                      type="file" 
-                      accept="image/*" 
-                      onChange={handleImageChange} 
-                      className="hidden" 
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleImageChange}
+                      className="hidden"
                     />
                   </label>
                 </div>
@@ -199,9 +232,11 @@ export default function ContenidoPage() {
           <div className="bg-white rounded-3xl border border-cream/30 shadow-xs p-6 md:p-8 space-y-6">
             <div className="flex items-center gap-2 border-b border-cream/20 pb-4">
               <LinkIcon className="text-terracotta" size={20} />
-              <h2 className="font-title text-xl text-teal">Contacto y Redes Sociales</h2>
+              <h2 className="font-title text-xl text-teal">
+                Contacto y Redes Sociales
+              </h2>
             </div>
-            
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-1.5">
                 <label className="font-subtitle text-[10px] tracking-wider uppercase font-bold text-teal flex items-center gap-2">
@@ -220,10 +255,10 @@ export default function ContenidoPage() {
                   <Globe size={14} /> Instagram URL
                 </label>
                 <input
-                  type="url"
+                  type="text"
                   value={instagram}
                   onChange={(e) => setInstagram(e.target.value)}
-                  placeholder="https://instagram.com/tu_cuenta"
+                  placeholder="instagram.com/tu_cuenta"
                   className="w-full px-4 py-3 bg-white border border-cream rounded-xl font-body text-sm text-teal focus:outline-none"
                 />
               </div>
@@ -232,10 +267,10 @@ export default function ContenidoPage() {
                   <Globe size={14} /> Facebook URL
                 </label>
                 <input
-                  type="url"
+                  type="text"
                   value={facebook}
                   onChange={(e) => setFacebook(e.target.value)}
-                  placeholder="https://facebook.com/tu_pagina"
+                  placeholder="facebook.com/tu_pagina"
                   className="w-full px-4 py-3 bg-white border border-cream rounded-xl font-body text-sm text-teal focus:outline-none"
                 />
               </div>
@@ -258,7 +293,9 @@ export default function ContenidoPage() {
           <div className="bg-white rounded-3xl border border-cream/30 shadow-xs p-6 md:p-8 space-y-6">
             <div className="flex items-center gap-2 border-b border-cream/20 pb-4">
               <MapPin className="text-terracotta" size={20} />
-              <h2 className="font-title text-xl text-teal">Sección "Cómo llegar"</h2>
+              <h2 className="font-title text-xl text-teal">
+                Sección "Cómo llegar"
+              </h2>
             </div>
 
             <div className="space-y-5">
@@ -277,7 +314,9 @@ export default function ContenidoPage() {
               </div>
 
               <div className="bg-offwhite p-4 rounded-xl border border-cream/50 space-y-3">
-                <p className="text-xs font-semibold text-teal/70">Vista previa del mapa generado automáticamente:</p>
+                <p className="text-xs font-semibold text-teal/70">
+                  Vista previa del mapa generado automáticamente:
+                </p>
                 {address ? (
                   <iframe
                     src={`https://www.google.com/maps?q=${encodeURIComponent(address)}&output=embed`}
@@ -300,8 +339,13 @@ export default function ContenidoPage() {
             <div>
               {saveStatus === "success" && (
                 <div className="flex items-center gap-2 text-emerald-700 text-xs font-semibold">
-                  <Check size={16} className="bg-emerald-50 border border-emerald-200 rounded-full p-0.5" />
-                  <span>¡Cambios guardados con éxito! El landing se ha actualizado.</span>
+                  <Check
+                    size={16}
+                    className="bg-emerald-50 border border-emerald-200 rounded-full p-0.5"
+                  />
+                  <span>
+                    ¡Cambios guardados con éxito! El landing se ha actualizado.
+                  </span>
                 </div>
               )}
 
@@ -313,11 +357,15 @@ export default function ContenidoPage() {
               )}
 
               {saveStatus === "idle" && (
-                <span className="text-xs text-teal/40 font-semibold italic">Tienes cambios sin guardar.</span>
+                <span className="text-xs text-teal/40 font-semibold italic">
+                  Tienes cambios sin guardar.
+                </span>
               )}
 
               {saveStatus === "saving" && (
-                <span className="text-xs text-teal/60 font-semibold">Guardando cambios en el servidor...</span>
+                <span className="text-xs text-teal/60 font-semibold">
+                  Guardando cambios en el servidor...
+                </span>
               )}
             </div>
 

@@ -12,7 +12,6 @@ export const env = createEnv({
       process.env.NODE_ENV === "production"
         ? z.string()
         : z.string().optional(),
-    SANITY_API_TOKEN: z.string().optional(),
     CALCOM_WEBHOOK_SECRET: z.string().optional(),
     CALCOM_API_KEY: z.string().optional(),
     CALCOM_API_URL: z.string().optional(),
@@ -38,8 +37,6 @@ export const env = createEnv({
    * `NEXT_PUBLIC_`.
    */
   client: {
-    NEXT_PUBLIC_SANITY_PROJECT_ID: z.string().optional(),
-    NEXT_PUBLIC_SANITY_DATASET: z.string().optional(),
     NEXT_PUBLIC_GOOGLE_PLACE_ID: z.string().optional(),
     NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME: z.string().optional(),
     NEXT_PUBLIC_CALCOM_ADMIN_URL: z.string().url().optional(),
@@ -52,7 +49,6 @@ export const env = createEnv({
   runtimeEnv: {
     DATABASE_URL: process.env.DATABASE_URL,
     AUTH_SECRET: process.env.AUTH_SECRET,
-    SANITY_API_TOKEN: process.env.SANITY_API_TOKEN,
     CALCOM_WEBHOOK_SECRET: process.env.CALCOM_WEBHOOK_SECRET,
     CALCOM_API_KEY: process.env.CALCOM_API_KEY,
     CALCOM_API_URL: process.env.CALCOM_API_URL,
@@ -68,10 +64,9 @@ export const env = createEnv({
     CLOUDINARY_API_KEY: process.env.CLOUDINARY_API_KEY,
     CLOUDINARY_API_SECRET: process.env.CLOUDINARY_API_SECRET,
     NODE_ENV: process.env.NODE_ENV,
-    NEXT_PUBLIC_SANITY_PROJECT_ID: process.env.NEXT_PUBLIC_SANITY_PROJECT_ID,
-    NEXT_PUBLIC_SANITY_DATASET: process.env.NEXT_PUBLIC_SANITY_DATASET,
     NEXT_PUBLIC_GOOGLE_PLACE_ID: process.env.NEXT_PUBLIC_GOOGLE_PLACE_ID,
-    NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME: process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME,
+    NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME:
+      process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME,
     NEXT_PUBLIC_CALCOM_ADMIN_URL: process.env.NEXT_PUBLIC_CALCOM_ADMIN_URL,
   },
   /**

@@ -223,9 +223,34 @@ exports.Prisma.BlockedSlotScalarFieldEnum = {
   createdAt: 'createdAt'
 };
 
+exports.Prisma.BlogCategoryScalarFieldEnum = {
+  id: 'id',
+  name: 'name',
+  slug: 'slug',
+  createdAt: 'createdAt'
+};
+
+exports.Prisma.BlogPostScalarFieldEnum = {
+  id: 'id',
+  title: 'title',
+  slug: 'slug',
+  description: 'description',
+  body: 'body',
+  mainImage: 'mainImage',
+  status: 'status',
+  publishedAt: 'publishedAt',
+  categoryId: 'categoryId',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
 exports.Prisma.SortOrder = {
   asc: 'asc',
   desc: 'desc'
+};
+
+exports.Prisma.JsonNullValueInput = {
+  JsonNull: Prisma.JsonNull
 };
 
 exports.Prisma.QueryMode = {
@@ -236,6 +261,12 @@ exports.Prisma.QueryMode = {
 exports.Prisma.NullsOrder = {
   first: 'first',
   last: 'last'
+};
+
+exports.Prisma.JsonNullValueFilter = {
+  DbNull: Prisma.DbNull,
+  JsonNull: Prisma.JsonNull,
+  AnyNull: Prisma.AnyNull
 };
 exports.AppointmentStatus = exports.$Enums.AppointmentStatus = {
   BOOKED: 'BOOKED',
@@ -263,6 +294,11 @@ exports.CommunityMessageStatus = exports.$Enums.CommunityMessageStatus = {
   PUBLISHED_IN_BLOG: 'PUBLISHED_IN_BLOG'
 };
 
+exports.BlogPostStatus = exports.$Enums.BlogPostStatus = {
+  DRAFT: 'DRAFT',
+  PUBLISHED: 'PUBLISHED'
+};
+
 exports.Prisma.ModelName = {
   User: 'User',
   PasswordResetToken: 'PasswordResetToken',
@@ -273,7 +309,9 @@ exports.Prisma.ModelName = {
   GalleryPhoto: 'GalleryPhoto',
   CommunityMessage: 'CommunityMessage',
   SiteConfig: 'SiteConfig',
-  BlockedSlot: 'BlockedSlot'
+  BlockedSlot: 'BlockedSlot',
+  BlogCategory: 'BlogCategory',
+  BlogPost: 'BlogPost'
 };
 
 /**
