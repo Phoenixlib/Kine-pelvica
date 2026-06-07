@@ -106,19 +106,19 @@ export default function BookingFlow({ calLink, onClose }: BookingFlowProps) {
 
     const formattedDateString = bookingDate
       ? bookingDate.toLocaleDateString("es-CL", {
-          weekday: "long",
-          day: "numeric",
-          month: "long",
-        }) +
-        " - " +
-        bookingDate
-          .toLocaleTimeString("es-CL", {
-            hour: "2-digit",
-            minute: "2-digit",
-            hour12: true,
-          })
-          .replace("a. m.", "am")
-          .replace("p. m.", "pm")
+        weekday: "long",
+        day: "numeric",
+        month: "long",
+      }) +
+      " - " +
+      bookingDate
+        .toLocaleTimeString("es-CL", {
+          hour: "2-digit",
+          minute: "2-digit",
+          hour12: true,
+        })
+        .replace("a. m.", "am")
+        .replace("p. m.", "pm")
       : "";
 
     // Obtener nombres de los asistentes
@@ -153,15 +153,15 @@ export default function BookingFlow({ calLink, onClose }: BookingFlowProps) {
 
         {/* Caja de Información Importante */}
         <div className="w-full bg-[#f7f3ef] border border-cream/50 rounded-2xl p-5 mb-6 text-sm text-teal leading-relaxed space-y-4 shadow-xs">
-          <h3 className="font-subtitle font-bold text-xs uppercase tracking-wider text-terracotta flex items-center gap-1.5">
+          <h3 className="font-subtitle font-bold text-sm md:text-base uppercase tracking-wider text-terracotta flex items-center gap-2">
             <svg
               xmlns="http://www.w3.org/2000/svg"
-              width="16"
-              height="16"
+              width="18"
+              height="18"
               viewBox="0 0 24 24"
               fill="none"
               stroke="currentColor"
-              strokeWidth="2"
+              strokeWidth="2.5"
               strokeLinecap="round"
               strokeLinejoin="round"
             >
@@ -249,7 +249,7 @@ export default function BookingFlow({ calLink, onClose }: BookingFlowProps) {
               <button
                 type="button"
                 onClick={() => {
-                  const allDetails = `Datos de Transferencia Bancaria - Estudio Pélvico:\nNombre: Camila Ortiz\nRut: 17.798.781-6\nBanco: Banco de Chile\nTipo Cuenta: Cuenta Corriente\nNº Cuenta: 00-1 07-24890-05\nEmail: Camilaortiz.kine@gmail.com`;
+                  const allDetails = `Nombre: Camila Ortiz\nRut: 17.798.781-6\nBanco: Banco de Chile\nTipo Cuenta: Cuenta Corriente\nNº Cuenta: 00-1 07-24890-05\nEmail: Camilaortiz.kine@gmail.com`;
                   copyToClipboard(allDetails, "transferencia");
                 }}
                 className="w-full flex items-center justify-center gap-2 mt-3 bg-[#e6ded9] hover:bg-[#ded5ce] text-[#0f3f3e] font-subtitle uppercase tracking-widest font-bold text-[10px] py-2.5 px-4 rounded-xl transition duration-200"
@@ -297,6 +297,9 @@ export default function BookingFlow({ calLink, onClose }: BookingFlowProps) {
         </div>
 
         {/* Detalle de Cita de la Imagen */}
+        <h2 className="text-lg md:text-xl font-subtitle font-bold text-teal text-center mb-6 mt-2 leading-relaxed max-w-lg">
+          Detalle de tu cita
+        </h2>
         <div className="w-full max-w-md bg-white border border-cream rounded-2xl p-5 md:p-6 mb-8 text-teal font-body shadow-sm">
           <div className="divide-y divide-offwhite space-y-4">
             {/* Servicio */}

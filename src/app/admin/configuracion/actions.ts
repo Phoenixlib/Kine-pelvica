@@ -17,7 +17,7 @@ const passwordSchema = z.object({
 export async function updatePasswordAction(formData: FormData) {
   try {
     const session = await auth();
-    if (!session?.user?.email) {
+    if (!session?.user?.id) {
       return { error: "No autorizado. Inicie sesión nuevamente." };
     }
 
@@ -32,7 +32,7 @@ export async function updatePasswordAction(formData: FormData) {
     }
 
     const user = await db.user.findUnique({
-      where: { email: session.user.email },
+      where: { id: session.user.id },
     });
 
     if (!user) {
@@ -48,7 +48,7 @@ export async function updatePasswordAction(formData: FormData) {
     const hashedNewPassword = await bcrypt.hash(newPassword, 10);
 
     await db.user.update({
-      where: { email: session.user.email },
+      where: { id: session.user.id },
       data: { password: hashedNewPassword },
     });
 

@@ -4,6 +4,7 @@ import { cancelCalComBooking, rescheduleCalComBooking, createCalComBooking } fro
 import { env } from "~/env";
 import { TRPCError } from "@trpc/server";
 import { Prisma } from "../../../../generated/prisma";
+import { startOfDay } from "date-fns";
 
 export const appointmentRouter = createTRPCRouter({
   getAll: protectedProcedure
@@ -58,14 +59,16 @@ export const appointmentRouter = createTRPCRouter({
 
       let orderBy: Prisma.AppointmentOrderByWithRelationInput = { date: "asc" };
       if (input?.view === "upcoming") {
-        const currentDateGte = input?.startDate && input.startDate > new Date() ? input.startDate : new Date();
+        const todayStart = startOfDay(new Date());
+        const currentDateGte = input?.startDate && input.startDate > todayStart ? input.startDate : todayStart;
         whereClause.date = {
           ...(typeof whereClause.date === "object" ? whereClause.date : {}),
           gte: currentDateGte,
         };
         orderBy = { date: "asc" };
       } else if (input?.view === "past") {
-        const currentDateLt = input?.endDate && input.endDate < new Date() ? input.endDate : new Date();
+        const todayStart = startOfDay(new Date());
+        const currentDateLt = input?.endDate && input.endDate < todayStart ? input.endDate : todayStart;
         whereClause.date = {
           ...(typeof whereClause.date === "object" ? whereClause.date : {}),
           lt: currentDateLt,

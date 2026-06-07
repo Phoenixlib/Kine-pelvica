@@ -73,9 +73,9 @@ export default function RecuperarPasswordPage() {
               </p>
             </div>
             
-            <div className="mt-4 p-4 border border-teal/20 bg-teal/5 rounded-xl text-teal text-xs">
-              <p><strong>Nota (Modo Desarrollo):</strong> Revisa la consola del servidor (terminal donde se ejecuta npm run dev) para ver el enlace de recuperación, ya que el envío de correos no está configurado.</p>
-            </div>
+            <p className="text-teal/70 text-xs font-body">
+              Asegúrate de revisar tu bandeja de entrada y la carpeta de correo no deseado (spam).
+            </p>
             
             <Link 
               href="/login"

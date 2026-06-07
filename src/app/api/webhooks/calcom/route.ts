@@ -128,29 +128,40 @@ export async function POST(req: Request) {
       // Create or update the appointment
       try {
         const bookingIdVal = booking.bookingId ? String(booking.bookingId) : (booking.id ? String(booking.id) : null);
-        await db.appointment.upsert({
+        
+        const existingAppt = await db.appointment.findUnique({
           where: { calComEventId: String(booking.uid) },
-          update: { 
-            status: "BOOKED",
-            date: new Date(booking.startTime),
-            durationMinutes: booking.eventDuration || booking.length || 60,
-            title: booking.title || booking.eventType?.title || "Cita de Kinesiología",
-            serviceId,
-            notes: booking.responses?.notes?.value || null,
-            ...(bookingIdVal ? { calComBookingId: bookingIdVal } : {}),
-          },
-          create: {
-            patientId: patient.id,
-            calComEventId: String(booking.uid),
-            calComBookingId: bookingIdVal,
-            title: booking.title || booking.eventType?.title || "Cita de Kinesiología",
-            date: new Date(booking.startTime),
-            durationMinutes: booking.eventDuration || booking.length || 60,
-            status: "BOOKED",
-            serviceId,
-            notes: booking.responses?.notes?.value || null,
-          },
         });
+
+        if (existingAppt) {
+          await db.appointment.update({
+            where: { id: existingAppt.id },
+            data: {
+              date: new Date(booking.startTime),
+              durationMinutes: booking.eventDuration || booking.length || existingAppt.durationMinutes,
+              ...(serviceId ? { 
+                serviceId, 
+                title: booking.title || booking.eventType?.title || "Cita de Kinesiología" 
+              } : {}),
+              notes: booking.responses?.notes?.value || existingAppt.notes,
+              ...(bookingIdVal ? { calComBookingId: bookingIdVal } : {}),
+            },
+          });
+        } else {
+          await db.appointment.create({
+            data: {
+              patientId: patient.id,
+              calComEventId: String(booking.uid),
+              calComBookingId: bookingIdVal,
+              title: booking.title || booking.eventType?.title || "Cita de Kinesiología",
+              date: new Date(booking.startTime),
+              durationMinutes: booking.eventDuration || booking.length || 60,
+              status: "BOOKED",
+              serviceId,
+              notes: booking.responses?.notes?.value || null,
+            },
+          });
+        }
       } catch (err) {
         console.error("UPSERT ERROR:", err);
         throw err;

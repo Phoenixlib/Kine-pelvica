@@ -3,6 +3,7 @@
 import { db } from "~/server/db";
 import { randomBytes } from "crypto";
 import bcrypt from "bcryptjs";
+import { sendPasswordResetEmail } from "~/server/email";
 
 export async function requestPasswordResetAction(formData: FormData) {
   try {
@@ -33,16 +34,14 @@ export async function requestPasswordResetAction(formData: FormData) {
       },
     });
 
-    // In a real application, you would send an email here using a service like Resend, Sendgrid, NodeMailer, etc.
-    // e.g., sendEmail(user.email, resetUrl);
-    
-    // For this implementation, since no email service is configured, we will just log the URL to the console
-    // In production, the URL should be constructed dynamically based on the environment
     const resetUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/recuperar-password/reset?token=${token}`;
-    console.log(`\n\n-------------------------------------------------------------`);
-    console.log(`Password reset link for ${user.email}:`);
-    console.log(`${resetUrl}`);
-    console.log(`-------------------------------------------------------------\n\n`);
+    
+    try {
+      await sendPasswordResetEmail(user.email, resetUrl);
+    } catch (emailError) {
+      console.error("Error al enviar el email de restablecimiento:", emailError);
+      return { error: "No se pudo enviar el correo de recuperación. Verifica la configuración SMTP." };
+    }
 
     return { success: true };
   } catch (error) {

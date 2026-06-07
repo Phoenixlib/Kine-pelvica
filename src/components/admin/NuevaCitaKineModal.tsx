@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { api } from "~/trpc/react";
 import { addMinutes, startOfDay, endOfDay, isBefore, isAfter, isSameDay } from "date-fns";
+import { getCleanPhone } from "./AppointmentDetailModal";
 
 interface Props {
   isOpen: boolean;
@@ -175,6 +176,22 @@ export default function NuevaCitaKineModal({
         status: "CONFIRMED",
         paymentMethod: "PENDING"
       });
+
+      // 3. Open WhatsApp link with pre-filled message
+      const cleanPhone = getCleanPhone(isCreatingPatient ? newPhone : selectedPatient!.phone);
+      const formattedDateStr = dateObj.toLocaleDateString("es-CL", { weekday: "long", day: "numeric", month: "long" });
+      const formattedTimeStr = dateObj.toLocaleTimeString("es-CL", { hour: "2-digit", minute: "2-digit" });
+      const serviceName = service.name;
+      const patientFirstName = isCreatingPatient ? newFirstName : selectedPatient!.firstName;
+
+      const waMessage = `Hola ${patientFirstName}, te escribo de Kinesiología Pélvica Camila Ortiz para confirmarte que tu cita para *${serviceName}* ha sido agendada con éxito.\n\n*Detalles de tu cita:*\n📅 *Fecha:* ${formattedDateStr}\n⏰ *Hora:* ${formattedTimeStr} hrs\n📍 *Ubicación:* Benigno Posadas 1884, Iquique, Chile\n\n¡Te esperamos!`;
+      const waLink = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(waMessage)}`;
+
+      try {
+        window.open(waLink, "_blank");
+      } catch (e) {
+        console.error("Error opening WhatsApp link:", e);
+      }
 
       utils.appointment.getAll.invalidate();
       utils.patient.getAll.invalidate();
