@@ -42,48 +42,15 @@ export async function GET(req: NextRequest) {
       const words = query.split(/\s+/).filter(Boolean);
       
       if (words.length > 0) {
-        let whereClause = {};
-        
-        if (words.length === 1) {
-          const word = words[0];
-          whereClause = {
+        const whereClause = {
+          AND: words.map((word) => ({
             OR: [
-              { firstName: { contains: word, mode: "insensitive" } },
-              { lastName: { contains: word, mode: "insensitive" } },
-              { email: { contains: word, mode: "insensitive" } },
+              { firstName: { contains: word, mode: "insensitive" as const } },
+              { lastName: { contains: word, mode: "insensitive" as const } },
+              { email: { contains: word, mode: "insensitive" as const } },
             ],
-          };
-        } else {
-          const firstWord = words[0];
-          const secondWord = words[1];
-          const restOfWords = words.slice(1).join(" ");
-          
-          whereClause = {
-            OR: [
-              {
-                AND: [
-                  { firstName: { contains: firstWord, mode: "insensitive" } },
-                  { lastName: { contains: restOfWords, mode: "insensitive" } }
-                ]
-              },
-              {
-                AND: [
-                  { firstName: { contains: restOfWords, mode: "insensitive" } },
-                  { lastName: { contains: firstWord, mode: "insensitive" } }
-                ]
-              },
-              {
-                AND: [
-                  { firstName: { contains: firstWord, mode: "insensitive" } },
-                  { lastName: { contains: secondWord, mode: "insensitive" } }
-                ]
-              },
-              { firstName: { contains: query, mode: "insensitive" } },
-              { lastName: { contains: query, mode: "insensitive" } },
-              { email: { contains: query, mode: "insensitive" } }
-            ]
-          };
-        }
+          })),
+        };
 
         patient = await db.patient.findFirst({
           where: whereClause,

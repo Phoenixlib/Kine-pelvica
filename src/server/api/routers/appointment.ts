@@ -42,19 +42,40 @@ export const appointmentRouter = createTRPCRouter({
       }
 
       if (input?.searchQuery) {
-        whereClause.OR = [
-          { title: { contains: input.searchQuery, mode: "insensitive" } },
-          {
-            patient: {
-              OR: [
-                { firstName: { contains: input.searchQuery, mode: "insensitive" } },
-                { lastName: { contains: input.searchQuery, mode: "insensitive" } },
-                { email: { contains: input.searchQuery, mode: "insensitive" } },
-                { phone: { contains: input.searchQuery, mode: "insensitive" } },
-              ],
+        const query = input.searchQuery.trim();
+        const words = query.split(/\s+/).filter(Boolean);
+
+        if (words.length === 1) {
+          whereClause.OR = [
+            { title: { contains: words[0], mode: "insensitive" as const } },
+            {
+              patient: {
+                OR: [
+                  { firstName: { contains: words[0], mode: "insensitive" as const } },
+                  { lastName: { contains: words[0], mode: "insensitive" as const } },
+                  { email: { contains: words[0], mode: "insensitive" as const } },
+                  { phone: { contains: words[0], mode: "insensitive" as const } },
+                ],
+              },
             },
-          },
-        ];
+          ];
+        } else if (words.length > 1) {
+          whereClause.AND = words.map((word) => ({
+            OR: [
+              { title: { contains: word, mode: "insensitive" as const } },
+              {
+                patient: {
+                  OR: [
+                    { firstName: { contains: word, mode: "insensitive" as const } },
+                    { lastName: { contains: word, mode: "insensitive" as const } },
+                    { email: { contains: word, mode: "insensitive" as const } },
+                    { phone: { contains: word, mode: "insensitive" as const } },
+                  ],
+                },
+              },
+            ],
+          }));
+        }
       }
 
       let orderBy: Prisma.AppointmentOrderByWithRelationInput = { date: "asc" };
