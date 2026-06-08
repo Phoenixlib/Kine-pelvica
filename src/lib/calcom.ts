@@ -520,6 +520,20 @@ function isSameWindows(a: {start: number, end: number}[], b: {start: number, end
   return true;
 }
 
+function intersectWindows(a: {start: number, end: number}[], b: {start: number, end: number}[]): {start: number, end: number}[] {
+  const result: {start: number, end: number}[] = [];
+  for (const wA of a) {
+    for (const wB of b) {
+      const start = Math.max(wA.start, wB.start);
+      const end = Math.min(wA.end, wB.end);
+      if (start < end) {
+        result.push({ start, end });
+      }
+    }
+  }
+  return result;
+}
+
 async function updateCalComOverrides(scheduleId: string, overrides: CalComOverrideItem[]) {
   const patchUrl = `${env.CALCOM_API_URL ?? "https://api.cal.com/v2"}/schedules/${scheduleId}`;
   const res = await fetch(patchUrl, {
@@ -645,7 +659,8 @@ export async function deleteCalComScheduleOverride(
       currentWindows = targetDateOverrides.map(o => ({ start: timeToMins(o.startTime), end: timeToMins(o.endTime) }));
     }
 
-    const newWindows = addBlock(currentWindows, timeToMins(startSantiago.time), timeToMins(endSantiago.time));
+    const newWindowsAdded = addBlock(currentWindows, timeToMins(startSantiago.time), timeToMins(endSantiago.time));
+    const newWindows = intersectWindows(newWindowsAdded, baseAvail);
 
     let newDateOverrides: CalComOverrideItem[] = [];
     if (!isSameWindows(newWindows, baseAvail)) {
@@ -660,6 +675,124 @@ export async function deleteCalComScheduleOverride(
   } catch (err) {
     console.error("deleteCalComScheduleOverride error:", err);
     throw err;
+  }
+}
+
+function parseDateTimeInSantiago(dateStr: string, timeStr: string): Date {
+  const testDate = new Date(`${dateStr}T12:00:00Z`);
+  const parts = new Intl.DateTimeFormat('en-US', {
+    timeZone: 'America/Santiago',
+    timeZoneName: 'longOffset',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hour12: false
+  }).formatToParts(testDate);
+  
+  const offsetPart = parts.find(p => p.type === 'timeZoneName')?.value;
+  let offset = "-04:00";
+  if (offsetPart && offsetPart.startsWith("GMT")) {
+    offset = offsetPart.replace("GMT", "");
+  }
+  if (offset === "") offset = "+00:00";
+  
+  return new Date(`${dateStr}T${timeStr}:00${offset}`);
+}
+
+export async function getCalComVirtualBlockedSlots(startDate: Date, endDate: Date) {
+  if (!env.CALCOM_SCHEDULE_ID || !env.CALCOM_API_KEY) return [];
+
+  const getUrl = `${env.CALCOM_API_URL ?? "https://api.cal.com/v2"}/schedules/${env.CALCOM_SCHEDULE_ID}`;
+  
+  try {
+    const getRes = await fetch(getUrl, {
+      headers: {
+        "Authorization": `Bearer ${env.CALCOM_API_KEY}`,
+        "cal-api-version": "2024-06-11",
+      },
+      next: { revalidate: 0 },
+    });
+
+    if (!getRes.ok) return [];
+    const getJson = await getRes.json() as CalComScheduleResponse;
+    
+    const overrides = getJson.data?.overrides || [];
+    const availability = getJson.data?.availability || [];
+
+    const overridesByDate = new Map<string, CalComOverrideItem[]>();
+    for (const o of overrides) {
+      if (!overridesByDate.has(o.date)) overridesByDate.set(o.date, []);
+      overridesByDate.get(o.date)!.push(o);
+    }
+
+    const virtualBlocks: { id: string; startAt: Date; endAt: Date; reason: string; isVirtual: boolean }[] = [];
+
+    for (const [dateStr, dayOverrides] of Array.from(overridesByDate.entries())) {
+      const overrideDate = new Date(`${dateStr}T12:00:00Z`);
+      if (overrideDate < new Date(startDate.getTime() - 86400000) || overrideDate > new Date(endDate.getTime() + 86400000)) {
+        continue;
+      }
+
+      const baseAvail = getBaseAvailabilityForDate(dateStr, availability);
+      
+      let blockedWindows: {start: number, end: number}[] = [];
+      const firstOverride = dayOverrides[0];
+      if (dayOverrides.length === 1 && firstOverride && firstOverride.startTime === "00:00" && firstOverride.endTime === "00:00") {
+        blockedWindows = [{ start: 0, end: 24 * 60 }];
+      } else {
+        const overrideWindows = dayOverrides.map(o => ({ start: timeToMins(o.startTime), end: timeToMins(o.endTime) }));
+        blockedWindows = [...baseAvail];
+        for (const w of overrideWindows) {
+          blockedWindows = subtractBlock(blockedWindows, w.start, w.end);
+        }
+      }
+
+      for (const bw of blockedWindows) {
+        if (bw.end <= bw.start) continue;
+        
+        const startAt = parseDateTimeInSantiago(dateStr, minsToTime(bw.start));
+        const endAt = parseDateTimeInSantiago(dateStr, minsToTime(bw.end));
+        
+        virtualBlocks.push({
+          id: `virtual_${startAt.getTime()}_${endAt.getTime()}`,
+          startAt,
+          endAt,
+          reason: "Bloqueo externo (Cal.com)",
+          isVirtual: true
+        });
+      }
+    }
+
+    return virtualBlocks;
+  } catch (err) {
+    console.error("Failed to fetch CalCom virtual blocked slots:", err);
+    return [];
+  }
+}
+
+export async function getCalComScheduleAvailability(): Promise<CalComAvailabilityItem[]> {
+  if (!env.CALCOM_SCHEDULE_ID || !env.CALCOM_API_KEY) return [];
+
+  const getUrl = `${env.CALCOM_API_URL ?? "https://api.cal.com/v2"}/schedules/${env.CALCOM_SCHEDULE_ID}`;
+  
+  try {
+    const getRes = await fetch(getUrl, {
+      headers: {
+        "Authorization": `Bearer ${env.CALCOM_API_KEY}`,
+        "cal-api-version": "2024-06-11",
+      },
+      next: { revalidate: 0 },
+    });
+
+    if (!getRes.ok) return [];
+    const getJson = await getRes.json() as CalComScheduleResponse;
+    return getJson.data?.availability || [];
+  } catch (err) {
+    console.error("Failed to fetch CalCom schedule availability:", err);
+    return [];
   }
 }
 

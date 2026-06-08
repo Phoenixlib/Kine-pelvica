@@ -24,10 +24,31 @@ import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Plus, RefreshCw
 import { STATUS_STYLES, AppointmentDetailModal } from "~/components/admin/AppointmentDetailModal";
 import NuevaCitaKineModal from "~/components/admin/NuevaCitaKineModal";
 import BloqueoHorasModal from "~/components/admin/BloqueoHorasModal";
+import BlockDetailsModal from "~/components/admin/BlockDetailsModal";
 import type { Appointment } from "~/components/admin/AppointmentDetailModal";
 import { env } from "~/env";
 
-const HOURS = Array.from({ length: 13 }, (_, i) => i + 8); // 08:00 to 20:00
+
+const isHourAvailable = (date: Date, hour: number, availabilityRules: any[]) => {
+  const dayNames = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+  const dayOfWeek = dayNames[date.getDay()];
+  if (!dayOfWeek) return false;
+  
+  const rules = availabilityRules.filter(r => r.days.includes(dayOfWeek));
+  if (rules.length === 0) return false;
+  
+  const timeInMins = hour * 60;
+  const timeToMins = (timeStr: string) => {
+    const [h, m] = timeStr.split(":").map(Number);
+    return (h ?? 0) * 60 + (m ?? 0);
+  };
+  
+  return rules.some(r => {
+    const startMins = timeToMins(r.startTime);
+    const endMins = timeToMins(r.endTime);
+    return timeInMins >= startMins && timeInMins < endMins;
+  });
+};
 
 export default function AgendaPage() {
   const [currentDate, setCurrentDate] = useState(new Date());
@@ -42,9 +63,16 @@ export default function AgendaPage() {
   const [showBlockModal, setShowBlockModal] = useState(false);
   const [initialBlockDate, setInitialBlockDate] = useState<string | null>(null);
   const [blockToDelete, setBlockToDelete] = useState<string | null>(null);
+  const [selectedBlock, setSelectedBlock] = useState<{
+    id: string;
+    startAt: Date;
+    endAt: Date;
+    reason: string | null;
+    isVirtual?: boolean;
+  } | null>(null);
   
   // Context Menu State
-  const [contextMenu, setContextMenu] = useState<{ x: number, y: number, dateStr: string } | null>(null);
+  const [contextMenu, setContextMenu] = useState<{ x: number, y: number, dateStr: string, isOut: boolean } | null>(null);
 
   const utils = api.useUtils();
 
@@ -64,6 +92,48 @@ export default function AgendaPage() {
     startDate,
     endDate,
   });
+
+  const { data: availabilityRules = [] } = api.blockedSlot.getAvailability.useQuery();
+
+  // Dynamic hours calculation
+  const dynamicHoursRange = useMemo(() => {
+    let minH = 8;
+    let maxH = 21; // By default show up to 21:00 cell (which covers 21:00 - 22:00)
+
+    availabilityRules.forEach(rule => {
+      const startH = parseInt(rule.startTime.split(':')[0] || "8", 10);
+      let endH = parseInt(rule.endTime.split(':')[0] || "21", 10);
+      const endM = parseInt(rule.endTime.split(':')[1] || "0", 10);
+      if (endM > 0) endH += 1; // Round up if there's minutes
+      if (startH < minH) minH = startH;
+      if (endH > maxH) maxH = endH;
+    });
+
+    appointments.forEach(appt => {
+      const startObj = new Date(appt.date);
+      const startH = startObj.getHours();
+      const endH = startH + Math.ceil(appt.durationMinutes / 60);
+      if (startH < minH) minH = startH;
+      if (endH > maxH) maxH = endH;
+    });
+    
+    // Ensure minimum bounds to be 8 to 21
+    if (maxH < 21) maxH = 21;
+    if (minH > 8) minH = 8;
+
+    // Constrain to 0..24
+    maxH = Math.min(24, maxH);
+    minH = Math.max(0, minH);
+
+    const length = maxH - minH;
+    return {
+      minHour: minH,
+      maxHour: maxH,
+      hours: Array.from({ length }, (_, i) => i + minH)
+    };
+  }, [availabilityRules, appointments]);
+
+  const { minHour, maxHour, hours: HOURS } = dynamicHoursRange;
 
   // Mutations
   const updateMutation = api.appointment.update.useMutation({
@@ -102,11 +172,13 @@ export default function AgendaPage() {
     e.preventDefault();
     e.stopPropagation(); // Prevenir que el event listener del window lo cierre instantáneamente
     const cellDate = setHours(setMinutes(startOfDay(date), 0), hour);
+    const isOut = !isHourAvailable(date, hour, availabilityRules);
     
     setContextMenu({
       x: e.clientX,
       y: e.clientY,
       dateStr: format(cellDate, "yyyy-MM-dd'T'HH:mm:ss"),
+      isOut,
     });
   };
 
@@ -401,11 +473,16 @@ export default function AgendaPage() {
                   <div key={dIdx} className="flex-1 relative border-r border-cream/30 box-border z-10">
                     {/* Empty cell interaction areas */}
                     {HOURS.map(hour => {
+                      const isAvailable = isHourAvailable(day, hour, availabilityRules);
                       return (
                          <div 
                            key={hour} 
-                           className={`absolute w-full h-[56px] cursor-pointer hover:bg-teal/5 transition-colors`}
-                           style={{ top: `${(hour - 8) * 56}px` }}
+                           className={`absolute w-full h-[56px] cursor-pointer transition-colors ${
+                             isAvailable 
+                               ? "hover:bg-teal/5" 
+                               : "bg-[repeating-linear-gradient(-45deg,rgba(15,63,62,0.02),rgba(15,63,62,0.02)_4px,transparent_4px,transparent_8px)] bg-offwhite/40 hover:bg-offwhite/60"
+                           }`}
+                           style={{ top: `${(hour - minHour) * 56}px` }}
                            onClick={(e) => handleCellClick(e, day, hour)}
                          />
                       );
@@ -419,29 +496,44 @@ export default function AgendaPage() {
                         const endObj = new Date(block.endAt);
                         
                         const startDecimal = startObj.getHours() + startObj.getMinutes() / 60;
-                        const durationHrs = (endObj.getTime() - startObj.getTime()) / (1000 * 60 * 60);
+                        let durationHrs = (endObj.getTime() - startObj.getTime()) / (1000 * 60 * 60);
 
-                        if (startDecimal < 8 || startDecimal > 20) return null;
+                        // Adjust for full day bounds
+                        let adjustedStart = startDecimal;
+                        let adjustedDuration = durationHrs;
 
-                        const top = (startDecimal - 8) * 56;
-                        const height = durationHrs * 56;
+                        if (adjustedStart < minHour) {
+                          adjustedDuration -= (minHour - adjustedStart);
+                          adjustedStart = minHour;
+                        }
+                        if (adjustedStart + adjustedDuration > maxHour) {
+                          adjustedDuration = maxHour - adjustedStart;
+                        }
+
+                        if (adjustedStart >= maxHour || adjustedStart + adjustedDuration <= minHour) return null;
+
+                        const top = (adjustedStart - minHour) * 56;
+                        const height = adjustedDuration * 56;
+                        const isVirtual = block.id.startsWith("virtual_") || block.isVirtual;
 
                         return (
                           <div
                             key={block.id}
-                            className="absolute left-1 right-1 bg-slate-200/80 border border-slate-300 rounded-lg p-1 overflow-hidden z-20 flex items-center justify-between shadow-sm cursor-not-allowed"
+                            className="absolute left-1 right-1 bg-slate-200/85 border border-slate-300 rounded-lg p-1.5 overflow-hidden z-20 flex flex-col justify-between shadow-sm cursor-pointer hover:bg-slate-200 transition-colors"
                             style={{ top: `${top}px`, height: `${Math.max(height, 20)}px` }}
-                            onClick={(e) => e.stopPropagation()}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setSelectedBlock(block);
+                            }}
                           >
-                            <span className="text-[9px] font-bold text-slate-600 uppercase tracking-widest leading-tight">
+                            <span className="text-[9px] font-bold text-slate-700 uppercase tracking-widest leading-none truncate">
                               Bloqueado
                             </span>
-                            <button
-                              onClick={(e) => handleDeleteBlock(e, block.id)}
-                              className="text-slate-400 hover:text-red-500 transition-colors p-0.5"
-                            >
-                              <X size={12} />
-                            </button>
+                            {height > 30 && (
+                              <span className="text-[8px] text-slate-500 font-medium leading-none truncate mt-1">
+                                {isVirtual ? "🌐 Cal.com" : "📱 Local"}
+                              </span>
+                            )}
                           </div>
                         );
                     })}
@@ -454,9 +546,9 @@ export default function AgendaPage() {
                         const startDecimal = startObj.getHours() + startObj.getMinutes() / 60;
                         const durationHrs = appt.durationMinutes / 60;
 
-                        if (startDecimal < 8 || startDecimal > 20) return null;
+                        if (startDecimal < minHour || startDecimal >= maxHour) return null;
 
-                        const top = (startDecimal - 8) * 56;
+                        const top = (startDecimal - minHour) * 56;
                         const height = durationHrs * 56;
                         const styleConfig = STATUS_STYLES[appt.status];
 
@@ -494,7 +586,7 @@ export default function AgendaPage() {
         {/* Context Menu */}
         {contextMenu && (
           <div 
-            className="fixed z-50 bg-white rounded-xl shadow-xl border border-cream/50 py-1 w-48 animate-in fade-in zoom-in-95 duration-150"
+            className="fixed z-50 bg-white rounded-xl shadow-xl border border-cream/50 py-1 w-52 animate-in fade-in zoom-in-95 duration-150"
             style={{ top: contextMenu.y, left: contextMenu.x }}
             onClick={(e) => e.stopPropagation()}
           >
@@ -508,15 +600,17 @@ export default function AgendaPage() {
               className="w-full text-left px-4 py-2.5 text-xs font-semibold text-teal hover:bg-cream/10 transition-colors flex items-center gap-2"
             >
               <Plus size={14} className="text-terracotta" />
-              Agendar Cita
+              {contextMenu.isOut ? "Agendar Cita (Sobre Cupo)" : "Agendar Cita"}
             </button>
-            <button
-              onClick={handleActionBlockSlot}
-              className="w-full text-left px-4 py-2.5 text-xs font-semibold text-teal hover:bg-cream/10 transition-colors flex items-center gap-2"
-            >
-              <X size={14} className="text-red-500" />
-              Bloquear Horario
-            </button>
+            {!contextMenu.isOut && (
+              <button
+                onClick={handleActionBlockSlot}
+                className="w-full text-left px-4 py-2.5 text-xs font-semibold text-teal hover:bg-cream/10 transition-colors flex items-center gap-2"
+              >
+                <X size={14} className="text-red-500" />
+                Bloquear Horario
+              </button>
+            )}
           </div>
         )}
         {/* Detail Modal */}
@@ -573,6 +667,23 @@ export default function AgendaPage() {
               </div>
             </div>
           </div>
+        )}
+
+        {/* Block Details Modal */}
+        {selectedBlock && (
+          <BlockDetailsModal
+            isOpen={!!selectedBlock}
+            onClose={() => setSelectedBlock(null)}
+            block={selectedBlock}
+            onDelete={(id) => {
+              deleteBlockMutation.mutate({ id }, {
+                onSuccess: () => {
+                  setSelectedBlock(null);
+                }
+              });
+            }}
+            isDeleting={deleteBlockMutation.isPending}
+          />
         )}
       </div>
     </div>
