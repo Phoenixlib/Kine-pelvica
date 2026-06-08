@@ -25,6 +25,7 @@ import { STATUS_STYLES, AppointmentDetailModal } from "~/components/admin/Appoin
 import NuevaCitaKineModal from "~/components/admin/NuevaCitaKineModal";
 import BloqueoHorasModal from "~/components/admin/BloqueoHorasModal";
 import type { Appointment } from "~/components/admin/AppointmentDetailModal";
+import { env } from "~/env";
 
 const HOURS = Array.from({ length: 13 }, (_, i) => i + 8); // 08:00 to 20:00
 
@@ -334,7 +335,7 @@ export default function AgendaPage() {
               )}
             </button>
             <a 
-              href="https://cal.com/availability/1597637" 
+              href={env.NEXT_PUBLIC_CALCOM_ADMIN_URL ?? "https://cal.com/availability/1597637"} 
               target="_blank" 
               rel="noopener noreferrer"
               className="flex items-center justify-center bg-teal hover:bg-teal/90 transition-colors text-white px-3 py-2 sm:px-4 sm:py-2 rounded-xl text-xs font-bold uppercase tracking-widest gap-2 shadow-sm"
