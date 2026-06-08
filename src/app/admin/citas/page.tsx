@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { api } from "~/trpc/react";
 import { 
   Search, 
@@ -45,6 +45,7 @@ export default function CitasPage() {
   const [cancellingAppt, setCancellingAppt] = useState<Appointment | null>(null);
   const [cancelReason, setCancelReason] = useState("");
 
+
   const utils = api.useUtils();
 
   // Reset page on search or filter change
@@ -69,6 +70,27 @@ export default function CitasPage() {
   const appointmentsList = appointmentsData?.appointments as unknown as Appointment[] || [];
   const totalPages = appointmentsData?.totalPages || 1;
   const totalCount = appointmentsData?.total || 0;
+
+  const tableContainerRef = useRef<HTMLDivElement>(null);
+  const [canScrollLeft, setCanScrollLeft] = useState(false);
+  const [canScrollRight, setCanScrollRight] = useState(false);
+
+  const checkScroll = () => {
+    if (tableContainerRef.current) {
+      const { scrollLeft, scrollWidth, clientWidth } = tableContainerRef.current;
+      setCanScrollLeft(scrollLeft > 0);
+      setCanScrollRight(Math.ceil(scrollLeft + clientWidth) < scrollWidth - 1);
+    }
+  };
+
+  useEffect(() => {
+    const timeout = setTimeout(checkScroll, 100);
+    window.addEventListener("resize", checkScroll);
+    return () => {
+      clearTimeout(timeout);
+      window.removeEventListener("resize", checkScroll);
+    };
+  }, [appointmentsList]);
 
   const updateMutation = api.appointment.update.useMutation({
     onSuccess: async () => {
@@ -215,8 +237,21 @@ export default function CitasPage() {
       </div>
 
       {/* Desktop Table View */}
-      <div className="hidden md:block bg-white rounded-3xl border border-cream/30 shadow-xs overflow-hidden">
-        <div className="overflow-x-auto">
+      <div className="hidden md:block bg-white rounded-3xl border border-cream/30 shadow-xs overflow-hidden relative">
+        {/* Left Fade Overlay */}
+        <div 
+          className={`absolute top-0 left-0 bottom-0 w-12 bg-gradient-to-r from-teal/10 to-transparent pointer-events-none z-10 transition-opacity duration-300 ${canScrollLeft ? "opacity-100" : "opacity-0"}`} 
+        />
+        {/* Right Fade Overlay */}
+        <div 
+          className={`absolute top-0 right-0 bottom-0 w-12 bg-gradient-to-l from-teal/10 to-transparent pointer-events-none z-10 transition-opacity duration-300 ${canScrollRight ? "opacity-100" : "opacity-0"}`} 
+        />
+        
+        <div 
+          ref={tableContainerRef}
+          onScroll={checkScroll}
+          className="overflow-x-auto"
+        >
           <table className="w-full text-left text-xs font-body text-teal">
             <thead className="bg-[#f7f3ef] font-subtitle uppercase tracking-widest text-[9px] font-bold text-teal/65 border-b border-cream/30">
               <tr>
@@ -227,7 +262,7 @@ export default function CitasPage() {
                 <th className="px-6 py-4">Precio Servicio</th>
                 <th className="px-6 py-4 text-center">Notas</th>
                 <th className="px-6 py-4">Estado Cita</th>
-                <th className="px-6 py-4 text-right">Cambiar Estado</th>
+                <th className="pl-4 pr-6 py-4 text-left">Cambiar Estado</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-cream/10">
@@ -308,8 +343,8 @@ export default function CitasPage() {
                           {STATUS_LABELS[appt.status]}
                         </span>
                       </td>
-                      <td className="px-6 py-4 text-right" onClick={(e) => e.stopPropagation()}>
-                        <div className="flex items-center justify-end gap-1.5">
+                      <td className="pl-4 pr-6 py-4 text-left" onClick={(e) => e.stopPropagation()}>
+                        <div className="flex items-center justify-start gap-1.5">
                           {appt.status === "BOOKED" && (
                             <>
                               <button
