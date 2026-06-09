@@ -350,12 +350,12 @@ export default function AgendaPage() {
         id="agenda-container"
         className={`flex-1 flex flex-col bg-white border border-cream/50 overflow-hidden transition-all ${
           isFullscreen 
-            ? "fixed inset-0 z-50 w-screen h-screen p-6 bg-white" 
+            ? "fixed inset-0 z-50 w-screen h-screen p-2 lg:p-6 bg-white" 
             : "rounded-3xl shadow-sm h-[calc(100vh-80px)] lg:h-auto"
         }`}
       >
         {/* Agenda Header */}
-        <div className="flex flex-col sm:flex-row items-center justify-between p-4 sm:p-6 border-b border-cream/50 gap-4">
+        <div className="flex flex-col sm:flex-row items-center justify-between p-3 lg:p-6 border-b border-cream/50 gap-4">
           <div className="flex items-center gap-3">
             <button onClick={handlePrevWeek} className="p-2 hover:bg-cream/30 rounded-full text-teal transition-colors"><ChevronLeft size={20} /></button>
             
@@ -364,12 +364,12 @@ export default function AgendaPage() {
               <button 
                 type="button"
                 onClick={(e) => { e.stopPropagation(); setShowDatePicker(!showDatePicker); setPickerDate(currentDate); }}
-                className="text-base sm:text-lg font-title text-teal capitalize min-w-48 text-center font-bold hover:bg-cream/20 px-4 py-1.5 rounded-xl transition-colors cursor-pointer flex items-center justify-center gap-2"
+                className="text-base sm:text-lg font-title text-teal capitalize min-w-36 lg:min-w-48 text-center font-bold hover:bg-cream/20 px-4 py-1.5 rounded-xl transition-colors cursor-pointer flex items-center justify-center gap-2"
               >
                 {format(startDate, "MMMM yyyy", { locale: es })}
                 <span className="text-xs opacity-50">▼</span>
               </button>
-
+ 
               {/* Popover */}
               {showDatePicker && (
                 <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 z-50">
@@ -377,9 +377,9 @@ export default function AgendaPage() {
                 </div>
               )}
             </div>
-
+ 
             <button onClick={handleNextWeek} className="p-2 hover:bg-cream/30 rounded-full text-teal transition-colors"><ChevronRight size={20} /></button>
-            <button onClick={handleToday} className="px-4 py-1.5 bg-cream/20 hover:bg-cream/40 text-teal text-[10px] font-bold uppercase tracking-widest rounded-full transition-colors ml-2 hidden sm:block">
+            <button onClick={handleToday} className="px-4 py-1.5 bg-cream/20 hover:bg-cream/40 text-teal text-[10px] font-bold uppercase tracking-widest rounded-full transition-colors ml-2 hidden md:block">
               Hoy
             </button>
           </div>
@@ -400,7 +400,7 @@ export default function AgendaPage() {
               {isFullscreen ? (
                 <>
                   <X size={18} />
-                  <span className="text-xs font-bold uppercase tracking-wider">Volver</span>
+                  <span className="text-xs font-bold uppercase tracking-wider hidden md:inline">Volver</span>
                 </>
               ) : (
                 <Maximize2 size={18} />
@@ -411,9 +411,10 @@ export default function AgendaPage() {
               target="_blank" 
               rel="noopener noreferrer"
               className="flex items-center justify-center bg-teal hover:bg-teal/90 transition-colors text-white px-3 py-2 sm:px-4 sm:py-2 rounded-xl text-xs font-bold uppercase tracking-widest gap-2 shadow-sm"
+              title="Disponibilidad"
             >
               <Calendar size={18} />
-              <span className="hidden sm:inline">Disponibilidad</span>
+              <span className="hidden md:inline">Disponibilidad</span>
             </a>
             <button
               onClick={() => {
@@ -421,9 +422,10 @@ export default function AgendaPage() {
                 setShowNewCitaModal(true);
               }}
               className="flex items-center justify-center bg-terracotta hover:bg-[#b05b4a] transition-colors text-white px-3 py-2 sm:px-4 sm:py-2 rounded-xl text-xs font-bold uppercase tracking-widest gap-2 shadow-sm"
+              title="Nueva Cita"
             >
               <Plus size={18} />
-              <span className="hidden sm:inline">Nueva Cita</span>
+              <span className="hidden md:inline">Nueva Cita</span>
             </button>
           </div>
         </div>

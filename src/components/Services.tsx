@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from "react";
 import BookingFlow from "./booking/BookingFlow";
-import { X } from "lucide-react";
+import { X, ChevronDown, ChevronUp } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 
 interface Service {
   name: string;
@@ -23,11 +24,13 @@ interface ServicesProps {
 
 export function Services({ initialCategories }: ServicesProps) {
   const [activeCategory, setActiveCategory] = useState<number>(0);
+  const [mobileOpenCategory, setMobileOpenCategory] = useState<number | null>(null);
   const [bookingModal, setBookingModal] = useState<{ open: boolean; calLink: string }>({
     open: false,
     calLink: "",
   });
   const [selectedService, setSelectedService] = useState<Service | null>(null);
+  const [selectedServiceCategory, setSelectedServiceCategory] = useState<string>("");
 
   useEffect(() => {
     if (bookingModal.open || selectedService) {
@@ -119,62 +122,155 @@ export function Services({ initialCategories }: ServicesProps) {
           </p>
         </div>
 
-        <div className="flex flex-wrap justify-center gap-3 mb-10">
-          {categories.map((category, index) => (
-            <button
-              key={index}
-              onClick={() => setActiveCategory(index)}
-              className={`px-6 py-3 rounded-full font-subtitle text-[11px] md:text-xs uppercase tracking-widest font-bold transition-all ${
-                safeActiveIndex === index 
-                  ? "bg-teal text-white shadow-md border border-teal" 
-                  : "bg-white text-teal border border-cream hover:bg-cream/20"
-              }`}
-            >
-              {category.name}
-            </button>
-          ))}
+        {/* Vista Desktop (Tabs + Grid) */}
+        <div className="hidden md:block">
+          <div className="flex flex-wrap justify-center gap-3 mb-10">
+            {categories.map((category, index) => (
+              <button
+                key={index}
+                onClick={() => setActiveCategory(index)}
+                className={`px-6 py-3 rounded-full font-subtitle text-[11px] md:text-xs uppercase tracking-widest font-bold transition-all ${
+                  safeActiveIndex === index 
+                    ? "bg-teal text-white shadow-md border border-teal" 
+                    : "bg-white text-teal border border-cream hover:bg-cream/20"
+                }`}
+              >
+                {category.name}
+              </button>
+            ))}
+          </div>
+
+          {currentCategory && (
+            <div className="bg-[#f7f3ef] border border-cream/50 rounded-3xl p-6 md:p-10 shadow-sm min-h-[400px]">
+              <h4 className="font-subtitle text-lg font-bold text-teal mb-8 text-center uppercase tracking-widest">
+                {currentCategory.name}
+              </h4>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 animate-in slide-in-from-bottom-2 fade-in duration-500" key={safeActiveIndex}>
+                {currentCategory.services.map((service, sIndex) => (
+                  <div 
+                    key={sIndex} 
+                    onClick={() => {
+                      setSelectedService(service);
+                      setSelectedServiceCategory(currentCategory.name);
+                    }}
+                    className="bg-white border border-terracotta/20 rounded-2xl p-6 flex flex-col hover:border-terracotta/50 hover:shadow-md transition-all h-full relative group cursor-pointer"
+                  >
+                    <div className="flex-1">
+                      <h4 className="font-subtitle text-[13px] font-bold text-[#0f3f3e] mb-1">{service.name}</h4>
+                      <div className="font-body text-sm text-[#0f3f3e]/60 mb-2 flex justify-between items-center">
+                        {service.duration && <span>{formatDuration(service.duration)}</span>}
+                        <span className="font-bold text-terracotta text-base">{formatPrice(service.price)}</span>
+                      </div>
+                      {service.details && (
+                        <p className="font-body text-xs text-[#0f3f3e]/70 leading-relaxed mb-4 line-clamp-3">
+                          {service.details}
+                        </p>
+                      )}
+                      {!service.details && <div className="mb-4"></div>}
+                    </div>
+                    <button 
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        const calPath = service.bookingUrl?.replace("https://cal.com/", "") ?? "";
+                        setBookingModal({ open: true, calLink: calPath });
+                      }}
+                      className="mt-auto block text-center bg-terracotta text-white w-full py-2.5 rounded-full font-subtitle text-[10px] uppercase tracking-widest font-bold hover:bg-teal transition-colors shadow-sm"
+                    >
+                      Agendar servicio
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
 
-        {currentCategory && (
-          <div className="bg-[#f7f3ef] border border-cream/50 rounded-3xl p-6 md:p-10 shadow-sm min-h-[400px]">
-            <h4 className="font-subtitle text-lg font-bold text-teal mb-8 text-center uppercase tracking-widest hidden md:block">
-              {currentCategory.name}
-            </h4>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 animate-in slide-in-from-bottom-2 fade-in duration-500" key={safeActiveIndex}>
-              {currentCategory.services.map((service, sIndex) => (
-                <div 
-                  key={sIndex} 
-                  onClick={() => setSelectedService(service)}
-                  className="bg-white border border-terracotta/20 rounded-2xl p-6 flex flex-col hover:border-terracotta/50 hover:shadow-md transition-all h-full relative group cursor-pointer"
+        {/* Vista Móvil (Accordion) */}
+        <div className="block md:hidden space-y-4">
+          {categories.map((category, index) => {
+            const isOpen = mobileOpenCategory === index;
+            return (
+              <div 
+                key={index} 
+                className="bg-[#f7f3ef] border border-cream/50 rounded-2xl overflow-hidden shadow-xs"
+              >
+                {/* Accordion Header */}
+                <button
+                  type="button"
+                  onClick={() => setMobileOpenCategory(isOpen ? null : index)}
+                  className="w-full px-6 py-4 flex items-center justify-between text-left text-teal font-subtitle text-xs uppercase tracking-widest font-bold hover:bg-cream/10 transition-colors"
                 >
-                  <div className="flex-1">
-                    <h4 className="font-subtitle text-[13px] font-bold text-[#0f3f3e] mb-1">{service.name}</h4>
-                    <div className="font-body text-sm text-[#0f3f3e]/60 mb-2 flex justify-between items-center">
-                      {service.duration && <span>{formatDuration(service.duration)}</span>}
-                      <span className="font-bold text-terracotta text-base">{formatPrice(service.price)}</span>
-                    </div>
-                    {service.details && (
-                      <p className="font-body text-xs text-[#0f3f3e]/70 leading-relaxed mb-4 line-clamp-3">
-                        {service.details}
-                      </p>
-                    )}
-                    {!service.details && <div className="mb-4"></div>}
-                  </div>
-                  <button 
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      const calPath = service.bookingUrl?.replace("https://cal.com/", "") ?? "";
-                      setBookingModal({ open: true, calLink: calPath });
-                    }}
-                    className="mt-auto block text-center bg-terracotta text-white w-full py-2.5 rounded-full font-subtitle text-[10px] uppercase tracking-widest font-bold hover:bg-teal transition-colors shadow-sm"
-                  >
-                    Agendar servicio
-                  </button>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
+                  <span className="pr-4">{category.name}</span>
+                  {isOpen ? (
+                    <ChevronUp size={16} className="text-terracotta shrink-0" />
+                  ) : (
+                    <ChevronDown size={16} className="text-teal/60 shrink-0" />
+                  )}
+                </button>
+
+                {/* Accordion Content */}
+                <AnimatePresence initial={false}>
+                  {isOpen && (
+                    <motion.div
+                      key="content"
+                      initial="collapsed"
+                      animate="open"
+                      exit="collapsed"
+                      variants={{
+                        open: { opacity: 1, height: "auto" },
+                        collapsed: { opacity: 0, height: 0 }
+                      }}
+                      transition={{ duration: 0.3, ease: [0.04, 0.62, 0.23, 0.98] }}
+                      className="overflow-hidden border-t border-cream/30"
+                    >
+                      <div className="p-4 space-y-4">
+                        {category.services.length === 0 ? (
+                          <p className="text-center text-teal/40 font-body text-xs py-4">
+                            No hay servicios registrados en esta categoría.
+                          </p>
+                        ) : (
+                          category.services.map((service, sIndex) => (
+                            <div 
+                              key={sIndex} 
+                              onClick={() => {
+                                setSelectedService(service);
+                                setSelectedServiceCategory(category.name);
+                              }}
+                              className="bg-white border border-terracotta/20 rounded-xl p-4 flex flex-col hover:border-terracotta/50 shadow-xs transition-all cursor-pointer"
+                            >
+                              <div className="flex-1">
+                                <h4 className="font-subtitle text-[13px] font-bold text-[#0f3f3e] mb-1">{service.name}</h4>
+                                <div className="font-body text-xs text-[#0f3f3e]/60 mb-2 flex justify-between items-center">
+                                  {service.duration && <span>{formatDuration(service.duration)}</span>}
+                                  <span className="font-bold text-terracotta text-sm">{formatPrice(service.price)}</span>
+                                </div>
+                                {service.details && (
+                                  <p className="font-body text-xs text-[#0f3f3e]/70 leading-relaxed mb-3 line-clamp-3 font-light">
+                                    {service.details}
+                                  </p>
+                                )}
+                              </div>
+                              <button 
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  const calPath = service.bookingUrl?.replace("https://cal.com/", "") ?? "";
+                                  setBookingModal({ open: true, calLink: calPath });
+                                }}
+                                className="mt-2 block text-center bg-terracotta text-white w-full py-2 rounded-full font-subtitle text-[9px] uppercase tracking-widest font-bold hover:bg-teal transition-colors shadow-sm"
+                              >
+                                Agendar servicio
+                              </button>
+                            </div>
+                          ))
+                        )}
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+            );
+          })}
+        </div>
       </div>
 
       {/* Modal overlay */}
@@ -209,7 +305,7 @@ export function Services({ initialCategories }: ServicesProps) {
             
             <div className="mt-2">
               <span className="text-[10px] font-subtitle font-bold tracking-[0.2em] text-terracotta uppercase">
-                {currentCategory?.name || "Servicio"}
+                {selectedServiceCategory || "Servicio"}
               </span>
               <h3 className="font-title text-3xl text-teal mt-1 mb-4 leading-tight">
                 {selectedService.name}
