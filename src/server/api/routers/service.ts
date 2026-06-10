@@ -114,7 +114,7 @@ export const serviceRouter = createTRPCRouter({
         );
         if (calEvent) {
           calComEventTypeId = calEvent.id;
-          calComBookingUrl = calEvent.bookingUrl || `https://cal.com/camila-ortiz/${calEvent.slug}`;
+          calComBookingUrl = calEvent.bookingUrl || `https://cal.com/estudiopelvico/${calEvent.slug}`;
           calComSlug = calEvent.slug;
         }
       } catch (error) {
@@ -181,7 +181,7 @@ export const serviceRouter = createTRPCRouter({
             locationAddress
           );
           if (calEvent) {
-            calComBookingUrl = calEvent.bookingUrl || `https://cal.com/camila-ortiz/${calEvent.slug}`;
+            calComBookingUrl = calEvent.bookingUrl || `https://cal.com/estudiopelvico/${calEvent.slug}`;
             calComSlug = calEvent.slug;
           }
         } catch (error) {
@@ -198,7 +198,7 @@ export const serviceRouter = createTRPCRouter({
           );
           if (calEvent) {
             calComEventTypeId = calEvent.id;
-            calComBookingUrl = calEvent.bookingUrl || `https://cal.com/camila-ortiz/${calEvent.slug}`;
+            calComBookingUrl = calEvent.bookingUrl || `https://cal.com/estudiopelvico/${calEvent.slug}`;
             calComSlug = calEvent.slug;
           }
         } catch (error) {
