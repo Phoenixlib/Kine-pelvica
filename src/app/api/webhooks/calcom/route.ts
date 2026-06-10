@@ -136,11 +136,15 @@ export async function POST(req: Request) {
 
       // Buscar el service asociado a este event type de Cal.com
       let serviceId: string | null = null;
+      let serviceDuration: number | undefined = undefined;
       if (booking.eventTypeId) {
         const service = await db.service.findFirst({
           where: { calComEventTypeId: Number(booking.eventTypeId) }
         });
         serviceId = service?.id || null;
+        if (service) {
+          serviceDuration = service.duration;
+        }
       }
 
       // Create or update the appointment
@@ -156,7 +160,7 @@ export async function POST(req: Request) {
             where: { id: existingAppt.id },
             data: {
               date: new Date(booking.startTime),
-              durationMinutes: booking.eventDuration || booking.length || existingAppt.durationMinutes,
+              durationMinutes: booking.eventDuration || booking.length || serviceDuration || existingAppt.durationMinutes || 60,
               ...(serviceId ? { 
                 serviceId, 
                 title: booking.title || booking.eventType?.title || "Cita de Kinesiología" 
@@ -173,7 +177,7 @@ export async function POST(req: Request) {
               calComBookingId: bookingIdVal,
               title: booking.title || booking.eventType?.title || "Cita de Kinesiología",
               date: new Date(booking.startTime),
-              durationMinutes: booking.eventDuration || booking.length || 60,
+              durationMinutes: booking.eventDuration || booking.length || serviceDuration || 60,
               status: "BOOKED",
               serviceId,
               notes: booking.responses?.notes?.value || null,

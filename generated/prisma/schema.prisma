@@ -1,6 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
 generator client {
   provider = "prisma-client-js"
   output   = "../generated/prisma"
@@ -12,12 +9,11 @@ datasource db {
   directUrl = env("DIRECT_URL")
 }
 
-// --- Autenticación ---
 model User {
   id          String               @id @default(cuid())
   name        String?
   email       String               @unique
-  password    String // bcrypt hash
+  password    String
   createdAt   DateTime             @default(now())
   updatedAt   DateTime             @updatedAt
   resetTokens PasswordResetToken[]
@@ -28,11 +24,10 @@ model PasswordResetToken {
   token     String   @unique
   expiresAt DateTime
   userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
-// --- Pacientes ---
 model Patient {
   id           String        @id @default(cuid())
   firstName    String
@@ -45,42 +40,25 @@ model Patient {
   appointments Appointment[]
 }
 
-// --- Citas ---
 model Appointment {
   id              String            @id @default(cuid())
   patientId       String
-  patient         Patient           @relation(fields: [patientId], references: [id], onDelete: Cascade)
   title           String
   serviceId       String?
-  service         Service?          @relation(fields: [serviceId], references: [id])
   date            DateTime
   durationMinutes Int               @default(60)
   status          AppointmentStatus @default(BOOKED)
   paymentMethod   PaymentMethod?    @default(PENDING)
-  cancelReason    String? // obligatorio si status=CANCELLED
+  cancelReason    String?
   calComEventId   String?           @unique
   calComBookingId String?           @unique
   notes           String?
   createdAt       DateTime          @default(now())
   updatedAt       DateTime          @updatedAt
+  patient         Patient           @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  service         Service?          @relation(fields: [serviceId], references: [id])
 }
 
-enum AppointmentStatus {
-  BOOKED // Reservado (hora pedida)
-  CONFIRMED // Confirmado
-  ATTENDED // Asistió
-  NO_SHOW // No asistió
-  CANCELLED // Cancelado (requiere cancelReason)
-}
-
-enum PaymentMethod {
-  PENDING // Pendiente
-  CASH_PENDING // Pago en efectivo (pendiente)
-  TRANSFER // Transferido (pagó por transferencia)
-  CASH_PAID // Pagado efectivo
-}
-
-// --- Servicios ---
 model ServiceCategory {
   id        String    @id @default(cuid())
   name      String
@@ -93,31 +71,29 @@ model ServiceCategory {
 model Service {
   id                String           @id @default(cuid())
   name              String
-  price             Int // CLP, sin decimales
-  duration          Int // minutos
+  price             Int
+  duration          Int
   description       String?
   isActive          Boolean          @default(true)
   order             Int              @default(0)
   categoryId        String?
-  category          ServiceCategory? @relation(fields: [categoryId], references: [id])
-  calComEventTypeId Int? // ID numérico del event type en Cal.com
-  calComBookingUrl  String? // URL pública de reserva: cal.com/camila-ortiz/evaluacion
-  calComSlug        String? // slug del evento para construir URLs
+  calComEventTypeId Int?
+  calComBookingUrl  String?
+  calComSlug        String?
   appointments      Appointment[]
+  category          ServiceCategory? @relation(fields: [categoryId], references: [id])
 }
 
-// --- Galería Antes/Después ---
 model GalleryPhoto {
   id        String   @id @default(cuid())
-  beforeUrl String // Cloudinary URL "Antes"
-  afterUrl  String // Cloudinary URL "Después"
+  beforeUrl String
+  afterUrl  String
   caption   String?
   order     Int      @default(0)
   isVisible Boolean  @default(true)
   createdAt DateTime @default(now())
 }
 
-// --- Buzón de la Comunidad (Historias y Dudas) ---
 model CommunityMessage {
   id        String                 @id @default(cuid())
   name      String
@@ -128,35 +104,21 @@ model CommunityMessage {
   createdAt DateTime               @default(now())
 }
 
-enum CommunityMessageType {
-  EXPERIENCE // Historia/Experiencia
-  QUESTION // Consulta/Duda
-}
-
-enum CommunityMessageStatus {
-  PENDING // Sin leer
-  READ // Leído
-  PUBLISHED_IN_BLOG // Usado en Blog / Publicado
-}
-
-// --- Config general del sitio (Quién Soy, etc.) ---
 model SiteConfig {
-  key       String   @id // "about_title", "about_description"
+  key       String   @id
   value     String
   updatedAt DateTime @updatedAt
 }
 
-// --- Bloqueo de Agenda (Cal.com y Local) ---
 model BlockedSlot {
   id               String   @id @default(cuid())
   startAt          DateTime
   endAt            DateTime
   reason           String?
-  calComOverrideId Int? // ID del override en Cal.com (null si no se sincronizó)
+  calComOverrideId Int?
   createdAt        DateTime @default(now())
 }
 
-// --- Blog ---
 model BlogCategory {
   id        String     @id @default(cuid())
   name      String
@@ -170,14 +132,40 @@ model BlogPost {
   title       String
   slug        String         @unique
   description String         @db.VarChar(200)
-  body        Json // Tiptap JSON
-  mainImage   String? // Cloudinary URL
+  body        Json
+  mainImage   String?
   status      BlogPostStatus @default(DRAFT)
   publishedAt DateTime?
   categoryId  String?
-  category    BlogCategory?  @relation(fields: [categoryId], references: [id])
   createdAt   DateTime       @default(now())
   updatedAt   DateTime       @updatedAt
+  category    BlogCategory?  @relation(fields: [categoryId], references: [id])
+}
+
+enum AppointmentStatus {
+  BOOKED
+  CONFIRMED
+  ATTENDED
+  NO_SHOW
+  CANCELLED
+}
+
+enum PaymentMethod {
+  PENDING
+  CASH_PENDING
+  TRANSFER
+  CASH_PAID
+}
+
+enum CommunityMessageType {
+  EXPERIENCE
+  QUESTION
+}
+
+enum CommunityMessageStatus {
+  PENDING
+  READ
+  PUBLISHED_IN_BLOG
 }
 
 enum BlogPostStatus {
