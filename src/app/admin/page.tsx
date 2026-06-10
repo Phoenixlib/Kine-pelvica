@@ -67,15 +67,15 @@ export default function AdminDashboardPage() {
       icon: CalendarIcon, 
       trend: "Revisar Agenda", 
       color: "border-terracotta/20",
-      href: "/admin/citas"
+      href: "/admin/agenda"
     },
     { 
       label: "Artículos Publicados", 
       value: stats.blogArticles, 
       icon: FileText, 
-      trend: "Blog Sanity", 
+      trend: "Blog", 
       color: "border-teal/20",
-      href: "/admin/contenido"
+      href: "/admin/blog"
     },
     { 
       label: "Tasa de Asistencia", 
@@ -162,16 +162,25 @@ export default function AdminDashboardPage() {
                 </Pie>
                 <Tooltip 
                   cursor={{ fill: 'transparent' }} 
-                  contentStyle={{ 
-                    borderRadius: '16px', 
-                    border: '1px solid #d8c7b4', 
-                    boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.05)',
-                    backgroundColor: '#fff',
-                    color: '#0f3f3e',
-                    fontFamily: 'Inter, sans-serif',
-                    fontWeight: 'bold'
+                  content={({ active, payload }) => {
+                    if (active && payload && payload.length) {
+                      const entry = payload[0] as any;
+                      const data = entry?.payload;
+                      if (!data) return null;
+                      const percent = entry.percent !== undefined
+                        ? `${(entry.percent * 100).toFixed(0)}%`
+                        : '';
+                      return (
+                        <div className="bg-white p-3 border border-[#d8c7b4] rounded-2xl shadow-sm font-subtitle text-xs text-[#0f3f3e]">
+                          <p className="font-bold">{data.name}</p>
+                          <p className="text-terracotta font-bold mt-1">
+                            {percent} <span className="text-teal/60 font-medium">({data.count} {data.count === 1 ? 'cita' : 'citas'})</span>
+                          </p>
+                        </div>
+                      );
+                    }
+                    return null;
                   }}
-                  formatter={(value: any) => [value, "Citas registradas"]}
                 />
                 <Legend 
                   verticalAlign="bottom" 
