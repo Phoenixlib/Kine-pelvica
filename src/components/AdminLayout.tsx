@@ -13,7 +13,6 @@ import {
   LogOut,
   Menu,
   X,
-  Bell,
   User as UserIcon,
   Home,
   Settings,
@@ -142,14 +141,6 @@ export function AdminLayout({ children, user }: AdminLayoutProps) {
             >
               <Home size={18} />
             </a>
-
-            <button
-              className="p-2.5 text-teal/70 hover:text-teal hover:bg-[#f7f3ef] rounded-full transition relative"
-              title="Notificaciones"
-            >
-              <Bell size={18} />
-              <span className="absolute top-2.5 right-2.5 w-2 h-2 bg-[#c48a6a] rounded-full border border-white"></span>
-            </button>
 
             <div className="h-8 w-px bg-cream/40"></div>
 

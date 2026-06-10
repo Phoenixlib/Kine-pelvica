@@ -107,9 +107,7 @@ export async function Footer() {
         <div className="mt-16 pt-8 border-t border-[#134948] flex flex-col md:flex-row items-center justify-between font-subtitle text-[10px] tracking-widest uppercase text-[#f7f3ef]/40 gap-4 text-center md:text-left">
           <p>© {new Date().getFullYear()} Estudio Pélvico Camila Ortiz. Todos los derechos reservados. Desarrollado por FinixDev</p>
           <div className="flex flex-wrap justify-center gap-4">
-            <a href="#" className="hover:text-terracotta transition-colors">Privacidad</a>
-            <span>|</span>
-            <a href="#" className="hover:text-terracotta transition-colors">Términos</a>
+            <a href="/politicas-de-atencion" className="hover:text-terracotta transition-colors">Términos de atención</a>
           </div>
         </div>
 

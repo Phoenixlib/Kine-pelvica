@@ -22,8 +22,7 @@ const fallbackPosts: Record<
   "cicatriz-hipertrofica-o-queloide": {
     title: "Mi cicatriz: ¿Es hipertrófica o queloide?",
     category: "CONSEJOS",
-    image:
-      "https://images.unsplash.com/photo-1616394584738-fc6e612e71b9?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
+    image: "/images/blog/cicatriz-queloide.png",
     date: "25 de Febrero, 2026",
     author: "Camila Ortiz",
     description:
@@ -93,8 +92,7 @@ const fallbackPosts: Record<
   "cesarea-recuperacion-postparto": {
     title: "La cesárea no es el camino fácil: tips y recomendaciones",
     category: "MATERNIDAD",
-    image:
-      "https://images.unsplash.com/photo-1518241353330-0f7941c2d9b5?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
+    image: "/images/blog/embarazada-barriga.png",
     date: "18 de Febrero, 2026",
     author: "Camila Ortiz",
     description:

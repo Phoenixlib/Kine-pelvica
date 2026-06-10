@@ -28,8 +28,7 @@ const fallbackPosts: Post[] = [
   {
     _id: "fb-1",
     slug: "cicatriz-hipertrofica-o-queloide",
-    image:
-      "https://images.unsplash.com/photo-1616394584738-fc6e612e71b9?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
+    image: "/images/blog/cicatriz-queloide.png",
     category: "CONSEJOS",
     title: "Mi cicatriz: ¿Es hipertrófica o queloide?",
     description:
@@ -39,8 +38,7 @@ const fallbackPosts: Post[] = [
   {
     _id: "fb-2",
     slug: "cesarea-recuperacion-postparto",
-    image:
-      "https://images.unsplash.com/photo-1518241353330-0f7941c2d9b5?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
+    image: "/images/blog/embarazada-barriga.png",
     category: "MATERNIDAD",
     title: "La cesárea no es el camino fácil: tips y recomendaciones",
     description:
