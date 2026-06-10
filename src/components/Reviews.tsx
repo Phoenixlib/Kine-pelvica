@@ -3,6 +3,14 @@
 import { useRef } from "react";
 import { Star, ChevronLeft, ChevronRight } from "lucide-react";
 
+interface Review {
+  name: string;
+  avatar: string;
+  color: string;
+  text: string;
+  time?: string;
+}
+
 export function Reviews() {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
@@ -14,7 +22,7 @@ export function Reviews() {
     }
   };
 
-  const reviews = [
+  const reviews: Review[] = [
     {
       name: "yanitza baeza salgado",
       avatar: "Y",
@@ -96,7 +104,7 @@ export function Reviews() {
                              </div>
                              <div className="flex flex-col justify-center">
                                 <p className="font-subtitle font-bold text-[11px] uppercase tracking-wide text-teal leading-none">{ref.name}</p>
-                                {"time" in ref && ref.time && (
+                                {ref.time && (
                                   <p className="text-[10px] font-subtitle uppercase tracking-widest text-teal/40 mt-1">{ref.time}</p>
                                 )}
                              </div>
