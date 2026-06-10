@@ -543,7 +543,7 @@ export default function AgendaPage() {
 
                     {/* Appointments Overlay */}
                     {appointments
-                      .filter((appt) => isSameDay(new Date(appt.date), day))
+                      .filter((appt) => isSameDay(new Date(appt.date), day) && appt.status !== "CANCELLED")
                       .map((appt) => {
                         const startObj = new Date(appt.date);
                         const startDecimal = startObj.getHours() + startObj.getMinutes() / 60;

@@ -707,6 +707,7 @@ export default function CitasPage() {
           appt={cancellingAppt}
           onClose={() => setCancellingAppt(null)}
           onConfirm={handleCancelConfirm}
+          isUpdating={updateMutation.isPending}
         />
       )}
     </div>

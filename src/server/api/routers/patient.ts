@@ -65,27 +65,57 @@ export const patientRouter = createTRPCRouter({
         }
       }
 
-      const [patients, total] = await Promise.all([
-        ctx.db.patient.findMany({
-          where: whereClause,
-          orderBy: [
-            { firstName: "asc" },
-            { lastName: "asc" }
-          ],
-          include: {
-            _count: {
-              select: { appointments: true },
-            },
-            appointments: {
-              orderBy: { date: "desc" },
-              take: 1,
-            },
+      // Obtener todos los pacientes que coinciden con el filtro para ordenarlos en memoria de forma insensible a mayúsculas/minúsculas y acentos.
+      const allMatching = await ctx.db.patient.findMany({
+        where: whereClause,
+        select: {
+          id: true,
+          firstName: true,
+          lastName: true,
+        },
+      });
+
+      // Ordenar en memoria usando localeCompare (específico para español)
+      allMatching.sort((a, b) => {
+        const compareFirst = a.firstName.localeCompare(b.firstName, "es", { sensitivity: "base", numeric: true });
+        if (compareFirst !== 0) return compareFirst;
+        return a.lastName.localeCompare(b.lastName, "es", { sensitivity: "base", numeric: true });
+      });
+
+      const total = allMatching.length;
+      const paginatedIds = allMatching.slice(skip, skip + limit).map((p) => p.id);
+
+      // Si no hay IDs paginados, devolvemos la lista vacía
+      if (paginatedIds.length === 0) {
+        return {
+          patients: [],
+          total,
+          page,
+          limit,
+          totalPages: Math.ceil(total / limit),
+        };
+      }
+
+      // Obtener los registros completos de la página actual
+      const pagePatients = await ctx.db.patient.findMany({
+        where: {
+          id: { in: paginatedIds },
+        },
+        include: {
+          _count: {
+            select: { appointments: true },
           },
-          skip,
-          take: limit,
-        }),
-        ctx.db.patient.count({ where: whereClause }),
-      ]);
+          appointments: {
+            orderBy: { date: "desc" },
+            take: 1,
+          },
+        },
+      });
+
+      // Re-ordenar según el orden de paginatedIds (orden alfabético ya calculado)
+      const patients = paginatedIds
+        .map((id) => pagePatients.find((p) => p.id === id)!)
+        .filter(Boolean);
 
       return {
         patients,
@@ -97,16 +127,18 @@ export const patientRouter = createTRPCRouter({
     }),
 
   getLookupList: protectedProcedure.query(async ({ ctx }) => {
-    return ctx.db.patient.findMany({
+    const patients = await ctx.db.patient.findMany({
       select: {
         id: true,
         firstName: true,
         lastName: true,
       },
-      orderBy: [
-        { firstName: "asc" },
-        { lastName: "asc" }
-      ],
+    });
+
+    return patients.sort((a, b) => {
+      const compareFirst = a.firstName.localeCompare(b.firstName, "es", { sensitivity: "base", numeric: true });
+      if (compareFirst !== 0) return compareFirst;
+      return a.lastName.localeCompare(b.lastName, "es", { sensitivity: "base", numeric: true });
     });
   }),
 
