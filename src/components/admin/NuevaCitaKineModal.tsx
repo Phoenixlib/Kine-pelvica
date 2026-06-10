@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { api } from "~/trpc/react";
 import { addMinutes, startOfDay, endOfDay, isBefore, isAfter, isSameDay } from "date-fns";
 import { getCleanPhone } from "./AppointmentDetailModal";
+import { detectSchedulingClash } from "~/utils/schedulingUtils";
 
 interface Props {
   isOpen: boolean;
@@ -105,23 +106,13 @@ export default function NuevaCitaKineModal({
   // Check clashes
   let hasClash = false;
   if (selectedDate && selectedTime && selectedService && (dayAppointments || dayBlocks)) {
-    const newStart = new Date(`${selectedDate}T${selectedTime}:00`);
-    const newEnd = addMinutes(newStart, selectedService.duration);
-
-    const hasApptClash = dayAppointments?.appointments.some((appt) => {
-      const apptStart = new Date(appt.date);
-      const apptEnd = addMinutes(apptStart, appt.durationMinutes);
-      // Overlap condition: start < endB AND end > startB
-      return newStart < apptEnd && newEnd > apptStart && appt.status !== "CANCELLED";
-    }) ?? false;
-
-    const hasBlockClash = dayBlocks?.some((block) => {
-      const blockStart = new Date(block.startAt);
-      const blockEnd = new Date(block.endAt);
-      return newStart < blockEnd && newEnd > blockStart;
-    }) ?? false;
-
-    hasClash = hasApptClash || hasBlockClash;
+    hasClash = detectSchedulingClash(
+      selectedDate,
+      selectedTime,
+      selectedService.duration,
+      dayAppointments?.appointments,
+      dayBlocks
+    );
   }
 
   const handleSubmit = async (e: React.FormEvent) => {

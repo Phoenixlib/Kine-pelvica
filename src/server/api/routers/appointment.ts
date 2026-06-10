@@ -355,15 +355,28 @@ export const appointmentRouter = createTRPCRouter({
       }
 
       // Synchronize cancellation or reschedule back to Cal.com if linked
+      console.log("[update] existing.calComEventId:", existing.calComEventId);
+      console.log("[update] input.date:", input.date?.toISOString(), "existing.date:", existing.date?.toISOString());
+      
       if (existing.calComEventId) {
         try {
           if (input.status === "CANCELLED" && existing.status !== "CANCELLED") {
+            console.log("[update] Calling cancelCalComBooking...");
             await cancelCalComBooking(existing.calComEventId, input.cancelReason || undefined);
+            console.log("[update] cancelCalComBooking succeeded.");
           } else if (input.date && input.date.getTime() !== existing.date.getTime()) {
-            await rescheduleCalComBooking(existing.calComEventId, input.date);
+            console.log("[update] Calling rescheduleCalComBooking with", existing.calComEventId, input.date.toISOString());
+            const calRes = await rescheduleCalComBooking(existing.calComEventId, input.date);
+            console.log("[update] rescheduleCalComBooking succeeded:", calRes);
           }
         } catch (calError) {
-          console.error("Cal.com sync error (proceeding with local DB update):", calError);
+          console.error("[update] Cal.com sync error:", calError);
+          const errMsg = calError instanceof Error ? calError.message : String(calError);
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: `Error al sincronizar con Cal.com: ${errMsg}. La cita no se ha modificado localmente para evitar desincronización.`,
+            cause: calError,
+          });
         }
       }
 

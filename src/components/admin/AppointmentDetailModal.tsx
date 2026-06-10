@@ -3,6 +3,9 @@
 import { useState, useEffect } from "react";
 import { X, Phone, Mail, MessageSquare, Calendar as CalendarIcon, Clock, Trash2 } from "lucide-react";
 import type { AppointmentStatus, PaymentMethod } from "../../../generated/prisma";
+import { api } from "~/trpc/react";
+import { addMinutes } from "date-fns";
+import { detectSchedulingClash } from "~/utils/schedulingUtils";
 
 export interface Patient {
   id: string;
@@ -87,11 +90,17 @@ export function AppointmentDetailModal({
     status?: AppointmentStatus; 
     paymentMethod?: PaymentMethod | null; 
     notes?: string | null; 
-    cancelReason?: string | null 
+    cancelReason?: string | null;
+    date?: Date;
   }) => void;
   onDelete: (id: string) => void;
   isUpdating: boolean;
 }) {
+  const apptDate = typeof appt.date === "string" ? new Date(appt.date) : appt.date;
+  const pad = (n: number) => n.toString().padStart(2, "0");
+  const initialDateStr = `${apptDate.getFullYear()}-${pad(apptDate.getMonth() + 1)}-${pad(apptDate.getDate())}`;
+  const initialTimeStr = `${pad(apptDate.getHours())}:${pad(apptDate.getMinutes())}`;
+
   const [notes, setNotes] = useState(appt.notes || "");
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>(appt.paymentMethod || "PENDING");
   const [status, setStatus] = useState<AppointmentStatus>(appt.status);
@@ -99,6 +108,10 @@ export function AppointmentDetailModal({
   const [showCancelInput, setShowCancelInput] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [cancelReasonError, setCancelReasonError] = useState(false);
+
+  const [selectedDate, setSelectedDate] = useState<string>(initialDateStr);
+  const [selectedTime, setSelectedTime] = useState<string>(initialTimeStr);
+  const [isEditingDate, setIsEditingDate] = useState(false);
 
   useEffect(() => {
     setNotes(appt.notes || "");
@@ -108,12 +121,55 @@ export function AppointmentDetailModal({
     setShowCancelInput(appt.status === "CANCELLED");
     setConfirmDelete(false);
     setCancelReasonError(false);
+    setIsEditingDate(false);
+
+    const aDate = typeof appt.date === "string" ? new Date(appt.date) : appt.date;
+    setSelectedDate(`${aDate.getFullYear()}-${pad(aDate.getMonth() + 1)}-${pad(aDate.getDate())}`);
+    setSelectedTime(`${pad(aDate.getHours())}:${pad(aDate.getMinutes())}`);
   }, [appt]);
+
+  const selectedDateObj = selectedDate ? new Date(`${selectedDate}T00:00:00`) : null;
+  const { data: dayAppointments } = api.appointment.getAll.useQuery(
+    {
+      startDate: selectedDateObj ? new Date(selectedDateObj.getTime() - 24 * 60 * 60 * 1000) : undefined,
+      endDate: selectedDateObj ? new Date(selectedDateObj.getTime() + 24 * 60 * 60 * 1000) : undefined,
+    },
+    { enabled: !!selectedDateObj && isEditingDate }
+  );
+
+  const { data: dayBlocks } = api.blockedSlot.getAll.useQuery(
+    {
+      startDate: selectedDateObj ? new Date(selectedDateObj.getTime() - 24 * 60 * 60 * 1000) : new Date(),
+      endDate: selectedDateObj ? new Date(selectedDateObj.getTime() + 24 * 60 * 60 * 1000) : new Date(),
+    },
+    { enabled: !!selectedDateObj && isEditingDate }
+  );
+
+  let hasClash = false;
+  if (isEditingDate) {
+    hasClash = detectSchedulingClash(
+      selectedDate,
+      selectedTime,
+      appt.durationMinutes,
+      dayAppointments?.appointments,
+      dayBlocks,
+      appt.id
+    );
+  }
 
   const handleSave = () => {
     if (status === "CANCELLED" && !cancelReason.trim()) {
       setCancelReasonError(true);
       return;
+    }
+
+    if (isEditingDate && hasClash) {
+      return;
+    }
+
+    let newDateObj: Date | undefined = undefined;
+    if (isEditingDate) {
+      newDateObj = new Date(`${selectedDate}T${selectedTime}:00`);
     }
 
     onUpdate({
@@ -122,6 +178,7 @@ export function AppointmentDetailModal({
       paymentMethod,
       status,
       cancelReason: status === "CANCELLED" ? cancelReason : null,
+      date: newDateObj,
     });
     onClose();
   };
@@ -226,22 +283,77 @@ export function AppointmentDetailModal({
                 )}
               </div>
 
-              <div className="grid grid-cols-2 gap-4 pt-2 border-t border-cream/10 text-xs">
-                <div>
-                  <span className="text-teal/50 block font-medium">Fecha</span>
-                  <span className="font-bold capitalize flex items-center gap-1.5 mt-0.5">
-                    <CalendarIcon size={12} className="text-teal/40" />
-                    {dateObj.toLocaleDateString("es-CL", { weekday: "short", day: "numeric", month: "short" })}
-                  </span>
+              {!isEditingDate ? (
+                <div className="pt-2 border-t border-cream/10 text-xs flex justify-between items-end">
+                  <div className="grid grid-cols-2 gap-4 flex-1">
+                    <div>
+                      <span className="text-teal/50 block font-medium">Fecha</span>
+                      <span className="font-bold capitalize flex items-center gap-1.5 mt-0.5">
+                        <CalendarIcon size={12} className="text-teal/40" />
+                        {dateObj.toLocaleDateString("es-CL", { weekday: "short", day: "numeric", month: "short" })}
+                      </span>
+                    </div>
+                    <div>
+                      <span className="text-teal/50 block font-medium">Hora</span>
+                      <span className="font-bold flex items-center gap-1.5 mt-0.5">
+                        <Clock size={12} className="text-teal/40" />
+                        {formattedTimeStr} hrs
+                      </span>
+                    </div>
+                  </div>
+                  <button 
+                    type="button" 
+                    onClick={() => setIsEditingDate(true)}
+                    className="text-[10px] font-bold uppercase tracking-wider text-terracotta hover:underline ml-2"
+                  >
+                    Reagendar
+                  </button>
                 </div>
-                <div>
-                  <span className="text-teal/50 block font-medium">Hora</span>
-                  <span className="font-bold flex items-center gap-1.5 mt-0.5">
-                    <Clock size={12} className="text-teal/40" />
-                    {formattedTimeStr} hrs
-                  </span>
+              ) : (
+                <div className="pt-2 border-t border-cream/10 space-y-3">
+                  <div className="flex justify-between items-center mb-1">
+                    <span className="font-bold text-xs text-teal">Reprogramar Cita</span>
+                    <button 
+                      type="button" 
+                      onClick={() => {
+                        setIsEditingDate(false);
+                        setSelectedDate(initialDateStr);
+                        setSelectedTime(initialTimeStr);
+                      }}
+                      className="text-[10px] font-bold uppercase tracking-wider text-teal/50 hover:underline"
+                    >
+                      Cancelar Cambio
+                    </button>
+                  </div>
+                  <div className="flex gap-3">
+                    <div className="flex-1 space-y-1">
+                      <label className="text-[10px] font-bold uppercase text-teal/70">Fecha</label>
+                      <input
+                        type="date"
+                        value={selectedDate}
+                        min={new Date().toISOString().split("T")[0]}
+                        onChange={(e) => setSelectedDate(e.target.value)}
+                        className="w-full px-3 py-2 bg-white border border-cream rounded-lg font-body text-xs text-teal focus:outline-none focus:border-terracotta transition-colors"
+                      />
+                    </div>
+                    <div className="flex-1 space-y-1">
+                      <label className="text-[10px] font-bold uppercase text-teal/70">Hora</label>
+                      <input
+                        type="time"
+                        value={selectedTime}
+                        onChange={(e) => setSelectedTime(e.target.value)}
+                        className="w-full px-3 py-2 bg-white border border-cream rounded-lg font-body text-xs text-teal focus:outline-none focus:border-terracotta transition-colors"
+                      />
+                    </div>
+                  </div>
+                  {hasClash && (
+                    <div className="bg-red-50 text-red-600 p-2 rounded-lg border border-red-100 text-[10px] font-bold flex items-center gap-1.5 mt-2">
+                      <svg className="w-3 h-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+                      ⛔ El horario está ocupado.
+                    </div>
+                  )}
                 </div>
-              </div>
+              )}
             </div>
           </div>
 
@@ -381,7 +493,7 @@ export function AppointmentDetailModal({
           <button
             type="button"
             onClick={handleSave}
-            disabled={isUpdating}
+            disabled={isUpdating || (isEditingDate && hasClash)}
             className="flex-1 py-3 bg-teal hover:bg-teal/90 text-white rounded-xl font-subtitle font-bold text-[10px] tracking-widest uppercase transition-all shadow-md disabled:opacity-50"
           >
             {isUpdating ? "Guardando..." : "Guardar Cambios"}

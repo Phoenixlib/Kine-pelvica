@@ -152,7 +152,7 @@ export async function rescheduleCalComBooking(bookingUid: string, newDate: Date)
       headers: {
         "Authorization": `Bearer ${env.CALCOM_API_KEY}`,
         "Content-Type": "application/json",
-        "cal-api-version": "2024-06-14",
+        "cal-api-version": "2024-08-13",
       },
       body: JSON.stringify({
         start: newDate.toISOString(),

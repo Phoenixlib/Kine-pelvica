@@ -138,6 +138,7 @@ export default function AgendaPage() {
   // Mutations
   const updateMutation = api.appointment.update.useMutation({
     onSuccess: () => utils.appointment.getAll.invalidate(),
+    onError: (error) => alert(error.message),
   });
 
   const deleteMutation = api.appointment.delete.useMutation({

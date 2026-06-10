@@ -100,6 +100,9 @@ export default function CitasPage() {
       // Reset transition states
       setCancellingAppt(null);
       setCancelReason("");
+    },
+    onError: (error) => {
+      alert(error.message);
     }
   });
 
@@ -149,6 +152,7 @@ export default function CitasPage() {
     paymentMethod?: PaymentMethod | null;
     notes?: string | null;
     cancelReason?: string | null;
+    date?: Date;
   }) => {
     updateMutation.mutate(data, {
       onSuccess: (updated) => {
