@@ -1,6 +1,0 @@
-{
-  "name": "AgendaAdmin Pro",
-  "description": "Admin panel for appointment scheduling, client management, and business analytics.",
-  "requestFramePermissions": [],
-  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
-}
