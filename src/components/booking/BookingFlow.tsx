@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import CalComEmbed, { type CalComPrefill } from "./CalComEmbed";
+import { api } from "~/trpc/react";
 
 type Step = "lookup" | "embed";
 
@@ -22,6 +23,24 @@ export default function BookingFlow({ calLink, onClose }: BookingFlowProps) {
 
   const [copiedField, setCopiedField] = useState<string | null>(null);
   const [highlightPolicies, setHighlightPolicies] = useState(false);
+
+  const { data: configData } = api.siteConfig.get.useQuery({
+    keys: [
+      "bank_name",
+      "bank_rut",
+      "bank_bank",
+      "bank_account_type",
+      "bank_account_number",
+      "bank_email",
+    ],
+  });
+
+  const bankName = configData?.bank_name || "Camila Ortiz";
+  const bankRut = configData?.bank_rut || "17.798.781-6";
+  const bankBank = configData?.bank_bank || "Banco de Chile";
+  const bankAccountType = configData?.bank_account_type || "Cuenta Corriente";
+  const bankAccountNumber = configData?.bank_account_number || "00-1 07-24890-05";
+  const bankEmail = configData?.bank_email || "Camilaortiz.kine@gmail.com";
 
   const formatPhoneForCalcom = (phoneStr: string) => {
     // Normalizar: quitar espacios, guiones y paréntesis
@@ -211,7 +230,7 @@ export default function BookingFlow({ calLink, onClose }: BookingFlowProps) {
                 <span>
                   Nombre:{" "}
                   <strong className="font-subtitle font-bold text-teal">
-                    Camila Ortiz
+                    {bankName}
                   </strong>
                 </span>
               </div>
@@ -219,7 +238,7 @@ export default function BookingFlow({ calLink, onClose }: BookingFlowProps) {
                 <span>
                   Rut:{" "}
                   <strong className="font-subtitle font-bold text-teal">
-                    17.798.781-6
+                    {bankRut}
                   </strong>
                 </span>
               </div>
@@ -227,7 +246,7 @@ export default function BookingFlow({ calLink, onClose }: BookingFlowProps) {
                 <span>
                   Banco:{" "}
                   <strong className="font-subtitle font-bold text-teal">
-                    Banco de Chile
+                    {bankBank}
                   </strong>
                 </span>
               </div>
@@ -235,7 +254,7 @@ export default function BookingFlow({ calLink, onClose }: BookingFlowProps) {
                 <span>
                   Tipo Cuenta:{" "}
                   <strong className="font-subtitle font-bold text-teal">
-                    Cuenta Corriente
+                    {bankAccountType}
                   </strong>
                 </span>
               </div>
@@ -243,7 +262,7 @@ export default function BookingFlow({ calLink, onClose }: BookingFlowProps) {
                 <span>
                   Nº Cuenta:{" "}
                   <strong className="font-subtitle font-bold text-teal">
-                    00-1 07-24890-05
+                    {bankAccountNumber}
                   </strong>
                 </span>
               </div>
@@ -251,7 +270,7 @@ export default function BookingFlow({ calLink, onClose }: BookingFlowProps) {
                 <span>
                   Email:{" "}
                   <strong className="font-subtitle font-bold text-teal">
-                    Camilaortiz.kine@gmail.com
+                    {bankEmail}
                   </strong>
                 </span>
               </div>
@@ -260,7 +279,7 @@ export default function BookingFlow({ calLink, onClose }: BookingFlowProps) {
               <button
                 type="button"
                 onClick={() => {
-                  const allDetails = `Nombre: Camila Ortiz\nRut: 17.798.781-6\nBanco: Banco de Chile\nTipo Cuenta: Cuenta Corriente\nNº Cuenta: 00-1 07-24890-05\nEmail: Camilaortiz.kine@gmail.com`;
+                  const allDetails = `Nombre: ${bankName}\nRut: ${bankRut}\nBanco: ${bankBank}\nTipo Cuenta: ${bankAccountType}\nNº Cuenta: ${bankAccountNumber}\nEmail: ${bankEmail}`;
                   copyToClipboard(allDetails, "transferencia");
                 }}
                 className="w-full flex items-center justify-center gap-2 mt-3 bg-[#e6ded9] hover:bg-[#ded5ce] text-[#0f3f3e] font-subtitle uppercase tracking-widest font-bold text-[10px] py-2.5 px-4 rounded-xl transition duration-200"

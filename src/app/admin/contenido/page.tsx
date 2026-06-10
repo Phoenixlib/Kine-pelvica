@@ -26,6 +26,13 @@ export default function ContenidoPage() {
   const [facebook, setFacebook] = useState("");
   const [email, setEmail] = useState("");
 
+  const [bankName, setBankName] = useState("");
+  const [bankRut, setBankRut] = useState("");
+  const [bankBank, setBankBank] = useState("");
+  const [bankAccountType, setBankAccountType] = useState("");
+  const [bankAccountNumber, setBankAccountNumber] = useState("");
+  const [bankEmail, setBankEmail] = useState("");
+
   const [saveStatus, setSaveStatus] = useState<
     "idle" | "saving" | "success" | "error"
   >("idle");
@@ -48,6 +55,12 @@ export default function ContenidoPage() {
       "instagram_url",
       "facebook_url",
       "email_address",
+      "bank_name",
+      "bank_rut",
+      "bank_bank",
+      "bank_account_type",
+      "bank_account_number",
+      "bank_email",
     ],
   });
 
@@ -73,6 +86,12 @@ export default function ContenidoPage() {
       setInstagram(configData.instagram_url || "");
       setFacebook(configData.facebook_url || "");
       setEmail(configData.email_address || "");
+      setBankName(configData.bank_name || "");
+      setBankRut(configData.bank_rut || "");
+      setBankBank(configData.bank_bank || "");
+      setBankAccountType(configData.bank_account_type || "");
+      setBankAccountNumber(configData.bank_account_number || "");
+      setBankEmail(configData.bank_email || "");
     }
   }, [configData]);
 
@@ -120,6 +139,12 @@ export default function ContenidoPage() {
         { key: "instagram_url", value: formattedInstagram },
         { key: "facebook_url", value: formattedFacebook },
         { key: "email_address", value: email },
+        { key: "bank_name", value: bankName },
+        { key: "bank_rut", value: bankRut },
+        { key: "bank_bank", value: bankBank },
+        { key: "bank_account_type", value: bankAccountType },
+        { key: "bank_account_number", value: bankAccountNumber },
+        { key: "bank_email", value: bankEmail },
       ],
     });
   };
@@ -330,6 +355,91 @@ export default function ContenidoPage() {
                     Ingresa una dirección para ver el mapa
                   </div>
                 )}
+              </div>
+            </div>
+          </div>
+
+          {/* Section: Datos de Transferencia */}
+          <div className="bg-white rounded-3xl border border-cream/30 shadow-xs p-6 md:p-8 space-y-6">
+            <div className="flex items-center gap-2 border-b border-cream/20 pb-4">
+              <FileText className="text-terracotta" size={20} />
+              <h2 className="font-title text-xl text-teal">
+                Datos de Transferencia (Reserva Exitosa)
+              </h2>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-1.5">
+                <label className="font-subtitle text-[10px] tracking-wider uppercase font-bold text-teal block">
+                  Nombre
+                </label>
+                <input
+                  type="text"
+                  value={bankName}
+                  onChange={(e) => setBankName(e.target.value)}
+                  placeholder="Ej: Camila Ortiz"
+                  className="w-full px-4 py-3 bg-white border border-cream rounded-xl font-body text-sm text-teal focus:outline-none"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <label className="font-subtitle text-[10px] tracking-wider uppercase font-bold text-teal block">
+                  RUT
+                </label>
+                <input
+                  type="text"
+                  value={bankRut}
+                  onChange={(e) => setBankRut(e.target.value)}
+                  placeholder="Ej: 17.798.781-6"
+                  className="w-full px-4 py-3 bg-white border border-cream rounded-xl font-body text-sm text-teal focus:outline-none"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <label className="font-subtitle text-[10px] tracking-wider uppercase font-bold text-teal block">
+                  Banco
+                </label>
+                <input
+                  type="text"
+                  value={bankBank}
+                  onChange={(e) => setBankBank(e.target.value)}
+                  placeholder="Ej: Banco de Chile"
+                  className="w-full px-4 py-3 bg-white border border-cream rounded-xl font-body text-sm text-teal focus:outline-none"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <label className="font-subtitle text-[10px] tracking-wider uppercase font-bold text-teal block">
+                  Tipo de Cuenta
+                </label>
+                <input
+                  type="text"
+                  value={bankAccountType}
+                  onChange={(e) => setBankAccountType(e.target.value)}
+                  placeholder="Ej: Cuenta Corriente"
+                  className="w-full px-4 py-3 bg-white border border-cream rounded-xl font-body text-sm text-teal focus:outline-none"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <label className="font-subtitle text-[10px] tracking-wider uppercase font-bold text-teal block">
+                  Nº Cuenta
+                </label>
+                <input
+                  type="text"
+                  value={bankAccountNumber}
+                  onChange={(e) => setBankAccountNumber(e.target.value)}
+                  placeholder="Ej: 00-1 07-24890-05"
+                  className="w-full px-4 py-3 bg-white border border-cream rounded-xl font-body text-sm text-teal focus:outline-none"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <label className="font-subtitle text-[10px] tracking-wider uppercase font-bold text-teal block">
+                  Email
+                </label>
+                <input
+                  type="email"
+                  value={bankEmail}
+                  onChange={(e) => setBankEmail(e.target.value)}
+                  placeholder="Ej: correo@ejemplo.com"
+                  className="w-full px-4 py-3 bg-white border border-cream rounded-xl font-body text-sm text-teal focus:outline-none"
+                />
               </div>
             </div>
           </div>
