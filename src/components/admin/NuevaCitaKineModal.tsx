@@ -148,6 +148,8 @@ export default function NuevaCitaKineModal({
 
     try {
       let finalPatientId = selectedPatientId;
+      let finalPatientPhone = "";
+      let finalPatientFirstName = "";
 
       // 1. Create Patient if needed
       if (isCreatingPatient) {
@@ -162,6 +164,23 @@ export default function NuevaCitaKineModal({
           email: newEmail || undefined,
         });
         finalPatientId = newPatient.id;
+        finalPatientPhone = newPatient.phone;
+        finalPatientFirstName = newPatient.firstName;
+
+        // Correctly transition UI state to the newly created patient
+        setSelectedPatientId(newPatient.id);
+        setIsCreatingPatient(false);
+        setNewFirstName("");
+        setNewLastName("");
+        setNewPhone("");
+        setNewEmail("");
+      } else {
+        if (!selectedPatient) {
+          setCreateError("Debe seleccionar un paciente.");
+          return;
+        }
+        finalPatientPhone = selectedPatient.phone;
+        finalPatientFirstName = selectedPatient.firstName;
       }
 
       // 2. Create Appointment
@@ -178,13 +197,12 @@ export default function NuevaCitaKineModal({
       });
 
       // 3. Open WhatsApp link with pre-filled message
-      const cleanPhone = getCleanPhone(isCreatingPatient ? newPhone : selectedPatient!.phone);
+      const cleanPhone = getCleanPhone(finalPatientPhone);
       const formattedDateStr = dateObj.toLocaleDateString("es-CL", { weekday: "long", day: "numeric", month: "long" });
       const formattedTimeStr = dateObj.toLocaleTimeString("es-CL", { hour: "2-digit", minute: "2-digit" });
       const serviceName = service.name;
-      const patientFirstName = isCreatingPatient ? newFirstName : selectedPatient!.firstName;
 
-      const waMessage = `Hola ${patientFirstName}, te escribo de Kinesiología Pélvica Camila Ortiz para confirmarte que tu cita para *${serviceName}* ha sido agendada con éxito.\n\n*Detalles de tu cita:*\n📅 *Fecha:* ${formattedDateStr}\n⏰ *Hora:* ${formattedTimeStr} hrs\n📍 *Ubicación:* Benigno Posadas 1884, Iquique, Chile\n\n¡Te esperamos!`;
+      const waMessage = `Hola ${finalPatientFirstName}, te escribo de Kinesiología Pélvica Camila Ortiz para confirmarte que tu cita para *${serviceName}* ha sido agendada con éxito.\n\n*Detalles de tu cita:*\n📅 *Fecha:* ${formattedDateStr}\n⏰ *Hora:* ${formattedTimeStr} hrs\n📍 *Ubicación:* Benigno Posadas 1884, Iquique, Chile\n\n¡Te esperamos!`;
       const waLink = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(waMessage)}`;
 
       try {

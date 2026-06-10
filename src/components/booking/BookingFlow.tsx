@@ -21,6 +21,7 @@ export default function BookingFlow({ calLink, onClose }: BookingFlowProps) {
   const [bookingSuccessData, setBookingSuccessData] = useState<any>(null);
 
   const [copiedField, setCopiedField] = useState<string | null>(null);
+  const [highlightPolicies, setHighlightPolicies] = useState(false);
 
   const formatPhoneForCalcom = (phoneStr: string) => {
     // Normalizar: quitar espacios, guiones y paréntesis
@@ -35,6 +36,11 @@ export default function BookingFlow({ calLink, onClose }: BookingFlowProps) {
 
   const handleLookup = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!acceptedPolicies) {
+      setHighlightPolicies(true);
+      setTimeout(() => setHighlightPolicies(false), 500);
+      return;
+    }
     if (!query.trim()) {
       setError("Por favor ingresa tu nombre o teléfono.");
       return;
@@ -80,6 +86,11 @@ export default function BookingFlow({ calLink, onClose }: BookingFlowProps) {
   };
 
   const handleDirectBooking = () => {
+    if (!acceptedPolicies) {
+      setHighlightPolicies(true);
+      setTimeout(() => setHighlightPolicies(false), 500);
+      return;
+    }
     // Primera vez → abrir embed con prefijo +56 por defecto
     setPrefill({ attendeePhoneNumber: "+56" });
     setStep("embed");
@@ -480,8 +491,8 @@ export default function BookingFlow({ calLink, onClose }: BookingFlowProps) {
 
         <button
           type="submit"
-          disabled={loading || !acceptedPolicies}
-          className="w-full bg-terracotta text-white p-3 rounded-full font-subtitle text-xs uppercase tracking-widest font-bold hover:bg-teal transition-colors disabled:opacity-50 shadow-sm"
+          disabled={loading}
+          className="w-full bg-terracotta text-white p-3 rounded-full font-subtitle text-xs uppercase tracking-widest font-bold hover:bg-teal transition-colors disabled:opacity-50 shadow-sm cursor-pointer"
         >
           {loading ? "Buscando..." : "Buscar Cuenta"}
         </button>
@@ -505,24 +516,27 @@ export default function BookingFlow({ calLink, onClose }: BookingFlowProps) {
         <button
           type="button"
           onClick={handleDirectBooking}
-          disabled={!acceptedPolicies}
-          className="w-full border border-terracotta/40 text-terracotta bg-white p-3 rounded-full font-subtitle text-xs uppercase tracking-widest font-bold hover:bg-terracotta/5 hover:border-terracotta transition-colors shadow-sm disabled:opacity-50 disabled:hover:bg-white disabled:hover:border-terracotta/40"
+          className="w-full border border-terracotta/40 text-terracotta bg-white p-3 rounded-full font-subtitle text-xs uppercase tracking-widest font-bold hover:bg-terracotta/5 hover:border-terracotta transition-colors shadow-sm cursor-pointer"
         >
           Primera vez, quiero reservar directamente 🌸
         </button>
       </div>
 
-      <div className="mt-6 flex items-start gap-3 p-4 bg-slate-50 rounded-xl border border-slate-100">
+      <div className={`mt-6 flex items-start gap-3 p-4 rounded-xl border transition-all duration-300 ${
+        highlightPolicies
+          ? "animate-shake border-terracotta bg-terracotta/10 shadow-md ring-2 ring-terracotta/20"
+          : "bg-slate-50 border-slate-100"
+      }`}>
         <input
           type="checkbox"
           id="policies"
           checked={acceptedPolicies}
           onChange={(e) => setAcceptedPolicies(e.target.checked)}
-          className="mt-1 w-4 h-4 rounded border-slate-300 text-terracotta focus:ring-terracotta"
+          className="mt-1 w-4 h-4 rounded border-slate-300 text-terracotta focus:ring-terracotta cursor-pointer"
         />
         <label
           htmlFor="policies"
-          className="text-xs text-slate-600 leading-relaxed"
+          className="text-xs text-slate-600 leading-relaxed cursor-pointer select-none"
         >
           He leído y acepto las{" "}
           <Link

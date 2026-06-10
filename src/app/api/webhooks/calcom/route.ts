@@ -91,20 +91,38 @@ export async function POST(req: Request) {
         : null;
 
       // 2. Si no se encontró por email, buscar por teléfono normalizado
-      if (!patient && attendee.phone) {
-        patient = await db.patient.findFirst({ where: { phone: patientPhone } });
+      if (!patient && rawPhone) {
+        patient = await db.patient.findUnique({ where: { phone: patientPhone } });
       }
 
       // 3. Si no existe, crear el paciente nuevo
       if (!patient) {
-        patient = await db.patient.create({
-          data: {
-            firstName,
-            lastName,
-            email: attendee.email || null,
-            phone: patientPhone,
-          },
-        });
+        try {
+          patient = await db.patient.create({
+            data: {
+              firstName,
+              lastName,
+              email: attendee.email || null,
+              phone: patientPhone,
+            },
+          });
+        } catch (e: any) {
+          console.error("[Cal.com Webhook] Patient creation error (possibly race condition):", e);
+          // If creation fails due to duplicate, try to fetch it one last time
+          if (e.code === 'P2002') {
+            patient = await db.patient.findFirst({
+              where: {
+                OR: [
+                  { email: attendee.email || undefined },
+                  { phone: patientPhone }
+                ]
+              }
+            });
+            if (!patient) throw e; // If still not found, throw
+          } else {
+            throw e;
+          }
+        }
       } else {
         // 4. Si existe, actualizar datos si cambiaron (no sobreescribir si ya tenía info)
         await db.patient.update({
