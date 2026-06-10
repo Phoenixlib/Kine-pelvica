@@ -98,5 +98,7 @@ Al finalizar su reserva, se le muestra a la usuaria un modal que incluye los dat
 
 ## 9. Blog (Artículos y Novedades)
 
-El blog cuenta con su propio gestor de contenidos externo (**Sanity**), optimizado para crear artículos enriquecidos (textos amplios, fotografías clínicas como cicatrices o anatomía de piso pélvico, negritas, links, etc).
-* Desde el submenú de Blog de la administración, la usuaria es redirigida al portal CMS para redactar los artículos, los cuales se publican al instante en la sección "/blog" de la página web del estudio, potenciando la divulgación educativa de manera rápida y sencilla.
+El sistema cuenta con un gestor de publicaciones propio integrado directamente en el panel de administración.
+* **Creación y Edición:** Desde la sección "Blog", puede redactar nuevos artículos, asignarles categorías y establecer su estado (Borrador o Publicado).
+* **Gestión de Imágenes:** Las fotografías destacadas (ej. anatomía, tratamientos) se suben directamente y se alojan en la nube (Cloudinary) de manera automática.
+* **Visibilidad Instantánea:** Al cambiar el estado de un post a "Publicado", aparecerá automáticamente en la sección "/blog" de su sitio web, potenciando el SEO y manteniendo a sus pacientes informadas.
