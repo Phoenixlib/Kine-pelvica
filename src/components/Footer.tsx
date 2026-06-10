@@ -57,11 +57,13 @@ export async function Footer() {
           <div className="lg:mx-auto">
              <h4 className="font-subtitle font-bold tracking-[0.2em] text-[10px] uppercase text-[#f7f3ef]/50 mb-6">Navegación</h4>
              <ul className="space-y-4 font-subtitle text-xs uppercase tracking-widest text-[#f7f3ef]/90">
-                <li><a href="#inicio" className="hover:text-terracotta transition-colors">Inicio</a></li>
-                <li><a href="#quien-soy" className="hover:text-terracotta transition-colors">Quién Soy</a></li>
-                <li><a href="#servicios" className="hover:text-terracotta transition-colors">Servicios</a></li>
-                <li><a href="#galeria" className="hover:text-terracotta transition-colors">Casos Clínicos</a></li>
+                <li><a href="/#inicio" className="hover:text-terracotta transition-colors">Inicio</a></li>
+                <li><a href="/#quien-soy" className="hover:text-terracotta transition-colors">Quién Soy</a></li>
+                <li><a href="/#servicios" className="hover:text-terracotta transition-colors">Servicios</a></li>
+                <li><a href="/#galeria" className="hover:text-terracotta transition-colors">Antes y Después</a></li>
+                <li><a href="/#testimonios" className="hover:text-terracotta transition-colors">Testimonios</a></li>
                 <li><a href="/blog" className="hover:text-terracotta transition-colors">Blog</a></li>
+                <li><a href="/#buzon" className="hover:text-terracotta transition-colors">Buzón Comunidad</a></li>
              </ul>
           </div>
 
@@ -94,7 +96,7 @@ export async function Footer() {
                 Evaluaciones
              </h4>
              <p className="font-title text-2xl text-[#f7f3ef] mb-6">Agenda tu hora</p>
-             <a href="#contacto" className="inline-flex w-fit items-center justify-center px-6 py-3 bg-terracotta text-white rounded-full font-subtitle text-[10px] uppercase tracking-[0.2em] font-bold hover:bg-white hover:text-terracotta transition-colors shadow-sm">
+             <a href="/#servicios" className="inline-flex w-fit items-center justify-center px-6 py-3 bg-terracotta text-white rounded-full font-subtitle text-[10px] uppercase tracking-[0.2em] font-bold hover:bg-white hover:text-terracotta transition-colors shadow-sm">
                 Agendar ahora
              </a>
           </div>
