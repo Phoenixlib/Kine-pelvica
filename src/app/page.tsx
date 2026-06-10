@@ -120,7 +120,7 @@ async function getBlogPosts() {
           slug: post.slug,
           image:
             post.mainImage ??
-            "https://images.unsplash.com/photo-1516627145497-ae6968895b74?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
+            "https://images.unsplash.com/photo-1616394584738-fc6e612e71b9?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
           category: post.category?.name ?? "",
           description: post.description,
           publishedAt: post.publishedAt?.toISOString() ?? "",

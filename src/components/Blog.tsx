@@ -21,7 +21,7 @@ export function Blog({ initialPosts }: BlogProps) {
       id: 1,
       slug: "cicatriz-hipertrofica-o-queloide",
       image:
-        "https://images.unsplash.com/photo-1516627145497-ae6968895b74?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
+        "https://images.unsplash.com/photo-1616394584738-fc6e612e71b9?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
       category: "CONSEJOS",
       title: "Mi cicatriz: ¿Es hipertrófica o queloide?",
       description:
@@ -31,7 +31,7 @@ export function Blog({ initialPosts }: BlogProps) {
       id: 2,
       slug: "cesarea-recuperacion-postparto",
       image:
-        "https://images.unsplash.com/photo-1606240212788-b2170cbae985?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
+        "https://images.unsplash.com/photo-1518241353330-0f7941c2d9b5?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
       category: "MATERNIDAD",
       title: "La cesárea no es el camino fácil: tips y recomendaciones",
       description:

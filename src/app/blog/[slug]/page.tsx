@@ -23,7 +23,7 @@ const fallbackPosts: Record<
     title: "Mi cicatriz: ¿Es hipertrófica o queloide?",
     category: "CONSEJOS",
     image:
-      "https://images.unsplash.com/photo-1516627145497-ae6968895b74?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
+      "https://images.unsplash.com/photo-1616394584738-fc6e612e71b9?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
     date: "25 de Febrero, 2026",
     author: "Camila Ortiz",
     description:
@@ -94,7 +94,7 @@ const fallbackPosts: Record<
     title: "La cesárea no es el camino fácil: tips y recomendaciones",
     category: "MATERNIDAD",
     image:
-      "https://images.unsplash.com/photo-1606240212788-b2170cbae985?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
+      "https://images.unsplash.com/photo-1518241353330-0f7941c2d9b5?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
     date: "18 de Febrero, 2026",
     author: "Camila Ortiz",
     description:
