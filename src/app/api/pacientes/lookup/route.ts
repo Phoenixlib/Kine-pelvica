@@ -16,20 +16,27 @@ export async function GET(req: NextRequest) {
   try {
     // Check if the query contains any digits (likely a phone number)
     const isPhone = /[\d]/.test(query);
-    let patient = null;
+    let patients: {
+      id: string;
+      firstName: string;
+      lastName: string;
+      email: string | null;
+      phone: string;
+    }[] = [];
 
     if (isPhone) {
       // Normalizar: quitar todo menos dígitos y +
       const normalized = query.replace(/[^\d+]/g, "");
       const baseNumber = normalized.replace(/^\+?56/, "");
 
-      patient = await db.patient.findFirst({
+      patients = await db.patient.findMany({
         where: {
           OR: [
             { phone: { contains: normalized } },
             { phone: { contains: baseNumber } },
           ],
         },
+        take: 5,
         select: {
           id: true,
           firstName: true,
@@ -52,8 +59,9 @@ export async function GET(req: NextRequest) {
           })),
         };
 
-        patient = await db.patient.findFirst({
+        patients = await db.patient.findMany({
           where: whereClause,
+          take: 5,
           select: {
             id: true,
             firstName: true,
@@ -65,19 +73,41 @@ export async function GET(req: NextRequest) {
       }
     }
 
-    if (!patient) {
+    if (!patients || patients.length === 0) {
       return NextResponse.json({ found: false });
     }
 
+    // Enmascarar datos para privacidad
+    const maskedPatients = patients.map((p) => {
+      let maskedEmail = null;
+      if (p.email) {
+        const [name, domain] = p.email.split("@");
+        if (name && domain) {
+          if (name.length > 2) {
+            maskedEmail = `${name[0]}****${name[name.length - 1]}@${domain}`;
+          } else {
+            maskedEmail = `****@${domain}`;
+          }
+        }
+      }
+
+      // Format phone as +56 9 **** 1234
+      const digits = p.phone.replace(/\D/g, "");
+      const last4 = digits.length >= 4 ? digits.slice(-4) : digits;
+      const maskedPhone = `+56 9 **** ${last4}`;
+
+      return {
+        id: p.id,
+        firstName: p.firstName,
+        lastName: p.lastName,
+        maskedEmail,
+        maskedPhone,
+      };
+    });
+
     return NextResponse.json({
       found: true,
-      patient: {
-        id: patient.id,
-        firstName: patient.firstName,
-        lastName: patient.lastName,
-        email: patient.email,
-        phone: patient.phone,
-      },
+      patients: maskedPatients,
     });
   } catch (error) {
     console.error("[Patient Lookup Error]:", error);

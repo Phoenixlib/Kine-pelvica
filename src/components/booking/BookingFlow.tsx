@@ -5,7 +5,7 @@ import Link from "next/link";
 import CalComEmbed, { type CalComPrefill } from "./CalComEmbed";
 import { api } from "~/trpc/react";
 
-type Step = "lookup" | "embed";
+type Step = "lookup" | "verification" | "embed";
 
 interface BookingFlowProps {
   calLink: string; // e.g. "camila-ortiz/evaluacion-pelvica"
@@ -18,6 +18,9 @@ export default function BookingFlow({ calLink, onClose }: BookingFlowProps) {
   const [error, setError] = useState("");
   const [prefill, setPrefill] = useState<CalComPrefill>({});
   const [query, setQuery] = useState("");
+  const [patients, setPatients] = useState<any[]>([]);
+  const [selectedPatientId, setSelectedPatientId] = useState<string | null>(null);
+  const [verificationCode, setVerificationCode] = useState("");
   const [acceptedPolicies, setAcceptedPolicies] = useState(false);
   const [bookingSuccessData, setBookingSuccessData] = useState<any>(null);
 
@@ -73,22 +76,19 @@ export default function BookingFlow({ calLink, onClose }: BookingFlowProps) {
       const res = await fetch(url.toString());
       const data = (await res.json()) as {
         found: boolean;
-        patient?: {
+        patients?: {
+          id: string;
           firstName: string;
           lastName: string;
-          email: string | null;
-          phone: string;
-        };
+          maskedEmail: string | null;
+          maskedPhone: string;
+        }[];
       };
 
-      if (data.found && data.patient) {
-        // Paciente conocido → pre-llenar con sus datos guardados
-        setPrefill({
-          name: `${data.patient.firstName} ${data.patient.lastName}`.trim(),
-          email: data.patient.email ?? "",
-          attendeePhoneNumber: formatPhoneForCalcom(data.patient.phone),
-        });
-        setStep("embed");
+      if (data.found && data.patients && data.patients.length > 0) {
+        // Paciente(s) encontrado(s) -> mostrar paso de verificación
+        setPatients(data.patients);
+        setStep("verification");
       } else {
         // No se encontró el paciente
         setError(
@@ -113,6 +113,42 @@ export default function BookingFlow({ calLink, onClose }: BookingFlowProps) {
     // Primera vez → abrir embed con prefijo +56 por defecto
     setPrefill({ attendeePhoneNumber: "+56" });
     setStep("embed");
+  };
+
+  const handleVerification = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (verificationCode.length !== 4) return;
+    
+    setLoading(true);
+    setError("");
+
+    try {
+      const res = await fetch("/api/pacientes/verify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          id: selectedPatientId,
+          hiddenDigits: verificationCode,
+        }),
+      });
+      
+      const data = await res.json();
+      
+      if (res.ok && data.success && data.patient) {
+        setPrefill({
+          name: `${data.patient.firstName} ${data.patient.lastName}`.trim(),
+          email: data.patient.email ?? "",
+          attendeePhoneNumber: formatPhoneForCalcom(data.patient.phone),
+        });
+        setStep("embed");
+      } else {
+        setError(data.error || "Código incorrecto. Por favor intenta de nuevo.");
+      }
+    } catch {
+      setError("Ocurrió un error al verificar tu identidad.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleBookingSuccess = (e: any) => {
@@ -463,6 +499,103 @@ export default function BookingFlow({ calLink, onClose }: BookingFlowProps) {
         >
           Cerrar y Volver
         </button>
+      </div>
+    );
+  }
+
+  if (step === "verification") {
+    const selectedPatient = patients.find(p => p.id === selectedPatientId);
+
+    return (
+      <div className="w-full max-w-md mx-auto bg-white rounded-3xl p-8 shadow-xl border border-cream/50 animate-in fade-in zoom-in duration-300">
+        <h2 className="text-xl font-bold mb-2 text-teal font-title text-center">
+          Confirma tu identidad
+        </h2>
+        <p className="text-sm text-teal/70 text-center mb-6">
+          {patients.length > 1 
+            ? "Encontramos varias coincidencias. Selecciona tu perfil:"
+            : "Encontramos tu perfil. Confirma para continuar:"}
+        </p>
+
+        {!selectedPatientId ? (
+          <div className="space-y-3">
+            {patients.map((p) => (
+              <button
+                key={p.id}
+                onClick={() => setSelectedPatientId(p.id)}
+                className="w-full text-left p-4 rounded-xl border border-cream hover:border-terracotta hover:bg-terracotta/5 transition-all focus:outline-none focus:ring-2 focus:ring-terracotta/40"
+              >
+                <div className="font-subtitle font-bold text-teal">
+                  {p.firstName} {p.lastName}
+                </div>
+                <div className="text-xs text-teal/60 mt-1 flex flex-col gap-0.5">
+                  <span>📱 {p.maskedPhone}</span>
+                  {p.maskedEmail && <span>✉️ {p.maskedEmail}</span>}
+                </div>
+              </button>
+            ))}
+            <button
+              onClick={() => {
+                setStep("lookup");
+                setQuery("");
+              }}
+              className="w-full mt-4 text-xs font-subtitle uppercase tracking-widest text-terracotta hover:text-teal transition-colors text-center p-2"
+            >
+              Volver a buscar
+            </button>
+          </div>
+        ) : (
+          <form onSubmit={handleVerification} className="space-y-4">
+            <div className="bg-slate-50 p-4 rounded-xl border border-slate-100 mb-4">
+              <div className="font-subtitle font-bold text-teal mb-1">
+                {selectedPatient?.firstName} {selectedPatient?.lastName}
+              </div>
+              <p className="text-xs text-teal/70 leading-relaxed">
+                Por seguridad, ingresa los <strong>4 dígitos ocultos</strong> de tu celular registrado ({selectedPatient?.maskedPhone}).
+              </p>
+            </div>
+            
+            <div>
+              <input
+                type="text"
+                placeholder="Ej: 1234"
+                maxLength={4}
+                value={verificationCode}
+                onChange={(e) => setVerificationCode(e.target.value.replace(/\D/g, ""))}
+                className="w-full p-3 text-center text-xl tracking-widest rounded-xl border border-cream focus:outline-none focus:ring-2 focus:ring-terracotta/40 text-teal font-bold"
+                disabled={loading}
+                required
+              />
+            </div>
+
+            {error && (
+              <div className="p-3 bg-red-50 rounded-xl border border-red-100 text-xs text-red-600 leading-relaxed text-center">
+                {error}
+              </div>
+            )}
+
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setSelectedPatientId(null);
+                  setVerificationCode("");
+                  setError("");
+                }}
+                className="flex-1 border border-cream text-teal p-3 rounded-full font-subtitle text-xs uppercase tracking-widest font-bold hover:bg-slate-50 transition-colors disabled:opacity-50"
+              >
+                Atrás
+              </button>
+              <button
+                type="submit"
+                disabled={loading || verificationCode.length !== 4}
+                className="flex-1 bg-terracotta text-white p-3 rounded-full font-subtitle text-xs uppercase tracking-widest font-bold hover:bg-teal transition-colors disabled:opacity-50 shadow-sm"
+              >
+                {loading ? "Verificando..." : "Confirmar"}
+              </button>
+            </div>
+          </form>
+        )}
       </div>
     );
   }
