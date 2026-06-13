@@ -9,10 +9,11 @@ type Step = "lookup" | "verification" | "embed";
 
 interface BookingFlowProps {
   calLink: string; // e.g. "camila-ortiz/evaluacion-pelvica"
+  price?: string | number;
   onClose?: () => void;
 }
 
-export default function BookingFlow({ calLink, onClose }: BookingFlowProps) {
+export default function BookingFlow({ calLink, price, onClose }: BookingFlowProps) {
   const [step, setStep] = useState<Step>("lookup");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -44,6 +45,13 @@ export default function BookingFlow({ calLink, onClose }: BookingFlowProps) {
   const bankAccountType = configData?.bank_account_type || "Cuenta Corriente";
   const bankAccountNumber = configData?.bank_account_number || "00-1 07-24890-05";
   const bankEmail = configData?.bank_email || "Camilaortiz.kine@gmail.com";
+
+  const displayPrice =
+    price !== undefined && price !== null
+      ? typeof price === "number"
+        ? `$${price.toLocaleString("es-CL")}`
+        : price
+      : "$35.000";
 
   const formatPhoneForCalcom = (phoneStr: string) => {
     // Normalizar: quitar espacios, guiones y paréntesis
@@ -479,7 +487,7 @@ export default function BookingFlow({ calLink, onClose }: BookingFlowProps) {
                   Precio
                 </span>
                 <span className="font-subtitle font-bold text-sm text-redbrown block">
-                  $35.000
+                  {displayPrice}
                 </span>
               </div>
             </div>

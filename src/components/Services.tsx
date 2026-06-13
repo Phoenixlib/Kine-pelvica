@@ -25,7 +25,7 @@ interface ServicesProps {
 export function Services({ initialCategories }: ServicesProps) {
   const [activeCategory, setActiveCategory] = useState<number>(0);
   const [mobileOpenCategory, setMobileOpenCategory] = useState<number | null>(null);
-  const [bookingModal, setBookingModal] = useState<{ open: boolean; calLink: string }>({
+  const [bookingModal, setBookingModal] = useState<{ open: boolean; calLink: string; price?: string | number }>({
     open: false,
     calLink: "",
   });
@@ -172,7 +172,7 @@ export function Services({ initialCategories }: ServicesProps) {
                       onClick={(e) => {
                         e.stopPropagation();
                         const calPath = service.bookingUrl?.replace("https://cal.com/", "") ?? "";
-                        setBookingModal({ open: true, calLink: calPath });
+                        setBookingModal({ open: true, calLink: calPath, price: service.price });
                       }}
                       className="mt-auto block text-center bg-terracotta text-white w-full py-2.5 rounded-full font-subtitle text-[10px] uppercase tracking-widest font-bold hover:bg-teal transition-colors shadow-sm"
                     >
@@ -254,7 +254,7 @@ export function Services({ initialCategories }: ServicesProps) {
                                 onClick={(e) => {
                                   e.stopPropagation();
                                   const calPath = service.bookingUrl?.replace("https://cal.com/", "") ?? "";
-                                  setBookingModal({ open: true, calLink: calPath });
+                                  setBookingModal({ open: true, calLink: calPath, price: service.price });
                                 }}
                                 className="mt-2 block text-center bg-terracotta text-white w-full py-2 rounded-full font-subtitle text-[9px] uppercase tracking-widest font-bold hover:bg-teal transition-colors shadow-sm"
                               >
@@ -285,6 +285,7 @@ export function Services({ initialCategories }: ServicesProps) {
             </button>
             <BookingFlow 
               calLink={bookingModal.calLink} 
+              price={bookingModal.price}
               onClose={() => setBookingModal({ open: false, calLink: "" })} 
             />
           </div>
@@ -343,7 +344,7 @@ export function Services({ initialCategories }: ServicesProps) {
                   <button
                     onClick={() => {
                       const calPath = selectedService.bookingUrl?.replace("https://cal.com/", "") ?? "";
-                      setBookingModal({ open: true, calLink: calPath });
+                      setBookingModal({ open: true, calLink: calPath, price: selectedService.price });
                       setSelectedService(null);
                     }}
                     className="flex-1 bg-terracotta text-white py-3 px-6 rounded-full font-subtitle text-xs uppercase tracking-widest font-bold hover:bg-teal transition-colors shadow-sm text-center cursor-pointer"
